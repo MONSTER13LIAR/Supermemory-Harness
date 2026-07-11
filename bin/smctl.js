@@ -6,6 +6,7 @@ import { runInstall } from "../src/install.js";
 import { runMemory } from "../src/memory.js";
 import { runSetup } from "../src/setup.js";
 import { runSkillset } from "../src/skillset.js";
+import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStatus } from "../src/status.js";
 
@@ -25,6 +26,9 @@ Usage:
   smctl skillset list [--json]
   smctl skillset install <name> [--json]
   smctl skillset doctor [--json]
+  smctl smart enable [--json] [--provider <openai|gemini|anthropic>] [--api-key-env <name>] [--model <model>] [--yes]
+  smctl smart doctor [--json]
+  smctl smart disable [--json]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
@@ -40,6 +44,7 @@ Commands:
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
   skillset Install app-specific local memory policies.
+  smart    Enable optional env-based LLM assistance.
   guard    Review memory writes before they are committed to Supermemory Local.
 `);
 }
@@ -52,7 +57,11 @@ function parseArgs(argv) {
     json: false,
     dryRun: false,
     apply: false,
+    yes: false,
     target: "all",
+    provider: null,
+    apiKeyEnv: null,
+    model: null,
     containerTag: "smctl-smoke",
     timeoutMs: 30000,
     limit: 50,
@@ -76,6 +85,23 @@ function parseArgs(argv) {
       args.dryRun = true;
     } else if (token === "--apply") {
       args.apply = true;
+    } else if (token === "--yes") {
+      args.yes = true;
+    } else if (token === "--provider") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--provider requires a value");
+      args.provider = value;
+      index += 1;
+    } else if (token === "--api-key-env") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--api-key-env requires a value");
+      args.apiKeyEnv = value;
+      index += 1;
+    } else if (token === "--model") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--model requires a value");
+      args.model = value;
+      index += 1;
     } else if (token === "--target") {
       const value = argv[index + 1];
       if (!value) {
@@ -144,6 +170,8 @@ function parseArgs(argv) {
       args.subcommand = token;
     } else if (args.command === "skillset" && !args.id) {
       args.id = token;
+    } else if (args.command === "smart" && !args.subcommand) {
+      args.subcommand = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -165,7 +193,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "status", "doctor", "setup", "smoke", "memory", "skillset", "guard"].includes(args.command)) {
+  if (!["install", "status", "doctor", "setup", "smoke", "memory", "skillset", "smart", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -249,6 +277,18 @@ async function runCommand(args) {
       action: args.subcommand,
       name: args.id,
       home: process.env.HOME
+    });
+  }
+
+  if (args.command === "smart") {
+    return runSmart({
+      action: args.subcommand,
+      home: process.env.HOME,
+      env: process.env,
+      provider: args.provider,
+      apiKeyEnv: args.apiKeyEnv,
+      model: args.model,
+      yes: args.yes
     });
   }
 

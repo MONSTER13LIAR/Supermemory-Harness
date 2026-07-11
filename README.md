@@ -70,6 +70,14 @@ node ./bin/smctl.js skillset install developer
 node ./bin/smctl.js skillset doctor
 ```
 
+Optionally enable env-based Smart Assist:
+
+```bash
+smctl smart enable
+smctl smart enable --yes
+smctl smart doctor
+```
+
 Review memory writes before commit:
 
 ```bash
@@ -89,6 +97,7 @@ node ./bin/smctl.js guard reject <id>
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `skillset` installs local app-specific memory policies used by Guard.
+- `smart` optionally stores a reference to an existing provider env var; it never copies the API key.
 - `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
