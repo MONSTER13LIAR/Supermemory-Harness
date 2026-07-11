@@ -6,6 +6,7 @@ import { runInstall } from "../src/install.js";
 import { runMemory } from "../src/memory.js";
 import { runSetup } from "../src/setup.js";
 import { runSmoke } from "../src/smoke.js";
+import { runStatus } from "../src/status.js";
 
 const VERSION = "0.1.0";
 
@@ -14,6 +15,7 @@ function printHelp() {
 
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>]
+  smctl status [--json] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
@@ -28,6 +30,7 @@ Usage:
 
 Commands:
   install  Install and connect the full Supermemory Harness plugin.
+  status   Show one-screen health for Supermemory, memory, and Guard.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
@@ -153,7 +156,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "doctor", "setup", "smoke", "memory", "guard"].includes(args.command)) {
+  if (!["install", "status", "doctor", "setup", "smoke", "memory", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -178,6 +181,17 @@ async function runCommand(args) {
       home: process.env.HOME,
       dryRun: args.dryRun,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "status") {
+    return runStatus({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 

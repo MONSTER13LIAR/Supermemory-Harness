@@ -19,6 +19,12 @@ For local development from this repo:
 node ./bin/smctl.js install
 ```
 
+Check the full Harness state:
+
+```bash
+smctl status
+```
+
 ```bash
 npm run doctor
 ```
@@ -69,6 +75,7 @@ node ./bin/smctl.js guard reject <id>
 
 - `doctor` is read-only diagnostics.
 - `install` is the one-command onboarding flow for the Harness plugin.
+- `status` gives one-screen health for Supermemory, memory quality, and Guard.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
