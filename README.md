@@ -77,6 +77,7 @@ smctl smart enable
 smctl smart enable --yes
 smctl smart enable --api-key-env LLM_API_KEY --yes
 smctl smart doctor
+smctl smart ping
 ```
 
 `smart enable` can use `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `ANTHROPIC_API_KEY` directly. For custom env names, pass `--api-key-env`; Harness infers OpenAI, Gemini, or Anthropic from the key shape and asks for `--provider` only when it cannot infer safely.

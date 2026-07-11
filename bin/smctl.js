@@ -28,6 +28,7 @@ Usage:
   smctl skillset doctor [--json]
   smctl smart enable [--json] [--provider <openai|gemini|anthropic>] [--api-key-env <name>] [--model <model>] [--yes]
   smctl smart doctor [--json]
+  smctl smart ping [--json]
   smctl smart disable [--json]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
@@ -288,7 +289,8 @@ async function runCommand(args) {
       provider: args.provider,
       apiKeyEnv: args.apiKeyEnv,
       model: args.model,
-      yes: args.yes
+      yes: args.yes,
+      fetch: globalThis.fetch
     });
   }
 

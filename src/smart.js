@@ -30,6 +30,7 @@ export async function runSmart(options = {}) {
   const action = options.action ?? "doctor";
   if (action === "enable") return smartEnable(options);
   if (action === "doctor") return smartDoctor(options);
+  if (action === "ping") return smartPing(options);
   if (action === "disable") return smartDisable(options);
   throw new Error(`Unknown smart action: ${action}`);
 }
@@ -118,6 +119,65 @@ export async function smartDoctor(options = {}) {
   };
   result.text = formatDoctor(result);
   return result;
+}
+
+export async function smartPing(options = {}) {
+  const context = smartContext(options);
+  const config = await readSmartConfig(context.configPath);
+  if (!config?.enabled) {
+    return smartResult({
+      command: "smart ping",
+      status: "failed",
+      exitCode: 1,
+      detail: "Smart Assist is not enabled. Run smctl smart enable --yes first."
+    });
+  }
+
+  const keyInfo = resolveApiKeyRef(config.apiKeyRef, context.env);
+  if (keyInfo.error) {
+    return smartResult({
+      command: "smart ping",
+      status: "failed",
+      exitCode: 1,
+      detail: keyInfo.error
+    }, config);
+  }
+
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    return smartResult({
+      command: "smart ping",
+      status: "failed",
+      exitCode: 1,
+      detail: "No fetch implementation available in this Node runtime."
+    }, config);
+  }
+
+  const startedAt = Date.now();
+  const ping = await pingProvider({
+    provider: config.provider,
+    model: config.model,
+    apiKey: keyInfo.value,
+    fetch: fetchImpl,
+    timeoutMs: options.timeoutMs ?? 20000
+  });
+  const latencyMs = Date.now() - startedAt;
+
+  if (!ping.ok) {
+    return smartResult({
+      command: "smart ping",
+      status: "failed",
+      exitCode: 1,
+      detail: `${ping.message} (${latencyMs}ms)`
+    }, config);
+  }
+
+  return smartResult({
+    command: "smart ping",
+    status: "ok",
+    exitCode: 0,
+    detail: `Provider responded with ${ping.reply} (${latencyMs}ms)`
+  }, config);
 }
 
 export async function smartDisable(options = {}) {
@@ -236,6 +296,130 @@ function uniqueDetections(detections) {
     }
   }
   return unique;
+}
+
+function resolveApiKeyRef(apiKeyRef, env) {
+  if (!apiKeyRef?.startsWith("env:")) {
+    return { error: `Unsupported apiKeyRef ${apiKeyRef ?? "missing"}` };
+  }
+  const envName = apiKeyRef.slice(4);
+  const value = env[envName];
+  if (!value) {
+    return { error: `Referenced API key env is missing: ${envName}` };
+  }
+  return { envName, value };
+}
+
+async function pingProvider({ provider, model, apiKey, fetch, timeoutMs }) {
+  if (provider === "openai") {
+    return pingOpenAI({ model, apiKey, fetch, timeoutMs });
+  }
+  if (provider === "gemini") {
+    return pingGemini({ model, apiKey, fetch, timeoutMs });
+  }
+  if (provider === "anthropic") {
+    return pingAnthropic({ model, apiKey, fetch, timeoutMs });
+  }
+  return { ok: false, message: `Unsupported smart provider: ${provider}` };
+}
+
+async function pingOpenAI({ model, apiKey, fetch, timeoutMs }) {
+  const response = await fetchJson(fetch, "https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model,
+      input: "Reply exactly: smctl-ok",
+      max_output_tokens: 16
+    })
+  }, timeoutMs);
+  if (!response.ok) return response;
+  const reply = response.data.output_text ?? response.data.output?.flatMap((item) => item.content ?? []).map((item) => item.text ?? "").join("").trim();
+  return normalizePingReply(reply);
+}
+
+async function pingGemini({ model, apiKey, fetch, timeoutMs }) {
+  const response = await fetchJson(fetch, `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: "Reply exactly: smctl-ok" }] }],
+      generationConfig: { maxOutputTokens: 16 }
+    })
+  }, timeoutMs);
+  if (!response.ok) return response;
+  const reply = response.data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
+  return normalizePingReply(reply);
+}
+
+async function pingAnthropic({ model, apiKey, fetch, timeoutMs }) {
+  const response = await fetchJson(fetch, "https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 16,
+      messages: [{ role: "user", content: "Reply exactly: smctl-ok" }]
+    })
+  }, timeoutMs);
+  if (!response.ok) return response;
+  const reply = response.data.content?.map((item) => item.text ?? "").join("").trim();
+  return normalizePingReply(reply);
+}
+
+async function fetchJson(fetch, url, init, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    const text = await response.text();
+    const data = text ? safeJson(text) : {};
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: `${response.status} ${response.statusText || "provider error"}: ${providerErrorMessage(data)}`
+      };
+    }
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, message: error.name === "AbortError" ? "Provider ping timed out" : `Provider ping failed: ${error.message}` };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function safeJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
+function providerErrorMessage(data) {
+  const message = data?.error?.message ?? data?.error?.status ?? data?.message;
+  return message ? sanitizeProviderMessage(message) : "request failed";
+}
+
+function sanitizeProviderMessage(message) {
+  return String(message)
+    .replace(/sk-[A-Za-z0-9_-]+/g, "[redacted-key]")
+    .replace(/AIza[0-9A-Za-z_-]+/g, "[redacted-key]");
+}
+
+function normalizePingReply(reply) {
+  const normalized = String(reply ?? "").trim();
+  if (!normalized) return { ok: false, message: "Provider returned an empty response" };
+  return { ok: true, reply: normalized.slice(0, 80) };
 }
 
 function smartResult(base, config = null) {
