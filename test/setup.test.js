@@ -10,7 +10,7 @@ test("setup dry-run reports planned writes without leaking the API key", async (
   const result = await runSetup({ home, dryRun: true });
 
   assert.equal(result.summary["would-create"], 2);
-  assert.equal(result.summary.manual, 3);
+  assert.equal(result.summary.manual, 4);
   assert.doesNotMatch(result.text, /sm_aaaaaaaa/);
   assert.doesNotMatch(JSON.stringify(result), /sm_aaaaaaaa/);
 });

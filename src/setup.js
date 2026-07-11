@@ -150,6 +150,11 @@ function manualInstallerActions() {
   return [
     {
       status: "manual",
+      title: "Load Harness env in your shell",
+      detail: "source ~/.config/smctl/supermemory.env"
+    },
+    {
+      status: "manual",
       title: "Install Claude Code plugin",
       detail: "/plugin marketplace add supermemoryai/claude-supermemory && /plugin install claude-supermemory"
     },

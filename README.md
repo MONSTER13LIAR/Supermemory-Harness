@@ -4,6 +4,12 @@
 
 ## Run
 
+Install and connect Harness:
+
+```bash
+node ./bin/smctl.js install
+```
+
 ```bash
 npm run doctor
 ```
@@ -45,6 +51,7 @@ node ./bin/smctl.js guard reject <id>
 ## Current Scope
 
 - `doctor` is read-only diagnostics.
+- `install` is the one-command onboarding flow for the Harness plugin.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.

@@ -2,6 +2,7 @@
 
 import { runDoctor } from "../src/doctor.js";
 import { runGuard } from "../src/guard.js";
+import { runInstall } from "../src/install.js";
 import { runSetup } from "../src/setup.js";
 import { runSmoke } from "../src/smoke.js";
 
@@ -11,6 +12,7 @@ function printHelp() {
   console.log(`smctl ${VERSION}
 
 Usage:
+  smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>]
   smctl doctor [--json] [--base-url <url>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
@@ -22,6 +24,7 @@ Usage:
   smctl --version
 
 Commands:
+  install  Install and connect the full Supermemory Harness plugin.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
@@ -42,6 +45,7 @@ function parseArgs(argv) {
     port: 6777,
     upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
+    guardUrl: "http://localhost:6777",
     help: false,
     version: false
   };
@@ -98,6 +102,13 @@ function parseArgs(argv) {
       }
       args.baseUrl = value;
       index += 1;
+    } else if (token === "--guard-url") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("--guard-url requires a value");
+      }
+      args.guardUrl = value;
+      index += 1;
     } else if (!args.command) {
       args.command = token;
     } else if (args.command === "guard" && !args.subcommand) {
@@ -125,7 +136,7 @@ async function main() {
     return;
   }
 
-  if (!["doctor", "setup", "smoke", "guard"].includes(args.command)) {
+  if (!["install", "doctor", "setup", "smoke", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -141,6 +152,18 @@ async function main() {
 }
 
 async function runCommand(args) {
+  if (args.command === "install") {
+    return runInstall({
+      baseUrl: args.baseUrl,
+      guardUrl: args.guardUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      dryRun: args.dryRun,
+      fetch: globalThis.fetch
+    });
+  }
+
   if (args.command === "doctor") {
     return runDoctor({
       baseUrl: args.baseUrl,
