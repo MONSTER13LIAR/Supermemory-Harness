@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Developer diagnostics and safety tooling for Supermemory Local.",
   "type": "module",
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
   "bin": {
     "smctl": "./bin/smctl.js"
   },
@@ -13,5 +18,13 @@
   "engines": {
     "node": ">=22"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MONSTER13LIAR/Supermemory-Harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MONSTER13LIAR/Supermemory-Harness/issues"
+  },
+  "homepage": "https://github.com/MONSTER13LIAR/Supermemory-Harness#readme",
   "license": "MIT"
 }

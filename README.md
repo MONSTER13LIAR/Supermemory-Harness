@@ -7,6 +7,15 @@
 Install and connect Harness:
 
 ```bash
+npm install -g github:MONSTER13LIAR/Supermemory-Harness
+smctl install
+```
+
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed.
+
+For local development from this repo:
+
+```bash
 node ./bin/smctl.js install
 ```
 
