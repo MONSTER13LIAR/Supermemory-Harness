@@ -19,6 +19,12 @@ For local development from this repo:
 node ./bin/smctl.js install
 ```
 
+Initialize the current app/project so Harness can tag Supermemory writes with project context:
+
+```bash
+smctl init
+```
+
 The commands below are optional diagnostics and advanced controls.
 
 Show every command:
@@ -102,6 +108,7 @@ node ./bin/smctl.js guard reject <id>
 
 - `doctor` is read-only diagnostics.
 - `install` is the one-command onboarding flow for the Harness plugin.
+- `init` detects the current project and writes an active project profile for memory enrichment.
 - `status` gives one-screen health for Supermemory, memory quality, and Guard.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
@@ -109,7 +116,7 @@ node ./bin/smctl.js guard reject <id>
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `skillset` installs local app-specific memory policies used by Guard.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
-- `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.
+- `guard` runs a local review proxy for `POST /v3/documents`, adds active project/skillset metadata, flags risky memory writes, and requires approval before forwarding.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
 - Does not auto-run Claude Code, Codex, or OpenCode plugin installers yet; it prints the exact next commands instead.

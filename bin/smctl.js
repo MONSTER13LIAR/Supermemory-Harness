@@ -4,6 +4,7 @@ import { runDoctor } from "../src/doctor.js";
 import { runGuard } from "../src/guard.js";
 import { runInstall } from "../src/install.js";
 import { runMemory } from "../src/memory.js";
+import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
 import { runSkillset } from "../src/skillset.js";
 import { runSmart } from "../src/smart.js";
@@ -19,6 +20,7 @@ Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl status [--json] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
+  smctl init [--json]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
@@ -42,6 +44,7 @@ Commands:
   install  Install and connect the full Supermemory Harness plugin.
   status   Show one-screen health for Supermemory, memory, and Guard.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
+  init     Detect the current project and create a project-aware memory profile.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
@@ -198,7 +201,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "status", "doctor", "setup", "smoke", "memory", "skillset", "smart", "guard"].includes(args.command)) {
+  if (!["install", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "smart", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -245,6 +248,14 @@ async function runCommand(args) {
       baseUrl: args.baseUrl,
       cwd: process.cwd(),
       env: process.env
+    });
+  }
+
+  if (args.command === "init") {
+    return runProject({
+      action: "init",
+      cwd: process.cwd(),
+      home: process.env.HOME
     });
   }
 

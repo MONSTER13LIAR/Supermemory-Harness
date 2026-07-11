@@ -79,6 +79,7 @@ export async function runInstall(options = {}) {
     smart,
     checks,
     nextSteps: [
+      "smctl init",
       "smctl guard start",
       "smctl status",
       "smctl memory doctor"

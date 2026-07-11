@@ -3,6 +3,7 @@ import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { applyProjectToRequest, readProjectProfile } from "./project.js";
 import { applySkillsetToRequest, readActiveSkillset } from "./skillset.js";
 
 const WRITE_ROUTES = new Set(["POST /v3/documents"]);
@@ -165,9 +166,11 @@ async function guardReject(context, id) {
 
 export async function quarantineWrite(context, request) {
   const pending = await readPending(context);
+  const project = await readProjectProfile(context.home);
   const skillset = await readActiveSkillset(context.home);
   const skillsetResult = applySkillsetToRequest(skillset, request);
-  const body = applySkillsetMetadata(request.body, skillsetResult);
+  const projectResult = applyProjectToRequest(project, request);
+  const body = applyContextMetadata(request.body, skillsetResult, projectResult);
   const item = {
     id: `guard_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     status: "pending",
@@ -185,6 +188,12 @@ export async function quarantineWrite(context, request) {
       metadata: skillsetResult.metadata,
       containerTag: skillsetResult.containerTag
     } : null,
+    project: project ? {
+      name: project.name,
+      root: project.root,
+      containerTag: project.containerTag,
+      metadata: projectResult.metadata
+    } : null,
     risk: mergeRisk(scanRisk(request), skillsetResult.findings)
   };
   pending.push(item);
@@ -192,12 +201,13 @@ export async function quarantineWrite(context, request) {
   return item;
 }
 
-function applySkillsetMetadata(body, skillsetResult) {
+function applyContextMetadata(body, skillsetResult, projectResult) {
   return {
     ...body,
-    ...(skillsetResult.containerTag ? { containerTag: skillsetResult.containerTag } : {}),
+    ...(projectResult.containerTag || skillsetResult.containerTag ? { containerTag: projectResult.containerTag ?? skillsetResult.containerTag } : {}),
     metadata: {
       ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+      ...(projectResult.metadata ?? {}),
       ...(skillsetResult.metadata ?? {})
     }
   };
@@ -376,6 +386,9 @@ function formatInbox(result) {
       }
       if (item.skillset) {
         lines.push(`   skillset: ${item.skillset.name}`);
+      }
+      if (item.project) {
+        lines.push(`   project: ${item.project.name}`);
       }
     }
   }

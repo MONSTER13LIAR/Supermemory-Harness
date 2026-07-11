@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { guardContext, quarantineWrite, runGuard } from "../src/guard.js";
+import { projectInit } from "../src/project.js";
 import { runSkillset } from "../src/skillset.js";
 
 test("guard quarantines document writes and lists inbox", async () => {
@@ -73,6 +74,28 @@ test("guard applies active skillset metadata", async () => {
   assert.equal(item.skillset.name, "developer");
   assert.equal(item.request.body.metadata.smctlSkillset, "developer");
   assert.equal(item.request.body.metadata.smctlMemoryType, "architecture_decision");
+});
+
+test("guard applies active project profile metadata", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  const repo = await mkdtemp(join(tmpdir(), "smctl-guard-repo-"));
+  await writeFile(join(repo, "package.json"), JSON.stringify({ name: "client-portal" }));
+  await projectInit({ home, cwd: repo, name: "Client Portal" });
+  const context = guardContext({ home });
+
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: { content: "Remember the billing export decision." },
+    rawBody: JSON.stringify({ content: "Remember the billing export decision." })
+  });
+
+  assert.equal(item.project.name, "Client Portal");
+  assert.equal(item.request.body.containerTag, "project:client-portal");
+  assert.equal(item.request.body.metadata.smctlProject, "Client Portal");
+  assert.equal(item.request.body.metadata.smctlProjectRoot, repo);
 });
 
 function response(status, body) {
