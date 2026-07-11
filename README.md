@@ -75,12 +75,13 @@ Optionally enable env-based Smart Assist:
 ```bash
 smctl smart enable
 smctl smart enable --yes
+smctl smart enable --prompt
 smctl smart enable --api-key-env LLM_API_KEY --yes
 smctl smart doctor
 smctl smart ping
 ```
 
-`smart enable` can use `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `ANTHROPIC_API_KEY` directly. For custom env names, pass `--api-key-env`; Harness infers OpenAI, Gemini, or Anthropic from the key shape and asks for `--provider` only when it cannot infer safely.
+`smart enable` can use `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `ANTHROPIC_API_KEY` directly. For custom env names, pass `--api-key-env`; Harness infers OpenAI, Gemini, or Anthropic from the key shape and asks for `--provider` only when it cannot infer safely. To paste a key directly into the terminal without putting it in shell history, run `smctl smart enable --prompt`; the input is hidden and stored in a local `0600` Harness secret file.
 
 Review memory writes before commit:
 

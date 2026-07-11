@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { readSmartConfig, runSmart } from "../src/smart.js";
@@ -158,4 +158,66 @@ test("smart ping sanitizes provider errors", async () => {
   assert.match(result.text, /401 Unauthorized/);
   assert.doesNotMatch(result.text, /test-secret-value/);
   assert.match(result.text, /\[redacted-key\]/);
+});
+
+test("smart enable prompt stores a private file key reference", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
+  const key = ["sk", "prompt-secret-value-1234567890"].join("-");
+  const result = await runSmart({
+    home,
+    action: "enable",
+    prompt: true,
+    env: {},
+    promptApiKey: async () => key
+  });
+  const configPath = join(home, ".config", "smctl", "smart.json");
+  const keyPath = join(home, ".config", "smctl", "smart.key");
+  const config = await readSmartConfig(configPath);
+  const storedKey = await readFile(keyPath, "utf8");
+  const keyMode = (await stat(keyPath)).mode & 0o777;
+
+  assert.equal(result.status, "enabled");
+  assert.equal(config.provider, "openai");
+  assert.equal(config.apiKeyRef, `file:${keyPath}`);
+  assert.equal(storedKey.trim(), key);
+  assert.equal(keyMode, 0o600);
+  assert.doesNotMatch(JSON.stringify(config), /prompt-secret-value/);
+  assert.doesNotMatch(result.text, /prompt-secret-value/);
+});
+
+test("smart ping uses prompted file key reference", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
+  await runSmart({
+    home,
+    action: "enable",
+    prompt: true,
+    env: {},
+    promptApiKey: async () => ["sk", "prompt-secret-value-1234567890"].join("-")
+  });
+  const result = await runSmart({
+    home,
+    action: "ping",
+    env: {},
+    fetch: async () => new Response(JSON.stringify({ output_text: "smctl-ok" }), { status: 200 })
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.match(result.text, /smctl-ok/);
+  assert.doesNotMatch(result.text, /prompt-secret-value/);
+});
+
+test("smart disable removes prompted key file", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
+  const keyPath = join(home, ".config", "smctl", "smart.key");
+  await runSmart({
+    home,
+    action: "enable",
+    prompt: true,
+    env: {},
+    promptApiKey: async () => ["sk", "prompt-secret-value-1234567890"].join("-")
+  });
+
+  await runSmart({ home, action: "disable" });
+
+  await assert.rejects(readFile(keyPath, "utf8"));
 });

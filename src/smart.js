@@ -37,7 +37,7 @@ export async function runSmart(options = {}) {
 
 export async function smartEnable(options = {}) {
   const context = smartContext(options);
-  const detected = detectProvider(context.env, options);
+  let detected = detectProvider(context.env, options);
   if (detected?.error) {
     return smartResult({
       command: "smart enable",
@@ -46,24 +46,35 @@ export async function smartEnable(options = {}) {
       detail: detected.error
     });
   }
+  if (!detected && options.prompt) {
+    detected = await detectPromptedProvider(context, options);
+    if (detected?.error) {
+      return smartResult({
+        command: "smart enable",
+        status: "failed",
+        exitCode: 1,
+        detail: detected.error
+      });
+    }
+  }
   if (!detected) {
     return smartResult({
       command: "smart enable",
       status: "failed",
       exitCode: 1,
-      detail: "No supported provider API key found in environment. Export OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, or pass --api-key-env."
+      detail: "No supported provider API key found in environment. Export OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, pass --api-key-env, or use --prompt."
     });
   }
 
   const config = {
     enabled: true,
     provider: detected.provider,
-    apiKeyRef: `env:${detected.apiKeyEnv}`,
+    apiKeyRef: detected.apiKeyRef ?? `env:${detected.apiKeyEnv}`,
     model: options.model ?? detected.model,
     createdAt: new Date().toISOString()
   };
 
-  if (!options.yes) {
+  if (!options.yes && !options.prompt) {
     return smartResult({
       command: "smart enable",
       status: "needs-confirmation",
@@ -73,6 +84,10 @@ export async function smartEnable(options = {}) {
   }
 
   await mkdir(dirname(context.configPath), { recursive: true });
+  if (detected.apiKeyValue) {
+    await writeFile(context.keyPath, `${detected.apiKeyValue.trim()}\n`, { mode: 0o600 });
+    await chmod(context.keyPath, 0o600);
+  }
   await writeFile(context.configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
   await chmod(context.configPath, 0o600);
 
@@ -80,7 +95,9 @@ export async function smartEnable(options = {}) {
     command: "smart enable",
     status: "enabled",
     exitCode: 0,
-    detail: `Smart Assist enabled with ${detected.provider}; key reference ${config.apiKeyRef}`
+    detail: detected.apiKeyValue
+      ? `Smart Assist enabled with ${detected.provider}; key stored in a private local Harness secret file`
+      : `Smart Assist enabled with ${detected.provider}; key reference ${config.apiKeyRef}`
   }, config);
 }
 
@@ -93,11 +110,15 @@ export async function smartDoctor(options = {}) {
     checks.push(fail("Smart Assist not enabled", "Run smctl smart enable"));
   } else {
     checks.push(ok("Smart Assist config found", configSummary(config)));
-    const envName = config.apiKeyRef?.startsWith("env:") ? config.apiKeyRef.slice(4) : null;
-    if (envName && context.env[envName]) {
-      checks.push(ok("Referenced API key env is available", envName));
-    } else if (envName) {
-      checks.push(fail("Referenced API key env is missing", envName));
+    const ref = parseApiKeyRef(config.apiKeyRef);
+    if (ref.type === "env" && context.env[ref.value]) {
+      checks.push(ok("Referenced API key env is available", ref.value));
+    } else if (ref.type === "env") {
+      checks.push(fail("Referenced API key env is missing", ref.value));
+    } else if (ref.type === "file" && await exists(ref.value)) {
+      checks.push(ok("Stored API key file is present", ref.value));
+    } else if (ref.type === "file") {
+      checks.push(fail("Stored API key file is missing", ref.value));
     } else {
       checks.push(fail("Unsupported apiKeyRef", config.apiKeyRef ?? "missing"));
     }
@@ -133,7 +154,7 @@ export async function smartPing(options = {}) {
     });
   }
 
-  const keyInfo = resolveApiKeyRef(config.apiKeyRef, context.env);
+  const keyInfo = await resolveApiKeyRef(config.apiKeyRef, context.env);
   if (keyInfo.error) {
     return smartResult({
       command: "smart ping",
@@ -184,6 +205,9 @@ export async function smartDisable(options = {}) {
   const context = smartContext(options);
   if (await exists(context.configPath)) {
     await rm(context.configPath);
+  }
+  if (await exists(context.keyPath)) {
+    await rm(context.keyPath);
   }
   return smartResult({
     command: "smart disable",
@@ -276,6 +300,41 @@ function detectProviderForEnvName(env, apiKeyEnv, explicitProvider = null, optio
   };
 }
 
+async function detectPromptedProvider(context, options) {
+  const apiKey = await readPromptedApiKey(options);
+  if (!apiKey?.trim()) {
+    return { error: "No API key was entered." };
+  }
+
+  if (options.provider) {
+    return {
+      provider: options.provider,
+      apiKeyRef: `file:${context.keyPath}`,
+      apiKeyValue: apiKey,
+      model: PROVIDERS[options.provider].model
+    };
+  }
+
+  const provider = inferProviderFromKey(apiKey);
+  if (!provider) {
+    return {
+      error: "Could not infer whether the pasted key is OpenAI, Gemini, or Anthropic. Re-run with --provider <openai|gemini|anthropic> --prompt."
+    };
+  }
+
+  return {
+    provider,
+    apiKeyRef: `file:${context.keyPath}`,
+    apiKeyValue: apiKey,
+    model: PROVIDERS[provider].model
+  };
+}
+
+async function readPromptedApiKey(options) {
+  if (options.promptApiKey) return options.promptApiKey();
+  return promptHidden("Provider API key: ");
+}
+
 function inferProviderFromKey(value) {
   const key = String(value).trim();
   if (key.startsWith("AIza")) return "gemini";
@@ -298,16 +357,79 @@ function uniqueDetections(detections) {
   return unique;
 }
 
-function resolveApiKeyRef(apiKeyRef, env) {
-  if (!apiKeyRef?.startsWith("env:")) {
-    return { error: `Unsupported apiKeyRef ${apiKeyRef ?? "missing"}` };
+async function resolveApiKeyRef(apiKeyRef, env) {
+  const ref = parseApiKeyRef(apiKeyRef);
+  if (ref.type === "env") {
+    const value = env[ref.value];
+    if (!value) {
+      return { error: `Referenced API key env is missing: ${ref.value}` };
+    }
+    return { envName: ref.value, value };
   }
-  const envName = apiKeyRef.slice(4);
-  const value = env[envName];
-  if (!value) {
-    return { error: `Referenced API key env is missing: ${envName}` };
+  if (ref.type === "file") {
+    try {
+      const value = (await readFile(ref.value, "utf8")).trim();
+      if (!value) return { error: "Stored API key file is empty" };
+      return { filePath: ref.value, value };
+    } catch {
+      return { error: `Stored API key file is missing: ${ref.value}` };
+    }
   }
-  return { envName, value };
+  return { error: `Unsupported apiKeyRef ${apiKeyRef ?? "missing"}` };
+}
+
+function parseApiKeyRef(apiKeyRef) {
+  if (apiKeyRef?.startsWith("env:")) {
+    return { type: "env", value: apiKeyRef.slice(4) };
+  }
+  if (apiKeyRef?.startsWith("file:")) {
+    return { type: "file", value: apiKeyRef.slice(5) };
+  }
+  return { type: "unsupported", value: apiKeyRef };
+}
+
+async function promptHidden(question) {
+  const input = process.stdin;
+  const output = process.stderr;
+  if (!input.isTTY || !output.isTTY || typeof input.setRawMode !== "function") {
+    throw new Error("Interactive key prompt requires a TTY. Use an env var or run this command in a terminal.");
+  }
+
+  output.write(question);
+  input.setRawMode(true);
+  input.resume();
+  input.setEncoding("utf8");
+
+  return new Promise((resolve, reject) => {
+    let value = "";
+    const cleanup = () => {
+      input.setRawMode(false);
+      input.off("data", onData);
+      input.pause();
+      output.write("\n");
+    };
+    const onData = (chunk) => {
+      const text = String(chunk);
+      for (const char of text) {
+        if (char === "\u0003") {
+          cleanup();
+          reject(new Error("Prompt cancelled"));
+          return;
+        }
+        if (char === "\r" || char === "\n") {
+          cleanup();
+          resolve(value);
+          return;
+        }
+        if (char === "\u0008" || char === "\u007f") {
+          value = value.slice(0, -1);
+          continue;
+        }
+        value += char;
+      }
+    };
+    input.on("data", onData);
+  });
 }
 
 async function pingProvider({ provider, model, apiKey, fetch, timeoutMs }) {
@@ -454,10 +576,12 @@ function formatDoctor(result) {
 
 function smartContext(options = {}) {
   const home = options.home ?? homedir();
+  const configDir = join(home, ".config", "smctl");
   return {
     home,
     env: options.env ?? process.env,
-    configPath: options.configPath ?? join(home, ".config", "smctl", "smart.json")
+    configPath: options.configPath ?? join(configDir, "smart.json"),
+    keyPath: options.keyPath ?? join(configDir, "smart.key")
   };
 }
 

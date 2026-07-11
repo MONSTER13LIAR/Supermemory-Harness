@@ -26,7 +26,7 @@ Usage:
   smctl skillset list [--json]
   smctl skillset install <name> [--json]
   smctl skillset doctor [--json]
-  smctl smart enable [--json] [--provider <openai|gemini|anthropic>] [--api-key-env <name>] [--model <model>] [--yes]
+  smctl smart enable [--json] [--provider <openai|gemini|anthropic>] [--api-key-env <name>] [--model <model>] [--prompt] [--yes]
   smctl smart doctor [--json]
   smctl smart ping [--json]
   smctl smart disable [--json]
@@ -59,6 +59,7 @@ function parseArgs(argv) {
     dryRun: false,
     apply: false,
     yes: false,
+    prompt: false,
     target: "all",
     provider: null,
     apiKeyEnv: null,
@@ -88,6 +89,8 @@ function parseArgs(argv) {
       args.apply = true;
     } else if (token === "--yes") {
       args.yes = true;
+    } else if (token === "--prompt") {
+      args.prompt = true;
     } else if (token === "--provider") {
       const value = argv[index + 1];
       if (!value) throw new Error("--provider requires a value");
@@ -290,6 +293,7 @@ async function runCommand(args) {
       apiKeyEnv: args.apiKeyEnv,
       model: args.model,
       yes: args.yes,
+      prompt: args.prompt,
       fetch: globalThis.fetch
     });
   }
