@@ -3,6 +3,7 @@ import { runDoctor } from "./doctor.js";
 import { memoryDoctor } from "./memory.js";
 import { runSetup } from "./setup.js";
 import { runSmart } from "./smart.js";
+import { skillsInstall } from "./skills.js";
 
 export async function runInstall(options = {}) {
   const context = {
@@ -30,6 +31,11 @@ export async function runInstall(options = {}) {
     target: "all"
   });
 
+  const skills = await skillsInstall({
+    home: context.home,
+    dryRun: context.dryRun
+  });
+
   const memory = doctor.exitCode === 0
     ? await memoryDoctor({
       baseUrl: context.baseUrl,
@@ -48,6 +54,9 @@ export async function runInstall(options = {}) {
     setup.exitCode === 0
       ? ok("Harness config files are ready", `${setupSummary(setup)}; clients point at Guard`)
       : fail("Harness setup failed", setupSummary(setup)),
+    skills.exitCode === 0
+      ? ok("Agent memory skills installed", skillsSummary(skills))
+      : fail("Agent memory skills failed", skillsSummary(skills)),
     smartCheck(smart),
     memory && memory.exitCode === 0
       ? ok("Memory health sampled", `${memory.summary.ok} memory checks passed`)
@@ -71,6 +80,11 @@ export async function runInstall(options = {}) {
       summary: setup.summary,
       actions: setup.actions
     },
+    skills: {
+      exitCode: skills.exitCode,
+      summary: skills.summary,
+      actions: skills.actions
+    },
     memory: memory ? {
       exitCode: memory.exitCode,
       summary: memory.summary,
@@ -81,6 +95,7 @@ export async function runInstall(options = {}) {
     nextSteps: [
       "smctl init",
       "smctl guard start",
+      "smctl skills doctor",
       "smctl status",
       "smctl memory doctor"
     ],
@@ -222,6 +237,11 @@ async function askConfirm(question, defaultValue) {
 function setupSummary(setup) {
   const summary = setup.summary;
   return `${summary.created} created, ${summary.updated} updated, ${summary.unchanged} unchanged, ${summary.manual} manual`;
+}
+
+function skillsSummary(skills) {
+  const summary = skills.summary;
+  return `${summary.created} created, ${summary.updated} updated, ${summary.unchanged} unchanged, ${summary["would-create"]} would-create, ${summary["would-update"]} would-update`;
 }
 
 function summarize(checks) {

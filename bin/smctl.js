@@ -7,6 +7,7 @@ import { runMemory } from "../src/memory.js";
 import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
 import { runSkillset } from "../src/skillset.js";
+import { runSkills } from "../src/skills.js";
 import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStatus } from "../src/status.js";
@@ -28,6 +29,9 @@ Usage:
   smctl skillset list [--json]
   smctl skillset install <name> [--json]
   smctl skillset doctor [--json]
+  smctl skills list [--json]
+  smctl skills install [--json] [--dry-run]
+  smctl skills doctor [--json]
   smctl smart enable [--json] [--provider <openai|gemini|anthropic>] [--api-key-env <name>] [--model <model>] [--prompt] [--yes]
   smctl smart doctor [--json]
   smctl smart ping [--json]
@@ -49,6 +53,7 @@ Commands:
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
   skillset Install app-specific local memory policies.
+  skills   Install markdown skills that teach agents better Supermemory behavior.
   smart    Enable optional env-based LLM assistance.
   guard    Review memory writes before they are committed to Supermemory Local.
 `);
@@ -178,6 +183,10 @@ function parseArgs(argv) {
       args.subcommand = token;
     } else if (args.command === "skillset" && !args.id) {
       args.id = token;
+    } else if (args.command === "skills" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "skills" && !args.id) {
+      args.id = token;
     } else if (args.command === "smart" && !args.subcommand) {
       args.subcommand = token;
     } else {
@@ -201,7 +210,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "smart", "guard"].includes(args.command)) {
+  if (!["install", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -296,6 +305,15 @@ async function runCommand(args) {
       action: args.subcommand,
       name: args.id,
       home: process.env.HOME
+    });
+  }
+
+  if (args.command === "skills") {
+    return runSkills({
+      action: args.subcommand,
+      name: args.id,
+      home: process.env.HOME,
+      dryRun: args.dryRun
     });
   }
 

@@ -11,7 +11,7 @@ npm install -g github:MONSTER13LIAR/Supermemory-Harness
 smctl install
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl install` is the normal user flow: it shows the Harness startup screen, checks Supermemory Local, writes Harness config, and asks for optional Smart Assist setup in the terminal.
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl install` is the normal user flow: it shows the Harness startup screen, checks Supermemory Local, writes Harness config, installs memory behavior skills, and asks for optional Smart Assist setup in the terminal.
 
 For local development from this repo:
 
@@ -84,6 +84,13 @@ node ./bin/smctl.js skillset install developer
 node ./bin/smctl.js skillset doctor
 ```
 
+Inspect the markdown skills installed for agents:
+
+```bash
+smctl skills list
+smctl skills doctor
+```
+
 Enable Smart Assist separately if you skipped it during install:
 
 ```bash
@@ -115,8 +122,10 @@ node ./bin/smctl.js guard reject <id>
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `skillset` installs local app-specific memory policies used by Guard.
+- `skills` installs markdown memory behavior skills: write hygiene, query patterns, and context injection format.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
 - `guard` runs a local review proxy for `POST /v3/documents`, adds active project/skillset metadata, flags risky memory writes, and requires approval before forwarding.
+- Smart Assist is optional; Harness core skills and Guard enrichment work without provider API access.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
 - Does not auto-run Claude Code, Codex, or OpenCode plugin installers yet; it prints the exact next commands instead.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { runInstall } from "../src/install.js";
@@ -36,6 +36,8 @@ test("install runs doctor and setup without leaking API key", async () => {
 
   assert.equal(result.exitCode, 0);
   assert.match(result.text, /Supermemory Harness is installed/);
+  assert.match(result.text, /Agent memory skills installed/);
+  assert.match(await readFile(join(home, ".config", "smctl", "skills", "memory-write-hygiene.md"), "utf8"), /Memory Write Hygiene/);
   assert.doesNotMatch(result.text, /sm_aaaaaaaa/);
   assert.doesNotMatch(JSON.stringify(result), /sm_aaaaaaaa/);
 });
