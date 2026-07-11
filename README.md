@@ -27,10 +27,17 @@ node ./bin/smctl.js setup --dry-run
 node ./bin/smctl.js setup
 ```
 
+Verify the ingest and recall pipeline:
+
+```bash
+node ./bin/smctl.js smoke
+```
+
 ## Current Scope
 
 - `doctor` is read-only diagnostics.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
+- `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
 - Does not auto-run Claude Code, Codex, or OpenCode plugin installers yet; it prints the exact next commands instead.
