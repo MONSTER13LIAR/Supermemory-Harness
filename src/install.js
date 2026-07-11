@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { runDoctor } from "./doctor.js";
 import { memoryDoctor } from "./memory.js";
 import { runSetup } from "./setup.js";
+import { runSmart } from "./smart.js";
 
 export async function runInstall(options = {}) {
   const context = {
@@ -10,7 +11,8 @@ export async function runInstall(options = {}) {
     cwd: options.cwd ?? process.cwd(),
     env: options.env ?? process.env,
     home: options.home ?? homedir(),
-    dryRun: Boolean(options.dryRun)
+    dryRun: Boolean(options.dryRun),
+    interactive: Boolean(options.interactive)
   };
 
   const doctor = await runDoctor({
@@ -37,6 +39,8 @@ export async function runInstall(options = {}) {
     })
     : null;
 
+  const smart = await configureSmart(context, options);
+
   const checks = [
     doctor.exitCode === 0
       ? ok("Supermemory Local is reachable", `${doctor.summary.ok} doctor checks passed`)
@@ -44,6 +48,7 @@ export async function runInstall(options = {}) {
     setup.exitCode === 0
       ? ok("Harness config files are ready", `${setupSummary(setup)}; clients point at Guard`)
       : fail("Harness setup failed", setupSummary(setup)),
+    smartCheck(smart),
     memory && memory.exitCode === 0
       ? ok("Memory health sampled", `${memory.summary.ok} memory checks passed`)
       : warn("Memory health needs review", memory ? `${memory.summary.fail} fail, ${memory.summary.warn} warn` : "Skipped because doctor failed"),
@@ -71,16 +76,12 @@ export async function runInstall(options = {}) {
       summary: memory.summary,
       sampled: memory.documents.sampled
     } : null,
+    smart,
     checks,
     nextSteps: [
-      "smctl doctor",
-      "smctl smoke",
-      "smctl memory doctor",
-      "smctl memory replay",
-      "smctl smart enable --prompt",
-      "smctl smart ping",
       "smctl guard start",
-      "smctl guard inbox"
+      "smctl status",
+      "smctl memory doctor"
     ],
     exitCode: summary.fail > 0 ? 1 : 0,
     summary
@@ -91,6 +92,10 @@ export async function runInstall(options = {}) {
 
 function formatInstall(result) {
   const lines = [];
+  lines.push("=================================");
+  lines.push("   Supermemory Harness");
+  lines.push("=================================");
+  lines.push("");
   lines.push("Supermemory Harness install");
   lines.push(`Supermemory: ${result.baseUrl}`);
   lines.push(`Guard proxy: ${result.guardUrl}`);
@@ -116,6 +121,101 @@ function formatInstall(result) {
     ? "Result: Supermemory Harness is installed."
     : "Result: install completed with issues to review.");
   return lines.join("\n");
+}
+
+async function configureSmart(context, options) {
+  if (context.dryRun) {
+    return { status: "skipped", detail: "Dry-run mode" };
+  }
+
+  const doctor = await runSmart({
+    action: "doctor",
+    home: context.home,
+    env: context.env
+  });
+  if (doctor.exitCode === 0) {
+    const ping = await runSmart({
+      action: "ping",
+      home: context.home,
+      env: context.env,
+      fetch: options.fetch
+    });
+    return {
+      status: ping.exitCode === 0 ? "ready" : "needs-attention",
+      detail: ping.exitCode === 0 ? "Smart Assist is enabled and provider ping passed" : ping.status ?? "Smart Assist is enabled but ping needs attention",
+      doctor,
+      ping
+    };
+  }
+
+  if (!context.interactive) {
+    return {
+      status: "not-enabled",
+      detail: "Run smctl install in a terminal or run smctl smart enable --prompt"
+    };
+  }
+
+  const shouldEnable = await askConfirm("Enable Smart Assist now? This stores your pasted provider key in a local 0600 Harness secret file. [Y/n] ", true);
+  if (!shouldEnable) {
+    return { status: "skipped", detail: "Smart Assist skipped by user" };
+  }
+
+  const enable = await runSmart({
+    action: "enable",
+    home: context.home,
+    env: context.env,
+    prompt: true,
+    yes: true,
+    provider: options.provider,
+    model: options.model
+  });
+  if (enable.exitCode !== 0) {
+    return { status: "failed", detail: enable.detail, enable };
+  }
+
+  const ping = await runSmart({
+    action: "ping",
+    home: context.home,
+    env: context.env,
+    fetch: options.fetch
+  });
+  return {
+    status: ping.exitCode === 0 ? "ready" : "needs-attention",
+    detail: ping.exitCode === 0 ? "Smart Assist is enabled and provider ping passed" : ping.detail,
+    enable,
+    ping
+  };
+}
+
+function smartCheck(smart) {
+  if (!smart) return warn("Smart Assist", "Skipped");
+  if (smart.status === "ready") return ok("Smart Assist", smart.detail);
+  if (smart.status === "failed") return fail("Smart Assist", smart.detail);
+  if (smart.status === "not-enabled") return warn("Smart Assist", smart.detail);
+  return info("Smart Assist", smart.detail);
+}
+
+async function askConfirm(question, defaultValue) {
+  const input = process.stdin;
+  const output = process.stderr;
+  if (!input.isTTY || !output.isTTY) return defaultValue;
+  output.write(question);
+  input.resume();
+  input.setEncoding("utf8");
+
+  return new Promise((resolve) => {
+    const onData = (chunk) => {
+      input.off("data", onData);
+      input.pause();
+      const answer = String(chunk).trim().toLowerCase();
+      if (!answer) {
+        resolve(defaultValue);
+        return;
+      }
+      resolve(answer === "y" || answer === "yes");
+    };
+    input.on("data", onData);
+  });
 }
 
 function setupSummary(setup) {

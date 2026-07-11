@@ -1,6 +1,6 @@
 # Supermemory Harness
 
-`smctl` is a local developer harness for Supermemory Local. It diagnoses the local install and writes safe integration config so a fresh Supermemory Local user has a clear next step.
+`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, and can set up Smart Assist from one guided terminal flow.
 
 ## Run
 
@@ -11,13 +11,15 @@ npm install -g github:MONSTER13LIAR/Supermemory-Harness
 smctl install
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed.
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl install` is the normal user flow: it shows the Harness startup screen, checks Supermemory Local, writes Harness config, and asks for optional Smart Assist setup in the terminal.
 
 For local development from this repo:
 
 ```bash
 node ./bin/smctl.js install
 ```
+
+The commands below are optional diagnostics and advanced controls.
 
 Check the full Harness state:
 
@@ -70,11 +72,9 @@ node ./bin/smctl.js skillset install developer
 node ./bin/smctl.js skillset doctor
 ```
 
-Optionally enable env-based Smart Assist:
+Enable Smart Assist separately if you skipped it during install:
 
 ```bash
-smctl smart enable
-smctl smart enable --yes
 smctl smart enable --prompt
 smctl smart enable --api-key-env LLM_API_KEY --yes
 smctl smart doctor
@@ -102,7 +102,7 @@ node ./bin/smctl.js guard reject <id>
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `skillset` installs local app-specific memory policies used by Guard.
-- `smart` optionally stores a reference to an existing provider env var; it never copies the API key.
+- `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
 - `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.

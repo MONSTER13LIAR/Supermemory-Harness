@@ -16,7 +16,7 @@ function printHelp() {
   console.log(`smctl ${VERSION}
 
 Usage:
-  smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>]
+  smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl status [--json] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
@@ -221,6 +221,9 @@ async function runCommand(args) {
       env: process.env,
       home: process.env.HOME,
       dryRun: args.dryRun,
+      interactive: !args.json && !args.dryRun && process.stdin.isTTY,
+      provider: args.provider,
+      model: args.model,
       fetch: globalThis.fetch
     });
   }
