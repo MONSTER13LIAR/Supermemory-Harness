@@ -1,0 +1,17 @@
+{
+  "name": "supermemory-harness",
+  "version": "0.1.0",
+  "description": "Developer diagnostics and safety tooling for Supermemory Local.",
+  "type": "module",
+  "bin": {
+    "smctl": "./bin/smctl.js"
+  },
+  "scripts": {
+    "doctor": "node ./bin/smctl.js doctor",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

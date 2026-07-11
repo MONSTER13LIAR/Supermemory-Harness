@@ -1,0 +1,41 @@
+# Project planning/context
+plan.md
+
+# Local Supermemory runtime and secrets
+.supermemory/
+**/.supermemory/
+~/.supermemory/
+api-key
+auth-secret
+env
+env.enc
+env.enc.bak
+*.enc
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and runtime output
+*.log
+logs/
+tmp/
+temp/
+
+# Dependencies/build artifacts
+node_modules/
+dist/
+build/
+coverage/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Codex/agent local metadata
+.codex/
+.agents/
