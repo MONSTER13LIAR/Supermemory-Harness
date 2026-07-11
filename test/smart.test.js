@@ -188,20 +188,19 @@ test("smart enable prompt stores a private file key reference", async () => {
   assert.doesNotMatch(result.text, /prompt-secret-value/);
 });
 
-test("smart enable prompt lets user choose provider for unknown key shape", async () => {
+test("smart enable prompt rejects unknown key shape", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
   const result = await runSmart({
     home,
     action: "enable",
     prompt: true,
     env: {},
-    promptApiKey: async () => "provider-key-without-known-prefix",
-    chooseProvider: async () => "anthropic"
+    promptApiKey: async () => "provider-key-without-known-prefix"
   });
-  const config = await readSmartConfig(join(home, ".config", "smctl", "smart.json"));
 
-  assert.equal(result.status, "enabled");
-  assert.equal(config.provider, "anthropic");
+  assert.equal(result.exitCode, 1);
+  assert.match(result.text, /Could not recognize/);
+  assert.match(result.text, /valid provider key/);
   assert.doesNotMatch(result.text, /provider-key-without-known-prefix/);
 });
 
