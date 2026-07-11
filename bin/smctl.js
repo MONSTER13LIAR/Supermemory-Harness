@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runDoctor } from "../src/doctor.js";
+import { runGuard } from "../src/guard.js";
 import { runSetup } from "../src/setup.js";
 import { runSmoke } from "../src/smoke.js";
 
@@ -13,6 +14,10 @@ Usage:
   smctl doctor [--json] [--base-url <url>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
+  smctl guard start [--port <port>] [--upstream <url>]
+  smctl guard inbox [--json]
+  smctl guard approve <id> [--json] [--upstream <url>]
+  smctl guard reject <id> [--json]
   smctl --help
   smctl --version
 
@@ -20,17 +25,22 @@ Commands:
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
+  guard    Review memory writes before they are committed to Supermemory Local.
 `);
 }
 
 function parseArgs(argv) {
   const args = {
     command: null,
+    subcommand: null,
+    id: null,
     json: false,
     dryRun: false,
     target: "all",
     containerTag: "smctl-smoke",
     timeoutMs: 30000,
+    port: 6777,
+    upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
     help: false,
     version: false
@@ -67,6 +77,20 @@ function parseArgs(argv) {
       }
       args.timeoutMs = value;
       index += 1;
+    } else if (token === "--port") {
+      const value = Number(argv[index + 1]);
+      if (!Number.isInteger(value) || value <= 0 || value > 65535) {
+        throw new Error("--port requires a valid port number");
+      }
+      args.port = value;
+      index += 1;
+    } else if (token === "--upstream") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("--upstream requires a value");
+      }
+      args.upstream = value;
+      index += 1;
     } else if (token === "--base-url") {
       const value = argv[index + 1];
       if (!value) {
@@ -76,6 +100,10 @@ function parseArgs(argv) {
       index += 1;
     } else if (!args.command) {
       args.command = token;
+    } else if (args.command === "guard" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "guard" && !args.id) {
+      args.id = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -97,7 +125,7 @@ async function main() {
     return;
   }
 
-  if (!["doctor", "setup", "smoke"].includes(args.command)) {
+  if (!["doctor", "setup", "smoke", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -128,6 +156,17 @@ async function runCommand(args) {
       env: process.env,
       target: args.target,
       dryRun: args.dryRun
+    });
+  }
+
+  if (args.command === "guard") {
+    return runGuard({
+      action: args.subcommand,
+      id: args.id,
+      home: process.env.HOME,
+      port: args.port,
+      upstream: args.upstream,
+      fetch: globalThis.fetch
     });
   }
 
