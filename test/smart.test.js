@@ -163,12 +163,14 @@ test("smart ping sanitizes provider errors", async () => {
 test("smart enable prompt stores a private file key reference", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
   const key = ["sk", "prompt-secret-value-1234567890"].join("-");
+  const detectedProviders = [];
   const result = await runSmart({
     home,
     action: "enable",
     prompt: true,
     env: {},
-    promptApiKey: async () => key
+    promptApiKey: async () => key,
+    onProviderDetected: async (provider) => detectedProviders.push(provider)
   });
   const configPath = join(home, ".config", "smctl", "smart.json");
   const keyPath = join(home, ".config", "smctl", "smart.key");
@@ -178,11 +180,29 @@ test("smart enable prompt stores a private file key reference", async () => {
 
   assert.equal(result.status, "enabled");
   assert.equal(config.provider, "openai");
+  assert.deepEqual(detectedProviders, ["openai"]);
   assert.equal(config.apiKeyRef, `file:${keyPath}`);
   assert.equal(storedKey.trim(), key);
   assert.equal(keyMode, 0o600);
   assert.doesNotMatch(JSON.stringify(config), /prompt-secret-value/);
   assert.doesNotMatch(result.text, /prompt-secret-value/);
+});
+
+test("smart enable prompt lets user choose provider for unknown key shape", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-smart-home-"));
+  const result = await runSmart({
+    home,
+    action: "enable",
+    prompt: true,
+    env: {},
+    promptApiKey: async () => "provider-key-without-known-prefix",
+    chooseProvider: async () => "anthropic"
+  });
+  const config = await readSmartConfig(join(home, ".config", "smctl", "smart.json"));
+
+  assert.equal(result.status, "enabled");
+  assert.equal(config.provider, "anthropic");
+  assert.doesNotMatch(result.text, /provider-key-without-known-prefix/);
 });
 
 test("smart ping uses prompted file key reference", async () => {

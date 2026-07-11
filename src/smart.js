@@ -317,11 +317,21 @@ async function detectPromptedProvider(context, options) {
 
   const provider = inferProviderFromKey(apiKey);
   if (!provider) {
+    const selectedProvider = await chooseProvider(options);
+    if (!selectedProvider) {
+      return {
+        error: "Could not infer whether the pasted key is OpenAI, Gemini, or Anthropic."
+      };
+    }
     return {
-      error: "Could not infer whether the pasted key is OpenAI, Gemini, or Anthropic. Re-run with --provider <openai|gemini|anthropic> --prompt."
+      provider: selectedProvider,
+      apiKeyRef: `file:${context.keyPath}`,
+      apiKeyValue: apiKey,
+      model: PROVIDERS[selectedProvider].model
     };
   }
 
+  await notifyDetectedProvider(provider, options);
   return {
     provider,
     apiKeyRef: `file:${context.keyPath}`,
@@ -333,6 +343,21 @@ async function detectPromptedProvider(context, options) {
 async function readPromptedApiKey(options) {
   if (options.promptApiKey) return options.promptApiKey();
   return promptHidden("Provider API key: ");
+}
+
+async function chooseProvider(options) {
+  if (options.chooseProvider) return options.chooseProvider();
+  return promptProviderChoice();
+}
+
+async function notifyDetectedProvider(provider, options) {
+  if (options.onProviderDetected) {
+    await options.onProviderDetected(provider);
+    return;
+  }
+  if (process.stderr?.isTTY) {
+    process.stderr.write(`Detected provider: ${provider}\n`);
+  }
 }
 
 function inferProviderFromKey(value) {
@@ -427,6 +452,31 @@ async function promptHidden(question) {
         }
         value += char;
       }
+    };
+    input.on("data", onData);
+  });
+}
+
+async function promptProviderChoice() {
+  const input = process.stdin;
+  const output = process.stderr;
+  if (!input.isTTY || !output.isTTY) return null;
+
+  output.write("Could not infer provider from key shape.\n");
+  output.write("Choose provider: [1] OpenAI  [2] Gemini  [3] Anthropic: ");
+  input.resume();
+  input.setEncoding("utf8");
+
+  return new Promise((resolve) => {
+    const onData = (chunk) => {
+      input.off("data", onData);
+      input.pause();
+      output.write("\n");
+      const answer = String(chunk).trim().toLowerCase();
+      if (answer === "1" || answer === "openai") resolve("openai");
+      else if (answer === "2" || answer === "gemini") resolve("gemini");
+      else if (answer === "3" || answer === "anthropic") resolve("anthropic");
+      else resolve(null);
     };
     input.on("data", onData);
   });
