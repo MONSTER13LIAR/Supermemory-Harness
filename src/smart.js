@@ -107,7 +107,7 @@ export async function smartDoctor(options = {}) {
   const checks = [];
 
   if (!config) {
-    checks.push(fail("Smart Assist not enabled", "Run smctl smart enable"));
+    checks.push(fail("Smart Assist not enabled", "Run smctl smart enable --prompt"));
   } else {
     checks.push(ok("Smart Assist config found", configSummary(config)));
     const ref = parseApiKeyRef(config.apiKeyRef);
@@ -150,7 +150,7 @@ export async function smartPing(options = {}) {
       command: "smart ping",
       status: "failed",
       exitCode: 1,
-      detail: "Smart Assist is not enabled. Run smctl smart enable --yes first."
+      detail: "Smart Assist is not enabled. Run smctl smart enable --prompt first."
     });
   }
 

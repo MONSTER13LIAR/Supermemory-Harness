@@ -77,6 +77,8 @@ export async function runInstall(options = {}) {
       "smctl smoke",
       "smctl memory doctor",
       "smctl memory replay",
+      "smctl smart enable --prompt",
+      "smctl smart ping",
       "smctl guard start",
       "smctl guard inbox"
     ],
