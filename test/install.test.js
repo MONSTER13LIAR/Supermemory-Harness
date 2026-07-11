@@ -24,6 +24,12 @@ test("install runs doctor and setup without leaking API key", async () => {
           }
         });
       }
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, { memories: [] });
+      }
+      if (url.endsWith("/v3/documents/processing")) {
+        return response(200, { running: 0, queued: 0 });
+      }
       return response(200, "<html></html>");
     }
   });

@@ -4,10 +4,15 @@ import { homedir } from "node:os";
 
 export async function runMemory(options = {}) {
   const action = options.action ?? "doctor";
-  if (action !== "doctor") {
+  if (action === "doctor") {
+    return memoryDoctor(options);
+  }
+  if (action === "replay") {
+    return memoryReplay(options);
+  }
+  if (!["doctor", "replay"].includes(action)) {
     throw new Error(`Unknown memory action: ${action}`);
   }
-  return memoryDoctor(options);
 }
 
 export async function memoryDoctor(options = {}) {
@@ -120,6 +125,119 @@ export async function memoryDoctor(options = {}) {
   return result;
 }
 
+export async function memoryReplay(options = {}) {
+  const context = {
+    baseUrl: normalizeBaseUrl(options.baseUrl ?? "http://localhost:6767"),
+    fetch: options.fetch ?? globalThis.fetch,
+    limit: options.limit ?? 25,
+    apply: Boolean(options.apply)
+  };
+
+  if (!context.fetch) {
+    throw new Error("Fetch API unavailable; Node 22+ is required");
+  }
+
+  const listResponse = await postJson(context.fetch, `${context.baseUrl}/v3/documents/list`, {
+    limit: context.limit,
+    page: 1,
+    sort: "updatedAt",
+    order: "desc"
+  });
+
+  if (!listResponse.ok) {
+    const result = {
+      command: "memory replay",
+      generatedAt: new Date().toISOString(),
+      baseUrl: context.baseUrl,
+      apply: context.apply,
+      actions: [],
+      summary: { replayed: 0, planned: 0, skipped: 0, failed: 1 },
+      exitCode: 1
+    };
+    result.text = `Supermemory Harness memory replay\n[fail] Document list unavailable\n   ${responseDetail(listResponse)}`;
+    return result;
+  }
+
+  const documents = listResponse.body?.memories ?? listResponse.body?.documents ?? [];
+  const failed = documents.filter((doc) => ["failed", "error"].includes(doc.status));
+  const actions = [];
+
+  for (const doc of failed) {
+    const detail = await getJson(context.fetch, `${context.baseUrl}/v3/documents/${doc.id}`);
+    if (!detail.ok) {
+      actions.push({
+        status: "failed",
+        id: doc.id,
+        title: doc.title ?? "(untitled)",
+        detail: responseDetail(detail)
+      });
+      continue;
+    }
+
+    const replayBody = replayPayload(detail.body, doc.id);
+    if (!replayBody.content) {
+      actions.push({
+        status: "skipped",
+        id: doc.id,
+        title: doc.title ?? "(untitled)",
+        detail: "No replayable text content found"
+      });
+      continue;
+    }
+
+    if (!context.apply) {
+      actions.push({
+        status: "planned",
+        id: doc.id,
+        title: doc.title ?? "(untitled)",
+        containerTag: replayBody.containerTag,
+        detail: "Would resubmit document"
+      });
+      continue;
+    }
+
+    const replay = await postJson(context.fetch, `${context.baseUrl}/v3/documents`, replayBody);
+    actions.push({
+      status: replay.ok ? "replayed" : "failed",
+      id: doc.id,
+      title: doc.title ?? "(untitled)",
+      newId: replay.body?.id,
+      containerTag: replayBody.containerTag,
+      detail: replay.ok ? `Queued as ${replay.body?.id}` : responseDetail(replay)
+    });
+  }
+
+  const summary = summarizeReplay(actions);
+  const result = {
+    command: "memory replay",
+    generatedAt: new Date().toISOString(),
+    baseUrl: context.baseUrl,
+    apply: context.apply,
+    sampled: documents.length,
+    actions,
+    summary,
+    exitCode: summary.failed > 0 ? 1 : 0
+  };
+  result.text = formatMemoryReplay(result);
+  return result;
+}
+
+function replayPayload(document, originalId) {
+  const content = document.content ?? document.raw;
+  const containerTag = (document.containerTags ?? [])[0];
+  return {
+    content,
+    ...(containerTag ? { containerTag } : {}),
+    taskType: document.taskType ?? "memory",
+    metadata: {
+      ...(document.metadata && typeof document.metadata === "object" ? document.metadata : {}),
+      smctlReplay: true,
+      smctlReplayFrom: originalId,
+      smctlReplayAt: new Date().toISOString()
+    }
+  };
+}
+
 function formatMemoryDoctor(result) {
   const lines = [];
   lines.push("Supermemory Harness memory doctor");
@@ -148,6 +266,35 @@ function formatMemoryDoctor(result) {
   lines.push(result.exitCode === 0
     ? "Result: sampled memory health looks usable."
     : "Result: memory health needs attention.");
+  return lines.join("\n");
+}
+
+function formatMemoryReplay(result) {
+  const lines = [];
+  lines.push("Supermemory Harness memory replay");
+  lines.push(`Base URL: ${result.baseUrl}`);
+  lines.push(`Mode: ${result.apply ? "apply" : "dry-run"}`);
+  lines.push(`Sample: ${result.sampled} documents`);
+  lines.push(`Summary: ${result.summary.replayed} replayed, ${result.summary.planned} planned, ${result.summary.skipped} skipped, ${result.summary.failed} failed`);
+  lines.push("");
+
+  if (result.actions.length === 0) {
+    lines.push("No failed documents found in sample.");
+  } else {
+    for (const action of result.actions) {
+      lines.push(`${symbolReplay(action.status)} ${action.id}  ${action.title}`);
+      if (action.detail) lines.push(`   ${action.detail}`);
+    }
+  }
+
+  lines.push("");
+  if (!result.apply && result.summary.planned > 0) {
+    lines.push("Result: dry-run complete. Run with --apply after fixing provider/config issues.");
+  } else if (result.exitCode === 0) {
+    lines.push("Result: replay completed.");
+  } else {
+    lines.push("Result: replay needs attention.");
+  }
   return lines.join("\n");
 }
 
@@ -243,6 +390,13 @@ function summarize(checks) {
   }, { ok: 0, warn: 0, fail: 0 });
 }
 
+function summarizeReplay(actions) {
+  return actions.reduce((acc, action) => {
+    acc[action.status] = (acc[action.status] ?? 0) + 1;
+    return acc;
+  }, { replayed: 0, planned: 0, skipped: 0, failed: 0 });
+}
+
 function summarizeObject(value) {
   if (!value || typeof value !== "object") return "reachable";
   const entries = Object.entries(value).slice(0, 5);
@@ -270,6 +424,12 @@ function fail(title, detail) {
 function symbol(status) {
   if (status === "ok") return "[ok]";
   if (status === "warn") return "[warn]";
+  return "[fail]";
+}
+
+function symbolReplay(status) {
+  if (["replayed", "planned"].includes(status)) return status === "planned" ? "[plan]" : "[ok]";
+  if (status === "skipped") return "[skip]";
   return "[fail]";
 }
 

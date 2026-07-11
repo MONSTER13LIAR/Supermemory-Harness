@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import { runDoctor } from "./doctor.js";
+import { memoryDoctor } from "./memory.js";
 import { runSetup } from "./setup.js";
 
 export async function runInstall(options = {}) {
@@ -27,6 +28,15 @@ export async function runInstall(options = {}) {
     target: "all"
   });
 
+  const memory = doctor.exitCode === 0
+    ? await memoryDoctor({
+      baseUrl: context.baseUrl,
+      home: context.home,
+      fetch: options.fetch,
+      limit: 25
+    })
+    : null;
+
   const checks = [
     doctor.exitCode === 0
       ? ok("Supermemory Local is reachable", `${doctor.summary.ok} doctor checks passed`)
@@ -34,6 +44,9 @@ export async function runInstall(options = {}) {
     setup.exitCode === 0
       ? ok("Harness config files are ready", `${setupSummary(setup)}; clients point at Guard`)
       : fail("Harness setup failed", setupSummary(setup)),
+    memory && memory.exitCode === 0
+      ? ok("Memory health sampled", `${memory.summary.ok} memory checks passed`)
+      : warn("Memory health needs review", memory ? `${memory.summary.fail} fail, ${memory.summary.warn} warn` : "Skipped because doctor failed"),
     info("Guard proxy", `Run smctl guard start, then point clients at ${context.guardUrl} for review-before-commit`)
   ];
 
@@ -53,10 +66,17 @@ export async function runInstall(options = {}) {
       summary: setup.summary,
       actions: setup.actions
     },
+    memory: memory ? {
+      exitCode: memory.exitCode,
+      summary: memory.summary,
+      sampled: memory.documents.sampled
+    } : null,
     checks,
     nextSteps: [
       "smctl doctor",
       "smctl smoke",
+      "smctl memory doctor",
+      "smctl memory replay",
       "smctl guard start",
       "smctl guard inbox"
     ],

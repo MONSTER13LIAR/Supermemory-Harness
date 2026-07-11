@@ -18,6 +18,7 @@ Usage:
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
+  smctl memory replay [--json] [--base-url <url>] [--limit <n>] [--apply]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
@@ -42,6 +43,7 @@ function parseArgs(argv) {
     id: null,
     json: false,
     dryRun: false,
+    apply: false,
     target: "all",
     containerTag: "smctl-smoke",
     timeoutMs: 30000,
@@ -64,6 +66,8 @@ function parseArgs(argv) {
       args.json = true;
     } else if (token === "--dry-run") {
       args.dryRun = true;
+    } else if (token === "--apply") {
+      args.apply = true;
     } else if (token === "--target") {
       const value = argv[index + 1];
       if (!value) {
@@ -212,7 +216,8 @@ async function runCommand(args) {
       baseUrl: args.baseUrl,
       home: process.env.HOME,
       fetch: globalThis.fetch,
-      limit: args.limit
+      limit: args.limit,
+      apply: args.apply
     });
   }
 

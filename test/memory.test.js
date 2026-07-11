@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { memoryDoctor } from "../src/memory.js";
+import { memoryDoctor, memoryReplay } from "../src/memory.js";
 
 test("memory doctor reports failed documents and log failures", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
@@ -34,6 +34,68 @@ test("memory doctor reports failed documents and log failures", async () => {
   assert.equal(result.exitCode, 1);
   assert.match(result.text, /Failed documents found/);
   assert.match(result.text, /memory agent failed/);
+});
+
+test("memory replay plans failed documents by default", async () => {
+  const result = await memoryReplay({
+    fetch: async (url) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, {
+          memories: [
+            { id: "doc_failed", status: "failed", title: "Failed note" }
+          ]
+        });
+      }
+      if (url.endsWith("/v3/documents/doc_failed")) {
+        return response(200, {
+          id: "doc_failed",
+          content: "Replay this note",
+          containerTags: ["repo"],
+          metadata: { source: "test" },
+          taskType: "memory"
+        });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.summary.planned, 1);
+  assert.match(result.text, /dry-run complete/);
+});
+
+test("memory replay apply resubmits failed documents", async () => {
+  const posts = [];
+  const result = await memoryReplay({
+    apply: true,
+    fetch: async (url, init) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, {
+          memories: [
+            { id: "doc_failed", status: "failed", title: "Failed note" }
+          ]
+        });
+      }
+      if (url.endsWith("/v3/documents/doc_failed")) {
+        return response(200, {
+          id: "doc_failed",
+          content: "Replay this note",
+          containerTags: ["repo"],
+          metadata: { source: "test" },
+          taskType: "memory"
+        });
+      }
+      if (url.endsWith("/v3/documents") && init.method === "POST") {
+        posts.push(JSON.parse(init.body));
+        return response(200, { id: "new_doc", status: "queued" });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.summary.replayed, 1);
+  assert.equal(posts[0].metadata.smctlReplayFrom, "doc_failed");
 });
 
 test("memory doctor passes on healthy sample", async () => {

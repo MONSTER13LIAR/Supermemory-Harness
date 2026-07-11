@@ -52,6 +52,8 @@ Inspect memory quality and failed ingests:
 
 ```bash
 node ./bin/smctl.js memory doctor
+node ./bin/smctl.js memory replay
+node ./bin/smctl.js memory replay --apply
 ```
 
 Review memory writes before commit:
@@ -70,6 +72,7 @@ node ./bin/smctl.js guard reject <id>
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
+- `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
