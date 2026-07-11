@@ -34,6 +34,7 @@ Usage:
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
   smctl guard reject <id> [--json]
+  smctl help
   smctl --help
   smctl --version
 
@@ -192,7 +193,7 @@ async function main() {
     return;
   }
 
-  if (args.help || !args.command) {
+  if (args.help || !args.command || args.command === "help") {
     printHelp();
     return;
   }

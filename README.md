@@ -21,6 +21,12 @@ node ./bin/smctl.js install
 
 The commands below are optional diagnostics and advanced controls.
 
+Show every command:
+
+```bash
+smctl help
+```
+
 Check the full Harness state:
 
 ```bash
