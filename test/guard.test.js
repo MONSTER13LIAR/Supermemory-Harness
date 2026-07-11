@@ -4,6 +4,7 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { guardContext, quarantineWrite, runGuard } from "../src/guard.js";
+import { runSkillset } from "../src/skillset.js";
 
 test("guard quarantines document writes and lists inbox", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
@@ -53,6 +54,25 @@ test("guard approve forwards stored write and removes it from inbox", async () =
   assert.equal(approved.exitCode, 0);
   assert.equal(forwarded.length, 1);
   assert.equal(inbox.pending.length, 0);
+});
+
+test("guard applies active skillset metadata", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  await runSkillset({ home, action: "install", name: "developer" });
+  const context = guardContext({ home });
+
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: { content: "Architecture decision: use Vitest for unit tests." },
+    rawBody: JSON.stringify({ content: "Architecture decision: use Vitest for unit tests." })
+  });
+
+  assert.equal(item.skillset.name, "developer");
+  assert.equal(item.request.body.metadata.smctlSkillset, "developer");
+  assert.equal(item.request.body.metadata.smctlMemoryType, "architecture_decision");
 });
 
 function response(status, body) {

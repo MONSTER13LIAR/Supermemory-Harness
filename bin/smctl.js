@@ -5,6 +5,7 @@ import { runGuard } from "../src/guard.js";
 import { runInstall } from "../src/install.js";
 import { runMemory } from "../src/memory.js";
 import { runSetup } from "../src/setup.js";
+import { runSkillset } from "../src/skillset.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStatus } from "../src/status.js";
 
@@ -21,6 +22,9 @@ Usage:
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
   smctl memory replay [--json] [--base-url <url>] [--limit <n>] [--apply]
+  smctl skillset list [--json]
+  smctl skillset install <name> [--json]
+  smctl skillset doctor [--json]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
@@ -35,6 +39,7 @@ Commands:
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
+  skillset Install app-specific local memory policies.
   guard    Review memory writes before they are committed to Supermemory Local.
 `);
 }
@@ -135,6 +140,10 @@ function parseArgs(argv) {
       args.id = token;
     } else if (args.command === "memory" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "skillset" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "skillset" && !args.id) {
+      args.id = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -156,7 +165,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "status", "doctor", "setup", "smoke", "memory", "guard"].includes(args.command)) {
+  if (!["install", "status", "doctor", "setup", "smoke", "memory", "skillset", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -232,6 +241,14 @@ async function runCommand(args) {
       fetch: globalThis.fetch,
       limit: args.limit,
       apply: args.apply
+    });
+  }
+
+  if (args.command === "skillset") {
+    return runSkillset({
+      action: args.subcommand,
+      name: args.id,
+      home: process.env.HOME
     });
   }
 

@@ -62,6 +62,14 @@ node ./bin/smctl.js memory replay
 node ./bin/smctl.js memory replay --apply
 ```
 
+Install an app-specific local memory policy:
+
+```bash
+node ./bin/smctl.js skillset list
+node ./bin/smctl.js skillset install developer
+node ./bin/smctl.js skillset doctor
+```
+
 Review memory writes before commit:
 
 ```bash
@@ -80,6 +88,7 @@ node ./bin/smctl.js guard reject <id>
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
+- `skillset` installs local app-specific memory policies used by Guard.
 - `guard` runs a local review proxy for `POST /v3/documents`, flags risky memory writes, and requires approval before forwarding.
 - Never prints the Supermemory API key or auth secret.
 - Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.

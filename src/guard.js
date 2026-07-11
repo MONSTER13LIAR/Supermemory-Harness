@@ -3,6 +3,7 @@ import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { applySkillsetToRequest, readActiveSkillset } from "./skillset.js";
 
 const WRITE_ROUTES = new Set(["POST /v3/documents"]);
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
@@ -164,18 +165,52 @@ async function guardReject(context, id) {
 
 export async function quarantineWrite(context, request) {
   const pending = await readPending(context);
+  const skillset = await readActiveSkillset(context.home);
+  const skillsetResult = applySkillsetToRequest(skillset, request);
+  const body = applySkillsetMetadata(request.body, skillsetResult);
   const item = {
     id: `guard_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     status: "pending",
     createdAt: new Date().toISOString(),
     route: `${request.method} ${request.path}`,
-    request,
+    request: {
+      ...request,
+      body,
+      rawBody: JSON.stringify(body)
+    },
     preview: previewRequest(request),
-    risk: scanRisk(request)
+    skillset: skillset ? {
+      name: skillset.name,
+      title: skillset.title,
+      metadata: skillsetResult.metadata,
+      containerTag: skillsetResult.containerTag
+    } : null,
+    risk: mergeRisk(scanRisk(request), skillsetResult.findings)
   };
   pending.push(item);
   await writePending(context, pending);
   return item;
+}
+
+function applySkillsetMetadata(body, skillsetResult) {
+  return {
+    ...body,
+    ...(skillsetResult.containerTag ? { containerTag: skillsetResult.containerTag } : {}),
+    metadata: {
+      ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+      ...(skillsetResult.metadata ?? {})
+    }
+  };
+}
+
+function mergeRisk(baseRisk, findings) {
+  const mergedFindings = [...baseRisk.findings, ...findings];
+  return {
+    level: mergedFindings.some((finding) => finding.severity === "high")
+      ? "high"
+      : mergedFindings.length > 0 ? "medium" : "low",
+    findings: mergedFindings
+  };
 }
 
 async function forwardStoredWrite(context, item) {
@@ -338,6 +373,9 @@ function formatInbox(result) {
         for (const finding of item.risk.findings) {
           lines.push(`   ${finding.severity}: ${finding.message}`);
         }
+      }
+      if (item.skillset) {
+        lines.push(`   skillset: ${item.skillset.name}`);
       }
     }
   }
