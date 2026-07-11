@@ -18,6 +18,14 @@ const PROVIDERS = {
   }
 };
 
+const GENERIC_API_KEY_ENVS = [
+  "LLM_API_KEY",
+  "AI_API_KEY",
+  "MODEL_API_KEY",
+  "PROVIDER_API_KEY",
+  "SUPERMEMORY_API_KEY"
+];
+
 export async function runSmart(options = {}) {
   const action = options.action ?? "doctor";
   if (action === "enable") return smartEnable(options);
@@ -29,12 +37,20 @@ export async function runSmart(options = {}) {
 export async function smartEnable(options = {}) {
   const context = smartContext(options);
   const detected = detectProvider(context.env, options);
+  if (detected?.error) {
+    return smartResult({
+      command: "smart enable",
+      status: "failed",
+      exitCode: 1,
+      detail: detected.error
+    });
+  }
   if (!detected) {
     return smartResult({
       command: "smart enable",
       status: "failed",
       exitCode: 1,
-      detail: "No supported provider API key found in environment. Export OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY first."
+      detail: "No supported provider API key found in environment. Export OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, or pass --api-key-env."
     });
   }
 
@@ -127,21 +143,99 @@ function detectProvider(env, options) {
     throw new Error(`Unsupported smart provider: ${options.provider}`);
   }
 
-  const candidates = options.provider
-    ? [[options.provider, PROVIDERS[options.provider]]]
-    : Object.entries(PROVIDERS);
+  if (options.apiKeyEnv) {
+    return detectProviderForEnvName(env, options.apiKeyEnv, options.provider);
+  }
 
-  for (const [provider, defaults] of candidates) {
-    const apiKeyEnv = options.apiKeyEnv ?? defaults.env;
-    if (env[apiKeyEnv]) {
+  if (options.provider) {
+    const defaults = PROVIDERS[options.provider];
+    if (env[defaults.env]) {
+      return {
+        provider: options.provider,
+        apiKeyEnv: defaults.env,
+        model: defaults.model
+      };
+    }
+    return null;
+  }
+
+  for (const [provider, defaults] of Object.entries(PROVIDERS)) {
+    if (env[defaults.env]) {
       return {
         provider,
-        apiKeyEnv,
+        apiKeyEnv: defaults.env,
         model: defaults.model
       };
     }
   }
+
+  for (const apiKeyEnv of GENERIC_API_KEY_ENVS) {
+    const detected = detectProviderForEnvName(env, apiKeyEnv);
+    if (detected) return detected;
+  }
+
+  const inferred = Object.keys(env)
+    .filter((name) => name.endsWith("_API_KEY") || name === "API_KEY")
+    .map((name) => detectProviderForEnvName(env, name, null, { ignoreUnknown: true }))
+    .filter(Boolean);
+
+  const unique = uniqueDetections(inferred);
+  if (unique.length === 1) return unique[0];
+  if (unique.length > 1) {
+    return {
+      error: `Multiple provider-shaped API keys found (${unique.map((item) => item.apiKeyEnv).join(", ")}). Re-run with --api-key-env <name>.`
+    };
+  }
   return null;
+}
+
+function detectProviderForEnvName(env, apiKeyEnv, explicitProvider = null, options = {}) {
+  const value = env[apiKeyEnv];
+  if (!value) return null;
+
+  if (explicitProvider) {
+    return {
+      provider: explicitProvider,
+      apiKeyEnv,
+      model: PROVIDERS[explicitProvider].model
+    };
+  }
+
+  const provider = inferProviderFromKey(value);
+  if (!provider) {
+    if (options.ignoreUnknown) return null;
+    return {
+      error: `Found ${apiKeyEnv}, but could not infer whether it is OpenAI, Gemini, or Anthropic. Re-run with --provider <openai|gemini|anthropic>.`
+    };
+  }
+
+  return {
+    provider,
+    apiKeyEnv,
+    model: PROVIDERS[provider].model
+  };
+}
+
+function inferProviderFromKey(value) {
+  const key = String(value).trim();
+  if (key.startsWith("AIza")) return "gemini";
+  if (key.startsWith(`sk-${"ant"}-`)) return "anthropic";
+  if (key.startsWith("sk-") || key.startsWith("sess-")) return "openai";
+  return null;
+}
+
+function uniqueDetections(detections) {
+  const seen = new Set();
+  const unique = [];
+  for (const detection of detections) {
+    if (detection.error) return [detection];
+    const key = `${detection.provider}:${detection.apiKeyEnv}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(detection);
+    }
+  }
+  return unique;
 }
 
 function smartResult(base, config = null) {
