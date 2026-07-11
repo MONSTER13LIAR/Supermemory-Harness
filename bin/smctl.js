@@ -3,6 +3,7 @@
 import { runDoctor } from "../src/doctor.js";
 import { runGuard } from "../src/guard.js";
 import { runInstall } from "../src/install.js";
+import { runMemory } from "../src/memory.js";
 import { runSetup } from "../src/setup.js";
 import { runSmoke } from "../src/smoke.js";
 
@@ -16,6 +17,7 @@ Usage:
   smctl doctor [--json] [--base-url <url>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
+  smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
@@ -28,6 +30,7 @@ Commands:
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
+  memory   Inspect memory quality, failed docs, and recall health.
   guard    Review memory writes before they are committed to Supermemory Local.
 `);
 }
@@ -42,6 +45,7 @@ function parseArgs(argv) {
     target: "all",
     containerTag: "smctl-smoke",
     timeoutMs: 30000,
+    limit: 50,
     port: 6777,
     upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
@@ -81,6 +85,13 @@ function parseArgs(argv) {
       }
       args.timeoutMs = value;
       index += 1;
+    } else if (token === "--limit") {
+      const value = Number(argv[index + 1]);
+      if (!Number.isInteger(value) || value <= 0) {
+        throw new Error("--limit requires a positive integer");
+      }
+      args.limit = value;
+      index += 1;
     } else if (token === "--port") {
       const value = Number(argv[index + 1]);
       if (!Number.isInteger(value) || value <= 0 || value > 65535) {
@@ -115,6 +126,8 @@ function parseArgs(argv) {
       args.subcommand = token;
     } else if (args.command === "guard" && !args.id) {
       args.id = token;
+    } else if (args.command === "memory" && !args.subcommand) {
+      args.subcommand = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -136,7 +149,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "doctor", "setup", "smoke", "guard"].includes(args.command)) {
+  if (!["install", "doctor", "setup", "smoke", "memory", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -190,6 +203,16 @@ async function runCommand(args) {
       port: args.port,
       upstream: args.upstream,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "memory") {
+    return runMemory({
+      action: args.subcommand,
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 
