@@ -1,5 +1,6 @@
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
+import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { projectDoctor } from "./project.js";
 import { repairWatchdog } from "./repair.js";
 import { skillsInstall } from "./skills.js";
@@ -76,6 +77,13 @@ export async function runStart(options = {}) {
     exitCode: summary.fail > 0 ? 1 : 0
   };
   result.text = formatStart(result);
+  if (options.explain && (context.dryRun || result.exitCode !== 0)) {
+    result.explanation = await explainHarnessResult(result, {
+      fetch: context.fetch,
+      ollamaModel: options.ollamaModel
+    });
+    result.text = appendExplanation(result.text, result.explanation);
+  }
 
   if (result.exitCode !== 0 || context.dryRun) {
     return result;

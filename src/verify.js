@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { runSmoke } from "./smoke.js";
 import { readProjectProfile } from "./project.js";
 
@@ -74,6 +75,13 @@ export async function runVerify(options = {}) {
     exitCode: summary.fail > 0 ? 1 : 0
   };
   result.text = formatVerify(result);
+  if (options.explain) {
+    result.explanation = await explainHarnessResult(result, {
+      fetch: context.fetch,
+      ollamaModel: options.ollamaModel
+    });
+    result.text = appendExplanation(result.text, result.explanation);
+  }
   return result;
 }
 

@@ -1,6 +1,10 @@
+<p align="center">
+  <img src="./assets/smctl-logo.svg" alt="Supermemory Harness smctl terminal logo" width="900">
+</p>
+
 # Supermemory Harness
 
-`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can set up Smart Assist from one guided terminal flow.
+`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can use a local Llama brain through Ollama for plain-English explanations.
 
 ## Run
 
@@ -43,6 +47,7 @@ Check the full Harness state:
 
 ```bash
 smctl status
+smctl status --explain
 ```
 
 ```bash
@@ -84,6 +89,13 @@ node ./bin/smctl.js memory doctor
 node ./bin/smctl.js memory replay
 node ./bin/smctl.js memory replay --apply
 node ./bin/smctl.js repair
+node ./bin/smctl.js repair --explain
+```
+
+Check the local Llama brain:
+
+```bash
+smctl brain doctor
 ```
 
 Install an app-specific local memory policy:
@@ -101,7 +113,7 @@ smctl skills list
 smctl skills doctor
 ```
 
-Enable Smart Assist separately if you skipped it during install:
+Cloud Smart Assist is optional and not needed for the local-brain flow:
 
 ```bash
 smctl smart enable --prompt
@@ -128,6 +140,7 @@ node ./bin/smctl.js guard reject <id>
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
+- `status --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
@@ -137,6 +150,7 @@ node ./bin/smctl.js guard reject <id>
 - `skillset` installs local app-specific memory policies used by Guard.
 - `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
+- `brain` checks local Ollama/Llama readiness for no-cloud explanations.
 - `guard` runs a local review proxy for `POST /v3/documents`, adds active project/skillset metadata, flags risky memory writes, and requires approval before forwarding.
 - Smart Assist is optional; Harness core skills and Guard enrichment work without provider API access.
 - Never prints the Supermemory API key or auth secret.

@@ -3,6 +3,7 @@
 import { runDoctor } from "../src/doctor.js";
 import { runGuard } from "../src/guard.js";
 import { runInstall } from "../src/install.js";
+import { localBrainDoctor } from "../src/local-brain.js";
 import { runMemory } from "../src/memory.js";
 import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
@@ -23,9 +24,9 @@ function printHelp() {
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
-  smctl status [--json] [--base-url <url>] [--limit <n>]
-  smctl verify [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
-  smctl repair [--json] [--base-url <url>] [--limit <n>]
+  smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl verify [--json] [--explain] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
+  smctl repair [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl init [--json]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
@@ -42,6 +43,7 @@ Usage:
   smctl smart doctor [--json]
   smctl smart ping [--json]
   smctl smart disable [--json]
+  smctl brain doctor [--json] [--ollama-model <model>]
   smctl guard start [--port <port>] [--upstream <url>]
   smctl guard inbox [--json]
   smctl guard approve <id> [--json] [--upstream <url>]
@@ -64,6 +66,7 @@ Commands:
   skillset Install app-specific local memory policies.
   skills   Install markdown skills that teach agents better Supermemory behavior.
   smart    Enable optional env-based LLM assistance.
+  brain    Use local Ollama/Llama for plain-English Harness explanations.
   guard    Review memory writes before they are committed to Supermemory Local.
 `);
 }
@@ -78,10 +81,12 @@ function parseArgs(argv) {
     apply: false,
     yes: false,
     prompt: false,
+    explain: false,
     target: "all",
     provider: null,
     apiKeyEnv: null,
     model: null,
+    ollamaModel: "llama3.2:1b-instruct-q4_K_M",
     containerTag: null,
     timeoutMs: 30000,
     limit: 50,
@@ -109,6 +114,8 @@ function parseArgs(argv) {
       args.yes = true;
     } else if (token === "--prompt") {
       args.prompt = true;
+    } else if (token === "--explain") {
+      args.explain = true;
     } else if (token === "--provider") {
       const value = argv[index + 1];
       if (!value) throw new Error("--provider requires a value");
@@ -123,6 +130,11 @@ function parseArgs(argv) {
       const value = argv[index + 1];
       if (!value) throw new Error("--model requires a value");
       args.model = value;
+      index += 1;
+    } else if (token === "--ollama-model") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--ollama-model requires a value");
+      args.ollamaModel = value;
       index += 1;
     } else if (token === "--target") {
       const value = argv[index + 1];
@@ -198,6 +210,8 @@ function parseArgs(argv) {
       args.id = token;
     } else if (args.command === "smart" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "brain" && !args.subcommand) {
+      args.subcommand = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -219,7 +233,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "start", "status", "verify", "repair", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
+  if (!["install", "start", "status", "verify", "repair", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -259,6 +273,8 @@ async function runCommand(args) {
       home: process.env.HOME,
       port: args.port,
       dryRun: args.dryRun,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel,
       fetch: globalThis.fetch
     });
   }
@@ -270,7 +286,9 @@ async function runCommand(args) {
       env: process.env,
       home: process.env.HOME,
       fetch: globalThis.fetch,
-      limit: args.limit
+      limit: args.limit,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 
@@ -281,7 +299,9 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       containerTag: args.containerTag,
-      timeoutMs: args.timeoutMs
+      timeoutMs: args.timeoutMs,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 
@@ -290,7 +310,9 @@ async function runCommand(args) {
       baseUrl: args.baseUrl,
       home: process.env.HOME,
       fetch: globalThis.fetch,
-      limit: args.limit
+      limit: args.limit,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 
@@ -370,6 +392,16 @@ async function runCommand(args) {
       yes: args.yes,
       prompt: args.prompt,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "brain") {
+    if (args.subcommand !== "doctor") {
+      throw new Error("Unknown brain action. Use: smctl brain doctor");
+    }
+    return localBrainDoctor({
+      fetch: globalThis.fetch,
+      ollamaModel: args.ollamaModel
     });
   }
 

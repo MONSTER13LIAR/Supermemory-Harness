@@ -1,6 +1,7 @@
 import { stat, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 
 const LARGE_DB_BYTES = 120 * 1024 * 1024;
 const SNAPSHOT_RISK_BYTES = 150 * 1024 * 1024;
@@ -105,6 +106,13 @@ export async function runRepair(options = {}) {
     exitCode: summary.fail > 0 ? 1 : 0
   };
   result.text = formatRepair(result);
+  if (options.explain) {
+    result.explanation = await explainHarnessResult(result, {
+      fetch: context.fetch,
+      ollamaModel: options.ollamaModel
+    });
+    result.text = appendExplanation(result.text, result.explanation);
+  }
   return result;
 }
 

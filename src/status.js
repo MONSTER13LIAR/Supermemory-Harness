@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
+import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { memoryDoctor } from "./memory.js";
 import { repairWatchdog } from "./repair.js";
 
@@ -89,6 +90,13 @@ export async function runStatus(options = {}) {
     exitCode: summary.fail > 0 ? 1 : 0
   };
   result.text = formatStatus(result);
+  if (options.explain) {
+    result.explanation = await explainHarnessResult(result, {
+      fetch: context.fetch,
+      ollamaModel: options.ollamaModel
+    });
+    result.text = appendExplanation(result.text, result.explanation);
+  }
   return result;
 }
 

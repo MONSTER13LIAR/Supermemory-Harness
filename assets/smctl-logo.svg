@@ -1,0 +1,34 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Supermemory Harness CLI logo</title>
+  <desc id="desc">A terminal-style Supermemory Harness logo for the smctl command line tool.</desc>
+  <rect width="1200" height="360" rx="28" fill="#0B1020"/>
+  <rect x="32" y="32" width="1136" height="296" rx="20" fill="#101827" stroke="#2E405F" stroke-width="2"/>
+  <rect x="32" y="32" width="1136" height="54" rx="20" fill="#162235"/>
+  <path d="M32 66H1168" stroke="#2E405F" stroke-width="2"/>
+  <circle cx="68" cy="59" r="8" fill="#FF5F57"/>
+  <circle cx="96" cy="59" r="8" fill="#FFBD2E"/>
+  <circle cx="124" cy="59" r="8" fill="#28C840"/>
+  <g filter="url(#glow)">
+    <path d="M95 154L143 182L95 210" stroke="#55E6C1" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M169 220H267" stroke="#7AA2FF" stroke-width="16" stroke-linecap="round"/>
+  </g>
+  <text x="314" y="195" fill="#F8FAFC" font-family="'SFMono-Regular', 'Cascadia Code', 'Fira Code', Consolas, monospace" font-size="86" font-weight="800" letter-spacing="0">smctl</text>
+  <text x="314" y="247" fill="#55E6C1" font-family="'SFMono-Regular', 'Cascadia Code', 'Fira Code', Consolas, monospace" font-size="34" font-weight="700" letter-spacing="0">SUPERMEMORY HARNESS</text>
+  <text x="314" y="288" fill="#95A3B8" font-family="'SFMono-Regular', 'Cascadia Code', 'Fira Code', Consolas, monospace" font-size="24" font-weight="500" letter-spacing="0">local guard · recall verify · repair diagnostics · local brain</text>
+  <path d="M979 126C1032 126 1075 169 1075 222C1075 275 1032 318 979 318C926 318 883 275 883 222C883 169 926 126 979 126Z" fill="#13253A" stroke="#2E405F" stroke-width="2"/>
+  <path d="M979 154L1037 187V254L979 288L921 254V187L979 154Z" fill="#0B1020" stroke="#55E6C1" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M979 154V219M1037 187L979 219M921 187L979 219M979 288V219" stroke="#7AA2FF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="979" cy="219" r="13" fill="#55E6C1"/>
+  <defs>
+    <filter id="glow" x="61" y="120" width="240" height="134" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset/>
+      <feGaussianBlur stdDeviation="10"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.333 0 0 0 0 0.902 0 0 0 0 0.757 0 0 0 0.45 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+</svg>
