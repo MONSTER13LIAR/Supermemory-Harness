@@ -10,6 +10,7 @@ import { runSkillset } from "../src/skillset.js";
 import { runSkills } from "../src/skills.js";
 import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
+import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
 
 const VERSION = "0.1.0";
@@ -19,6 +20,7 @@ function printHelp() {
 
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
+  smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl status [--json] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl init [--json]
@@ -46,6 +48,7 @@ Usage:
 
 Commands:
   install  Install and connect the full Supermemory Harness plugin.
+  start    Run the project-aware Guard/enrichment layer.
   status   Show one-screen health for Supermemory, memory, and Guard.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   init     Detect the current project and create a project-aware memory profile.
@@ -210,7 +213,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
+  if (!["install", "start", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -237,6 +240,19 @@ async function runCommand(args) {
       interactive: !args.json && !args.dryRun && process.stdin.isTTY,
       provider: args.provider,
       model: args.model,
+      fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "start") {
+    return runStart({
+      baseUrl: args.baseUrl,
+      upstream: args.upstream,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      port: args.port,
+      dryRun: args.dryRun,
       fetch: globalThis.fetch
     });
   }

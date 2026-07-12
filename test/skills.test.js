@@ -12,12 +12,18 @@ test("skills install writes all markdown skills", async () => {
   const hygiene = await readFile(join(home, ".config", "smctl", "skills", "memory-write-hygiene.md"), "utf8");
   const query = await readFile(join(home, ".config", "smctl", "skills", "memory-query-patterns.md"), "utf8");
   const context = await readFile(join(home, ".config", "smctl", "skills", "context-injection-format.md"), "utf8");
+  const health = await readFile(join(home, ".config", "smctl", "skills", "memory-health-triage.md"), "utf8");
+  const personalization = await readFile(join(home, ".config", "smctl", "skills", "project-memory-personalization.md"), "utf8");
+  const conflict = await readFile(join(home, ".config", "smctl", "skills", "memory-conflict-resolution.md"), "utf8");
 
   assert.equal(result.exitCode, 0);
-  assert.equal(result.summary.created, 3);
+  assert.equal(result.summary.created, 6);
   assert.match(hygiene, /Search for related existing memories/);
   assert.match(query, /Query Supermemory before asking/);
   assert.match(context, /Do not dump raw JSON/);
+  assert.match(health, /Inspect failed documents/);
+  assert.match(personalization, /Classify the app domain/);
+  assert.match(conflict, /Do not silently pick/);
 });
 
 test("skills doctor reports installed skills", async () => {
@@ -27,7 +33,7 @@ test("skills doctor reports installed skills", async () => {
   const result = await skillsDoctor({ home });
 
   assert.equal(result.exitCode, 0);
-  assert.equal(result.summary.ok, 3);
+  assert.equal(result.summary.ok, 6);
 });
 
 test("skills list marks installed skills", async () => {

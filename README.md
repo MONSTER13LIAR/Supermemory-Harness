@@ -25,6 +25,12 @@ Initialize the current app/project so Harness can tag Supermemory writes with pr
 smctl init
 ```
 
+Start the project-aware Guard/enrichment layer:
+
+```bash
+smctl start
+```
+
 The commands below are optional diagnostics and advanced controls.
 
 Show every command:
@@ -116,13 +122,14 @@ node ./bin/smctl.js guard reject <id>
 - `doctor` is read-only diagnostics.
 - `install` is the one-command onboarding flow for the Harness plugin.
 - `init` detects the current project and writes an active project profile for memory enrichment.
+- `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `status` gives one-screen health for Supermemory, memory quality, and Guard.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `skillset` installs local app-specific memory policies used by Guard.
-- `skills` installs markdown memory behavior skills: write hygiene, query patterns, and context injection format.
+- `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
 - `guard` runs a local review proxy for `POST /v3/documents`, adds active project/skillset metadata, flags risky memory writes, and requires approval before forwarding.
 - Smart Assist is optional; Harness core skills and Guard enrichment work without provider API access.

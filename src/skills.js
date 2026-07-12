@@ -11,6 +11,10 @@ export const AGENT_SKILLS = {
 
 Use this skill before writing to Supermemory.
 
+## Best Use Case
+
+Use when an agent is about to save a new memory and needs to decide if it is durable, safe, non-duplicative, and correctly tagged.
+
 ## Rules
 
 - Search for related existing memories before writing a new one.
@@ -35,6 +39,10 @@ Use this skill before writing to Supermemory.
     body: `# Memory Query Patterns
 
 Use this skill before assuming project or user context.
+
+## Best Use Case
+
+Use when an agent is about to answer from memory, continue project work, or ask the user for context that may already exist in Supermemory.
 
 ## Rules
 
@@ -63,6 +71,10 @@ Ask the user only when Supermemory has no relevant memory, memories conflict, or
 
 Use this skill when Supermemory returns memories for a session.
 
+## Best Use Case
+
+Use when an agent receives Supermemory search/session context and needs to turn it into a compact useful brief instead of raw memory dumps.
+
 ## Rules
 
 - Do not dump raw JSON into reasoning or user-facing answers.
@@ -83,6 +95,89 @@ Use this skill when Supermemory returns memories for a session.
 ### Use In This Turn
 
 State how the retrieved context changes the next action. If it does not change the action, ignore it.
+`
+  },
+  "memory-health-triage": {
+    title: "Memory Health Triage",
+    filename: "memory-health-triage.md",
+    body: `# Memory Health Triage
+
+Use this skill when Supermemory recall, ingestion, or memory quality looks unhealthy.
+
+## Best Use Case
+
+Use after failed searches, duplicate memories, failed document ingestion, missing context, or user reports that Supermemory "forgot" something.
+
+## Rules
+
+- Check Supermemory reachability before blaming memory quality.
+- Inspect failed documents and queued backlog.
+- Prefer dry-run repair before applying replay.
+- Treat duplicate memories as a tagging or write-hygiene problem.
+- If provider configuration is broken, fix that before replaying failed documents.
+
+## Triage Order
+
+1. Run status/doctor checks.
+2. Inspect memory health.
+3. Identify failed, queued, duplicated, or untagged documents.
+4. Fix provider/config issues.
+5. Replay only safe failed text documents.
+`
+  },
+  "project-memory-personalization": {
+    title: "Project Memory Personalization",
+    filename: "project-memory-personalization.md",
+    body: `# Project Memory Personalization
+
+Use this skill when adapting Supermemory behavior to a specific app or repo.
+
+## Best Use Case
+
+Use after opening a project or initializing a project profile so future memories are scoped to the app's actual domain and workflows.
+
+## Rules
+
+- Identify the active project root, package name, git remote, and container tag.
+- Classify the app domain before deciding what memory matters.
+- Keep project-specific decisions separate from global user preferences.
+- Prefer stable conventions, architecture decisions, product constraints, and unresolved work.
+- Do not store full source files as memory.
+
+## Output Shape
+
+- Project domain
+- Durable memory types
+- Likely noise
+- Sensitive data to avoid
+- Recommended container tag
+`
+  },
+  "memory-conflict-resolution": {
+    title: "Memory Conflict Resolution",
+    filename: "memory-conflict-resolution.md",
+    body: `# Memory Conflict Resolution
+
+Use this skill when retrieved memories disagree.
+
+## Best Use Case
+
+Use when Supermemory returns conflicting preferences, old project decisions, duplicated facts, or stale instructions.
+
+## Rules
+
+- Do not silently pick one conflicting memory.
+- Prefer newer memories only when timestamps or context make that reasonable.
+- Ask the user when the conflict affects behavior, safety, or product direction.
+- If one memory is stale, write a corrective memory instead of deleting context blindly.
+- Keep the conflict summary short and actionable.
+
+## Conflict Brief
+
+- Conflicting memories
+- Why they conflict
+- Which one seems current, if knowable
+- What action needs user confirmation
 `
   }
 };
