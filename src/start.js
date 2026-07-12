@@ -1,6 +1,7 @@
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
 import { projectDoctor } from "./project.js";
+import { repairWatchdog } from "./repair.js";
 import { skillsInstall } from "./skills.js";
 import { runSmart } from "./smart.js";
 
@@ -27,6 +28,14 @@ export async function runStart(options = {}) {
   const skills = await skillsInstall({ home: context.home, dryRun: context.dryRun });
   const smart = await runSmart({ action: "doctor", home: context.home, env: context.env });
   const ollama = await checkOllama(context);
+  const watchdog = doctor.exitCode === 0
+    ? await repairWatchdog({
+      baseUrl: context.baseUrl,
+      home: context.home,
+      fetch: context.fetch,
+      limit: 25
+    })
+    : null;
 
   const checks = [
     doctor.exitCode === 0
@@ -41,6 +50,9 @@ export async function runStart(options = {}) {
     smart.exitCode === 0
       ? ok("Smart Assist", "enabled")
       : warn("Smart Assist", "optional; deterministic mode is available"),
+    watchdog && watchdog.status === "ok"
+      ? ok("Repair Watchdog", watchdog.detail)
+      : warn("Repair Watchdog", watchdog ? watchdog.detail : "skipped until Supermemory is reachable"),
     ollama.available
       ? ok("Local brain", `${ollama.detail}`)
       : warn("Local brain", "Ollama not detected; deterministic mode is available")
@@ -57,6 +69,7 @@ export async function runStart(options = {}) {
     project: project.profile ?? null,
     skills: { exitCode: skills.exitCode, summary: skills.summary },
     smart: { exitCode: smart.exitCode, enabled: smart.enabled },
+    watchdog: watchdog ? { status: watchdog.status, detail: watchdog.detail } : null,
     ollama,
     checks,
     summary,

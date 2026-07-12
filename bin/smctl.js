@@ -12,6 +12,8 @@ import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
+import { runRepair } from "../src/repair.js";
+import { runVerify } from "../src/verify.js";
 
 const VERSION = "0.1.0";
 
@@ -22,6 +24,8 @@ Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl status [--json] [--base-url <url>] [--limit <n>]
+  smctl verify [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
+  smctl repair [--json] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl init [--json]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
@@ -50,6 +54,8 @@ Commands:
   install  Install and connect the full Supermemory Harness plugin.
   start    Run the project-aware Guard/enrichment layer.
   status   Show one-screen health for Supermemory, memory, and Guard.
+  verify   Prove write, recall, project scoping, and language recall work.
+  repair   Diagnose stuck docs, retry loops, store growth, and recall mismatch risks.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   init     Detect the current project and create a project-aware memory profile.
   setup    Write safe local integration config for Supermemory Local.
@@ -76,7 +82,7 @@ function parseArgs(argv) {
     provider: null,
     apiKeyEnv: null,
     model: null,
-    containerTag: "smctl-smoke",
+    containerTag: null,
     timeoutMs: 30000,
     limit: 50,
     port: 6777,
@@ -213,7 +219,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "start", "status", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
+  if (!["install", "start", "status", "verify", "repair", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -262,6 +268,26 @@ async function runCommand(args) {
       baseUrl: args.baseUrl,
       cwd: process.cwd(),
       env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
+    });
+  }
+
+  if (args.command === "verify") {
+    return runVerify({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      containerTag: args.containerTag,
+      timeoutMs: args.timeoutMs
+    });
+  }
+
+  if (args.command === "repair") {
+    return runRepair({
+      baseUrl: args.baseUrl,
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit

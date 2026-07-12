@@ -1,6 +1,6 @@
 # Supermemory Harness
 
-`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, and can set up Smart Assist from one guided terminal flow.
+`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can set up Smart Assist from one guided terminal flow.
 
 ## Run
 
@@ -71,8 +71,11 @@ node ./bin/smctl.js setup
 Verify the ingest and recall pipeline:
 
 ```bash
+node ./bin/smctl.js verify
 node ./bin/smctl.js smoke
 ```
+
+`verify` is the full user-facing proof: it writes a harmless marker, confirms project-scoped recall, checks for container mismatch symptoms, and runs a multilingual recall probe. `smoke` is the smaller raw ingest/search check.
 
 Inspect memory quality and failed ingests:
 
@@ -80,6 +83,7 @@ Inspect memory quality and failed ingests:
 node ./bin/smctl.js memory doctor
 node ./bin/smctl.js memory replay
 node ./bin/smctl.js memory replay --apply
+node ./bin/smctl.js repair
 ```
 
 Install an app-specific local memory policy:
@@ -123,11 +127,13 @@ node ./bin/smctl.js guard reject <id>
 - `install` is the one-command onboarding flow for the Harness plugin.
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
-- `status` gives one-screen health for Supermemory, memory quality, and Guard.
+- `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
+- `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
+- `repair` diagnoses failed documents, stale queues, retry-loop log hints, write/read mismatch symptoms, and local store size risk. It plans by default and avoids destructive cleanup.
 - `skillset` installs local app-specific memory policies used by Guard.
 - `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.

@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
 import { memoryDoctor } from "./memory.js";
+import { repairWatchdog } from "./repair.js";
 
 export async function runStatus(options = {}) {
   const context = {
@@ -35,6 +36,14 @@ export async function runStatus(options = {}) {
     home: context.home,
     fetch: context.fetch
   });
+  const watchdog = doctor.exitCode === 0
+    ? await repairWatchdog({
+      baseUrl: context.baseUrl,
+      home: context.home,
+      fetch: context.fetch,
+      limit: context.limit
+    })
+    : null;
 
   const sections = [
     doctor.exitCode === 0
@@ -43,12 +52,15 @@ export async function runStatus(options = {}) {
     memory && memory.exitCode === 0
       ? section("Memory Health", "ok", `${memory.documents.sampled} documents sampled`)
       : section("Memory Health", "warn", memory ? `${memory.summary.fail} fail, ${memory.summary.warn} warn` : "Skipped"),
+    watchdog
+      ? section("Repair Watchdog", watchdog.status === "ok" ? "ok" : "warn", watchdog.detail)
+      : section("Repair Watchdog", "warn", "Skipped"),
     guard.pending.length === 0
       ? section("Guard Inbox", "ok", "0 pending writes")
       : section("Guard Inbox", "warn", `${guard.pending.length} pending write(s)`)
   ];
 
-  const next = nextSteps({ doctor, memory, guard });
+  const next = nextSteps({ doctor, memory, guard, watchdog });
   const summary = summarizeSections(sections);
   const result = {
     command: "status",
@@ -69,6 +81,10 @@ export async function runStatus(options = {}) {
       pending: guard.pending.length,
       summary: guard.summary
     },
+    watchdog: watchdog ? {
+      status: watchdog.status,
+      detail: watchdog.detail
+    } : null,
     summary,
     exitCode: summary.fail > 0 ? 1 : 0
   };
@@ -76,7 +92,7 @@ export async function runStatus(options = {}) {
   return result;
 }
 
-function nextSteps({ doctor, memory, guard }) {
+function nextSteps({ doctor, memory, guard, watchdog }) {
   if (doctor.exitCode !== 0) {
     return ["smctl doctor"];
   }
@@ -85,6 +101,9 @@ function nextSteps({ doctor, memory, guard }) {
   if (memory && memory.exitCode !== 0) {
     steps.push("smctl memory doctor");
     steps.push("smctl memory replay");
+  }
+  if (watchdog && watchdog.status !== "ok") {
+    steps.push("smctl repair");
   }
   if (guard.pending.length > 0) {
     steps.push("smctl guard inbox");
