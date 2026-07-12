@@ -1,6 +1,12 @@
-<p align="center">
-  <img src="./assets/smctl-logo.svg" alt="Supermemory Harness smctl terminal logo" width="900">
-</p>
+```text
+  ___ _ __ ___   ___| |_| |
+ / __| '_ ` _ \ / __| __| |
+ \__ \ | | | | | (__| |_| |
+ |___/_| |_| |_|\___|\__|_|
+
+ Supermemory Harness
+ local guard · recall verify · repair diagnostics · local brain
+```
 
 # Supermemory Harness
 

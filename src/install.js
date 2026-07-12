@@ -4,6 +4,7 @@ import { memoryDoctor } from "./memory.js";
 import { runSetup } from "./setup.js";
 import { runSmart } from "./smart.js";
 import { skillsInstall } from "./skills.js";
+import { cliBanner } from "./banner.js";
 
 export async function runInstall(options = {}) {
   const context = {
@@ -108,9 +109,7 @@ export async function runInstall(options = {}) {
 
 function formatInstall(result) {
   const lines = [];
-  lines.push("=================================");
-  lines.push("   Supermemory Harness");
-  lines.push("=================================");
+  lines.push(cliBanner("install"));
   lines.push("");
   lines.push("Supermemory Harness install");
   lines.push(`Supermemory: ${result.baseUrl}`);

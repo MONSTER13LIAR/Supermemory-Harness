@@ -1,5 +1,6 @@
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
+import { cliBanner } from "./banner.js";
 import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { projectDoctor } from "./project.js";
 import { repairWatchdog } from "./repair.js";
@@ -118,9 +119,7 @@ async function checkOllama(context) {
 
 function formatStart(result) {
   const lines = [];
-  lines.push("=================================");
-  lines.push("   Supermemory Harness running");
-  lines.push("=================================");
+  lines.push(cliBanner("running"));
   lines.push("");
   lines.push(`Supermemory: ${result.baseUrl}`);
   lines.push(`Guard: ${result.guardUrl}`);

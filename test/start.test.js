@@ -40,7 +40,8 @@ test("start dry-run summarizes readiness without starting guard", async () => {
   assert.equal(result.exitCode, 0);
   assert.equal(result.project.name, "start-project");
   assert.equal(result.ollama.available, true);
-  assert.match(result.text, /Supermemory Harness running/);
+  assert.match(result.text, /___ _ __ ___/);
+  assert.match(result.text, /Supermemory Harness\n running/);
   assert.match(result.text, /Active project: start-project/);
   assert.match(result.text, /qwen2.5:1.5b/);
 });
