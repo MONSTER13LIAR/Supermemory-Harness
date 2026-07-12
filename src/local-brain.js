@@ -10,7 +10,7 @@ export async function explainHarnessResult(result, options = {}) {
   };
 
   if (!context.fetch) {
-    return unavailable("Fetch API unavailable; Node 22+ is required");
+    return fallback(result, context.model, "Fetch API unavailable; Node 22+ is required");
   }
 
   const prompt = buildPrompt(result);
@@ -27,17 +27,12 @@ export async function explainHarnessResult(result, options = {}) {
   }, context.timeoutMs);
 
   if (!response.ok) {
-    return unavailable(response.error ?? `HTTP ${response.status}`);
+    return fallback(result, context.model, response.error ?? `HTTP ${response.status}`);
   }
 
   const text = sanitize(response.body?.response);
   if (!text || refusalLike(text) || !structuredEnough(text)) {
-    return {
-      available: true,
-      provider: "local-fallback",
-      model: context.model,
-      text: fallbackExplanation(result)
-    };
+    return fallback(result, context.model, "Local Llama returned unstructured text");
   }
 
   return {
@@ -289,6 +284,16 @@ function unavailable(detail) {
     provider: "ollama",
     model: DEFAULT_MODEL,
     detail
+  };
+}
+
+function fallback(result, model, detail) {
+  return {
+    available: true,
+    provider: "local-fallback",
+    model,
+    detail,
+    text: fallbackExplanation(result)
   };
 }
 

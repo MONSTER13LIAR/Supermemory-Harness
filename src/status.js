@@ -106,12 +106,12 @@ function nextSteps({ doctor, memory, guard, watchdog }) {
   }
 
   const steps = [];
+  if (watchdog && watchdog.status !== "ok") {
+    steps.push("smctl repair");
+  }
   if (memory && memory.exitCode !== 0) {
     steps.push("smctl memory doctor");
     steps.push("smctl memory replay");
-  }
-  if (watchdog && watchdog.status !== "ok") {
-    steps.push("smctl repair");
   }
   if (guard.pending.length > 0) {
     steps.push("smctl guard inbox");
@@ -135,9 +135,19 @@ function formatStatus(result) {
   }
 
   lines.push("");
-  lines.push("Next:");
-  for (const step of result.next) {
-    lines.push(`   ${step}`);
+  if (result.next.length > 0) {
+    lines.push(`Recommended: ${result.next[0]}`);
+    const detail = nextDetail(result.next[0]);
+    if (detail) lines.push(`   ${detail}`);
+  }
+
+  const more = result.next.slice(1);
+  if (more.length > 0) {
+    lines.push("");
+    lines.push("More detail:");
+    for (const step of more) {
+      lines.push(`   ${step}`);
+    }
   }
 
   lines.push("");
@@ -145,6 +155,16 @@ function formatStatus(result) {
     ? "Result: Harness status is usable."
     : "Result: Harness status needs attention.");
   return lines.join("\n");
+}
+
+function nextDetail(step) {
+  const details = {
+    "smctl doctor": "Supermemory itself needs attention first.",
+    "smctl repair": "Shows what is broken and the safest repair plan without changing data.",
+    "smctl guard inbox": "Review pending memory writes before they are saved.",
+    "smctl smoke": "Runs a quick write/search test to prove recall works."
+  };
+  return details[step] ?? null;
 }
 
 function section(title, status, detail) {

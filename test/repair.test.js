@@ -40,7 +40,7 @@ test("repair plans around failed docs, stale queue, logs, and store growth", asy
   assert.equal(result.exitCode, 1);
   assert.match(result.text, /Failed documents found/);
   assert.match(result.text, /Stale queued documents found/);
-  assert.match(result.text, /Repair plan/);
+  assert.match(result.text, /Safest next steps/);
   assert(result.actions.some((action) => action.kind === "replay"));
 });
 

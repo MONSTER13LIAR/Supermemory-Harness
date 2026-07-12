@@ -62,7 +62,7 @@ export async function runInstall(options = {}) {
     memory && memory.exitCode === 0
       ? ok("Memory health sampled", `${memory.summary.ok} memory checks passed`)
       : warn("Memory health needs review", memory ? `${memory.summary.fail} fail, ${memory.summary.warn} warn` : "Skipped because doctor failed"),
-    info("Guard proxy", `Run smctl guard start, then point clients at ${context.guardUrl} for review-before-commit`)
+    info("Guard proxy", `Run smctl start to launch Guard at ${context.guardUrl}`)
   ];
 
   const summary = summarize(checks);
@@ -95,10 +95,8 @@ export async function runInstall(options = {}) {
     checks,
     nextSteps: [
       "smctl init",
-      "smctl guard start",
-      "smctl skills doctor",
-      "smctl status",
-      "smctl memory doctor"
+      "smctl start",
+      "smctl status --explain"
     ],
     exitCode: summary.fail > 0 ? 1 : 0,
     summary

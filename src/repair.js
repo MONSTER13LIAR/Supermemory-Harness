@@ -202,7 +202,7 @@ function formatRepair(result) {
   const lines = [];
   lines.push("Supermemory Harness repair");
   lines.push(`Base URL: ${result.baseUrl}`);
-  lines.push(`Mode: ${result.mode}`);
+  lines.push("Mode: plan only; no changes made");
   lines.push(`Sample: ${result.documents.sampled} documents`);
   lines.push(`Summary: ${result.summary.ok} ok, ${result.summary.warn} warn, ${result.summary.fail} fail`);
   lines.push("");
@@ -214,7 +214,7 @@ function formatRepair(result) {
 
   if (result.actions.length > 0) {
     lines.push("");
-    lines.push("Repair plan:");
+    lines.push("Safest next steps:");
     for (const action of result.actions) {
       lines.push(`   ${action.title}`);
       lines.push(`      ${action.detail}`);
@@ -223,7 +223,7 @@ function formatRepair(result) {
 
   if (result.documents.failed.length > 0) {
     lines.push("");
-    lines.push("Failed documents:");
+    lines.push("Recent failed items:");
     for (const doc of result.documents.failed) {
       lines.push(`   ${doc.id}  ${doc.title}`);
     }
@@ -232,7 +232,7 @@ function formatRepair(result) {
   lines.push("");
   lines.push(result.exitCode === 0
     ? "Result: no blocking repair issue found in the sample."
-    : "Result: repair issues found. Review the plan before applying any destructive cleanup.");
+    : "Result: repair issues found. Nothing was changed.");
   return lines.join("\n");
 }
 
