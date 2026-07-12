@@ -54,6 +54,15 @@ Check the full Harness state:
 ```bash
 smctl status
 smctl status --explain
+smctl score
+```
+
+When something is wrong, use the guided path instead of guessing commands:
+
+```bash
+smctl repair wizard
+smctl cleanup
+smctl memory coach
 ```
 
 ```bash
@@ -92,10 +101,16 @@ Inspect memory quality and failed ingests:
 
 ```bash
 node ./bin/smctl.js memory doctor
+node ./bin/smctl.js memory coach
 node ./bin/smctl.js memory replay
 node ./bin/smctl.js memory replay --apply
 node ./bin/smctl.js repair
+node ./bin/smctl.js repair wizard
 node ./bin/smctl.js repair --explain
+node ./bin/smctl.js score
+node ./bin/smctl.js timeline
+node ./bin/smctl.js cleanup
+node ./bin/smctl.js project
 ```
 
 Check the local Llama brain:
@@ -146,13 +161,19 @@ node ./bin/smctl.js guard reject <id>
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
+- `score` gives one confidence number for whether Supermemory memory/retrieval looks trustworthy.
 - `status --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
+- `project` shows the active app profile, project container, sampled project memories, and writes missing project context.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
+- `memory coach` explains how to improve memory quality: clearer wording, project tags, duplicates, secrets, and recall gaps.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `repair` diagnoses failed documents, stale queues, retry-loop log hints, write/read mismatch symptoms, and local store size risk. It plans by default and avoids destructive cleanup.
+- `repair wizard` turns repair diagnostics into a safe ordered plan.
+- `timeline` shows recent write activity by day and top containers.
+- `cleanup` plans safe cleanup for possible secrets, duplicates, old test markers, vague notes, and missing project context; it does not delete memories.
 - `skillset` installs local app-specific memory policies used by Guard.
 - `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.

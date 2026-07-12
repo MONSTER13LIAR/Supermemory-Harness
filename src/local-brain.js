@@ -31,7 +31,7 @@ export async function explainHarnessResult(result, options = {}) {
   }
 
   const text = sanitize(response.body?.response);
-  if (!text || refusalLike(text) || !structuredEnough(text)) {
+  if (!text || refusalLike(text) || !structuredEnough(text) || contradictsResult(text, result)) {
     return fallback(result, context.model, "Local Llama returned unstructured text");
   }
 
@@ -108,7 +108,8 @@ function buildPrompt(result) {
     "Works: ...",
     "Needs attention: ...",
     "Next: ...",
-    "Use only these commands: smctl repair, smctl verify, smctl memory doctor, smctl memory replay.",
+    "If exitCode is non-zero or any fail exists, Needs attention must mention the failure.",
+    "Use only these commands: smctl repair wizard, smctl repair, smctl verify, smctl score, smctl cleanup, smctl memory coach, smctl memory doctor, smctl memory replay.",
     compactToLines(compact)
   ].join("\n");
 }
@@ -244,7 +245,7 @@ function structuredEnough(text) {
 }
 
 function fallbackExplanation(result) {
-  const items = [...(result.sections ?? []), ...(result.checks ?? [])];
+  const items = [...(result.sections ?? []), ...(result.checks ?? []), ...(result.issues ?? [])];
   const works = items
     .filter((item) => item.status === "ok")
     .map((item) => item.title)
@@ -253,9 +254,11 @@ function fallbackExplanation(result) {
     .filter((item) => item.status !== "ok")
     .map((item) => item.detail ? `${item.title} (${item.detail})` : item.title)
     .slice(0, 3);
-  const next = result.next?.includes("smctl repair")
-    ? "smctl repair"
-    : result.next?.[0] ?? nextCommandFor(result);
+  const next = result.next?.includes("smctl repair wizard")
+    ? "smctl repair wizard"
+    : result.next?.includes("smctl repair")
+      ? "smctl repair"
+      : result.next?.[0] ?? nextCommandFor(result);
 
   return [
     `Works: ${works.length > 0 ? works.join(", ") : "Harness could read the result."}`,
@@ -264,7 +267,18 @@ function fallbackExplanation(result) {
   ].join("\n");
 }
 
+function contradictsResult(text, result) {
+  const hasFailure = result.exitCode > 0
+    || result.summary?.fail > 0
+    || result.issues?.some((issue) => issue.status === "fail")
+    || result.checks?.some((check) => check.status === "fail")
+    || result.sections?.some((section) => section.status === "fail");
+  if (!hasFailure) return false;
+  return /nothing urgent|no issue|no problem|looks good|all good/i.test(text);
+}
+
 function nextCommandFor(result) {
+  if (result.command === "repair wizard") return "smctl memory replay";
   if (result.command === "repair") return "smctl memory doctor";
   if (result.command === "verify") return "smctl repair";
   return "smctl status";

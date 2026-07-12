@@ -7,13 +7,16 @@ import { localBrainDoctor } from "../src/local-brain.js";
 import { runMemory } from "../src/memory.js";
 import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
+import { runCleanup } from "../src/cleanup.js";
+import { runScore } from "../src/score.js";
 import { runSkillset } from "../src/skillset.js";
 import { runSkills } from "../src/skills.js";
 import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
-import { runRepair } from "../src/repair.js";
+import { runRepair, runRepairWizard } from "../src/repair.js";
+import { runTimeline } from "../src/timeline.js";
 import { runVerify } from "../src/verify.js";
 
 const VERSION = "0.1.0";
@@ -25,14 +28,20 @@ Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl score [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl verify [--json] [--explain] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
   smctl repair [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl repair wizard [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
   smctl init [--json]
+  smctl project [--json] [--base-url <url>] [--limit <n>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
   smctl smoke [--json] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
   smctl memory replay [--json] [--base-url <url>] [--limit <n>] [--apply]
+  smctl memory coach [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl timeline [--json] [--base-url <url>] [--limit <n>]
+  smctl cleanup [--json] [--base-url <url>] [--limit <n>]
   smctl skillset list [--json]
   smctl skillset install <name> [--json]
   smctl skillset doctor [--json]
@@ -56,13 +65,17 @@ Commands:
   install  Install and connect the full Supermemory Harness plugin.
   start    Run the project-aware Guard/enrichment layer.
   status   Show one-screen health for Supermemory, memory, and Guard.
+  score    Show one confidence number for Supermemory memory/retrieval health.
   verify   Prove write, recall, project scoping, and language recall work.
   repair   Diagnose stuck docs, retry loops, store growth, and recall mismatch risks.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
   init     Detect the current project and create a project-aware memory profile.
+  project  Show the active project memory dashboard.
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
+  timeline Show recent Supermemory write activity by day and container.
+  cleanup  Plan safe cleanup for duplicates, test markers, vague notes, and secrets.
   skillset Install app-specific local memory policies.
   skills   Install markdown skills that teach agents better Supermemory behavior.
   smart    Enable optional env-based LLM assistance.
@@ -200,6 +213,8 @@ function parseArgs(argv) {
       args.id = token;
     } else if (args.command === "memory" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "repair" && !args.subcommand) {
+      args.subcommand = token;
     } else if (args.command === "skillset" && !args.subcommand) {
       args.subcommand = token;
     } else if (args.command === "skillset" && !args.id) {
@@ -233,7 +248,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "start", "status", "verify", "repair", "doctor", "init", "setup", "smoke", "memory", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "start", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -292,6 +307,17 @@ async function runCommand(args) {
     });
   }
 
+  if (args.command === "score") {
+    return runScore({
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
+    });
+  }
+
   if (args.command === "verify") {
     return runVerify({
       baseUrl: args.baseUrl,
@@ -306,6 +332,19 @@ async function runCommand(args) {
   }
 
   if (args.command === "repair") {
+    if (args.subcommand === "wizard") {
+      return runRepairWizard({
+        baseUrl: args.baseUrl,
+        home: process.env.HOME,
+        fetch: globalThis.fetch,
+        limit: args.limit,
+        explain: args.explain,
+        ollamaModel: args.ollamaModel
+      });
+    }
+    if (args.subcommand) {
+      throw new Error("Unknown repair action. Use: smctl repair wizard");
+    }
     return runRepair({
       baseUrl: args.baseUrl,
       home: process.env.HOME,
@@ -329,6 +368,17 @@ async function runCommand(args) {
       action: "init",
       cwd: process.cwd(),
       home: process.env.HOME
+    });
+  }
+
+  if (args.command === "project") {
+    return runProject({
+      action: "dashboard",
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 
@@ -360,7 +410,27 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit,
-      apply: args.apply
+      apply: args.apply,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
+    });
+  }
+
+  if (args.command === "timeline") {
+    return runTimeline({
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
+    });
+  }
+
+  if (args.command === "cleanup") {
+    return runCleanup({
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 

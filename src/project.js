@@ -2,11 +2,13 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { analyzeMemory } from "./insights.js";
 
 export async function runProject(options = {}) {
   const action = options.action ?? "doctor";
   if (action === "init") return projectInit(options);
   if (action === "doctor") return projectDoctor(options);
+  if (action === "dashboard") return projectDashboard(options);
   throw new Error(`Unknown project action: ${action}`);
 }
 
@@ -52,6 +54,29 @@ export async function projectDoctor(options = {}) {
     exitCode: summary.fail > 0 ? 1 : 0
   };
   result.text = formatDoctor(result);
+  return result;
+}
+
+export async function projectDashboard(options = {}) {
+  const analysis = await analyzeMemory(options);
+  const profile = analysis.profile;
+  const projectDocs = profile?.containerTag
+    ? analysis.topContainers.find((item) => item.containerTag === profile.containerTag)?.count ?? 0
+    : 0;
+  const result = {
+    command: "project",
+    generatedAt: analysis.generatedAt,
+    baseUrl: analysis.baseUrl,
+    profile,
+    score: analysis.score,
+    sampled: analysis.documents.sampled,
+    projectDocs,
+    topContainers: analysis.topContainers,
+    missingProject: analysis.quality.missingProject.slice(0, 8),
+    next: projectNext(analysis),
+    exitCode: profile ? 0 : 1
+  };
+  result.text = formatDashboard(result);
   return result;
 }
 
@@ -187,6 +212,59 @@ function formatDoctor(result) {
     if (check.detail) lines.push(`   ${check.detail}`);
   }
   return lines.join("\n");
+}
+
+function formatDashboard(result) {
+  const lines = [];
+  lines.push("Supermemory Harness project");
+  lines.push(`Base URL: ${result.baseUrl}`);
+  lines.push(`Memory score: ${result.score.value}/100 (${result.score.label})`);
+  lines.push("");
+
+  if (!result.profile) {
+    lines.push("[warn] No active project profile");
+    lines.push("   Run smctl init from the project folder.");
+  } else {
+    lines.push("[ok] Active project");
+    lines.push(`   ${result.profile.name}`);
+    lines.push("[ok] Project container");
+    lines.push(`   ${result.profile.containerTag}`);
+    lines.push("[ok] Project root");
+    lines.push(`   ${result.profile.root}`);
+    lines.push("[ok] Project memories in sample");
+    lines.push(`   ${result.projectDocs} of ${result.sampled}`);
+  }
+
+  if (result.topContainers.length > 0) {
+    lines.push("");
+    lines.push("Containers:");
+    for (const item of result.topContainers.slice(0, 5)) {
+      lines.push(`   ${item.containerTag}  ${item.count}`);
+    }
+  }
+
+  if (result.missingProject.length > 0) {
+    lines.push("");
+    lines.push("Missing project context:");
+    for (const item of result.missingProject.slice(0, 5)) {
+      lines.push(`   ${item.id}  ${item.title}`);
+    }
+  }
+
+  lines.push("");
+  lines.push(`Recommended: ${result.next[0]}`);
+  lines.push("");
+  lines.push(result.exitCode === 0
+    ? "Result: project memory dashboard is ready."
+    : "Result: project profile is missing.");
+  return lines.join("\n");
+}
+
+function projectNext(analysis) {
+  if (!analysis.profile) return ["smctl init"];
+  if (analysis.quality.missingProject.length > 0) return ["smctl start"];
+  if (analysis.score.value < 70) return ["smctl score"];
+  return ["smctl verify"];
 }
 
 function summarize(checks) {

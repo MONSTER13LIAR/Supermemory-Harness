@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { runMemoryCoach } from "./coach.js";
 
 export async function runMemory(options = {}) {
   const action = options.action ?? "doctor";
@@ -10,7 +11,10 @@ export async function runMemory(options = {}) {
   if (action === "replay") {
     return memoryReplay(options);
   }
-  if (!["doctor", "replay"].includes(action)) {
+  if (action === "coach") {
+    return runMemoryCoach(options);
+  }
+  if (!["doctor", "replay", "coach"].includes(action)) {
     throw new Error(`Unknown memory action: ${action}`);
   }
 }

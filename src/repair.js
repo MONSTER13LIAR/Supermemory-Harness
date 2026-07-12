@@ -2,6 +2,7 @@ import { stat, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { appendExplanation, explainHarnessResult } from "./local-brain.js";
+import { analyzeMemory } from "./insights.js";
 
 const LARGE_DB_BYTES = 120 * 1024 * 1024;
 const SNAPSHOT_RISK_BYTES = 150 * 1024 * 1024;
@@ -109,6 +110,30 @@ export async function runRepair(options = {}) {
   if (options.explain) {
     result.explanation = await explainHarnessResult(result, {
       fetch: context.fetch,
+      ollamaModel: options.ollamaModel
+    });
+    result.text = appendExplanation(result.text, result.explanation);
+  }
+  return result;
+}
+
+export async function runRepairWizard(options = {}) {
+  const analysis = await analyzeMemory(options);
+  const steps = wizardSteps(analysis);
+  const result = {
+    command: "repair wizard",
+    generatedAt: analysis.generatedAt,
+    baseUrl: analysis.baseUrl,
+    mode: "guided plan",
+    score: analysis.score,
+    issues: analysis.issues,
+    steps,
+    exitCode: analysis.issues.some((issue) => issue.status === "fail") ? 1 : 0
+  };
+  result.text = formatRepairWizard(result);
+  if (options.explain) {
+    result.explanation = await explainHarnessResult(result, {
+      fetch: options.fetch,
       ollamaModel: options.ollamaModel
     });
     result.text = appendExplanation(result.text, result.explanation);
@@ -234,6 +259,73 @@ function formatRepair(result) {
     ? "Result: no blocking repair issue found in the sample."
     : "Result: repair issues found. Nothing was changed.");
   return lines.join("\n");
+}
+
+function formatRepairWizard(result) {
+  const lines = [];
+  lines.push("Supermemory Harness repair wizard");
+  lines.push(`Base URL: ${result.baseUrl}`);
+  lines.push("Mode: guided plan; no memories changed");
+  lines.push(`Memory score: ${result.score.value}/100 (${result.score.label})`);
+  lines.push("");
+
+  lines.push("Problems found:");
+  for (const issue of result.issues.filter((item) => item.status !== "ok").slice(0, 6)) {
+    lines.push(`${symbol(issue.status)} ${issue.title}`);
+    if (issue.detail) lines.push(`   ${issue.detail}`);
+  }
+  if (!result.issues.some((item) => item.status !== "ok")) {
+    lines.push("[ok] No blocking repair issue found.");
+  }
+
+  lines.push("");
+  lines.push("Do this in order:");
+  for (const step of result.steps) {
+    lines.push(`${step.number}. ${step.title}`);
+    lines.push(`   ${step.detail}`);
+    if (step.command) lines.push(`   Command: ${step.command}`);
+  }
+
+  lines.push("");
+  lines.push(result.exitCode === 0
+    ? "Result: no repair needed right now."
+    : "Result: repair plan ready. Nothing was changed.");
+  return lines.join("\n");
+}
+
+function wizardSteps(analysis) {
+  const steps = [];
+  const add = (title, detail, command) => {
+    steps.push({ number: steps.length + 1, title, detail, command });
+  };
+
+  if (!analysis.reachable) {
+    add("Fix Supermemory reachability", "Harness cannot read the document inventory yet.", "smctl doctor");
+    return steps;
+  }
+
+  if (analysis.documents.failed.length > 0 || analysis.documents.stale.length > 0 || analysis.logs.retryLoop.length > 0) {
+    add("Restart Supermemory Local", "Clear stuck workers before replaying failed writes.", null);
+    add("Review the replay plan", "Check which failed documents would be resubmitted.", "smctl memory replay");
+    add("Replay only after review", "This creates replacement writes for failed documents.", "smctl memory replay --apply");
+    add("Prove recall works", "Write, search, and project-scoped recall should pass after repair.", "smctl verify");
+    return steps;
+  }
+
+  if (analysis.quality.zeroMemoryContainers.length > 0) {
+    add("Verify write/read behavior", "Some containers have documents but no listed memory entries.", "smctl verify");
+  }
+  if (analysis.quality.risky.length > 0 || analysis.quality.duplicates.length > 0 || analysis.quality.vague.length > 0) {
+    add("Clean memory quality", "Review secrets, duplicates, and vague notes before adding more context.", "smctl cleanup");
+    add("Use the coach", "Rewrite important memories into clearer project-aware context.", "smctl memory coach");
+  }
+  if (analysis.quality.missingProject.length > 0) {
+    add("Start Guard for future writes", "Guard adds tool and project metadata before Supermemory stores the memory.", "smctl start");
+  }
+  if (steps.length === 0) {
+    add("Run a confidence check", "The sample looks healthy; verify end-to-end recall when you have time.", "smctl verify");
+  }
+  return steps;
 }
 
 async function postJson(fetchFn, url, body) {

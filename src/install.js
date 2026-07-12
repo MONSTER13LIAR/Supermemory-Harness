@@ -96,6 +96,8 @@ export async function runInstall(options = {}) {
     nextSteps: [
       "smctl init",
       "smctl start",
+      "smctl score",
+      "smctl repair wizard",
       "smctl status --explain"
     ],
     exitCode: summary.fail > 0 ? 1 : 0,
