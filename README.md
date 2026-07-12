@@ -113,6 +113,18 @@ node ./bin/smctl.js cleanup
 node ./bin/smctl.js project
 ```
 
+Capture hardware or robotics experience:
+
+```bash
+smctl hardware init --name "robot-arm-v1"
+smctl hardware ingest --from ./run.log --session grasp-test
+arduino-cli monitor -p /dev/ttyUSB0 | smctl hardware observe --stdin --device robot-arm-v1 --session live-test
+smctl hardware coach
+smctl hardware replay
+```
+
+Hardware support is an adapter layer. The board or robot does not run Supermemory directly; its software bridge emits logs/events, and Harness compresses them into tagged Supermemory memories.
+
 Check the local Llama brain:
 
 ```bash
@@ -174,6 +186,7 @@ node ./bin/smctl.js guard reject <id>
 - `repair wizard` turns repair diagnostics into a safe ordered plan.
 - `timeline` shows recent write activity by day and top containers.
 - `cleanup` plans safe cleanup for possible secrets, duplicates, old test markers, vague notes, and missing project context; it does not delete memories.
+- `hardware` captures robotics/device logs as local experience memories through file or stdin bridges, with device/session tags.
 - `skillset` installs local app-specific memory policies used by Guard.
 - `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
 - `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.

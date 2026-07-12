@@ -2,6 +2,7 @@
 
 import { runDoctor } from "../src/doctor.js";
 import { runGuard } from "../src/guard.js";
+import { runHardware } from "../src/hardware.js";
 import { runInstall } from "../src/install.js";
 import { localBrainDoctor } from "../src/local-brain.js";
 import { runMemory } from "../src/memory.js";
@@ -42,6 +43,11 @@ Usage:
   smctl memory coach [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl timeline [--json] [--base-url <url>] [--limit <n>]
   smctl cleanup [--json] [--base-url <url>] [--limit <n>]
+  smctl hardware init [--json] [--name <device>] [--device <id>] [--project <name>]
+  smctl hardware ingest [--json] [--dry-run] [--from <log-file>] [--device <id>] [--session <name>] [--base-url <url>]
+  smctl hardware observe [--json] [--dry-run] [--stdin] [--device <id>] [--session <name>] [--base-url <url>]
+  smctl hardware coach [--json] [--device <id>] [--base-url <url>] [--limit <n>]
+  smctl hardware replay [--json] [--device <id>] [--base-url <url>] [--limit <n>]
   smctl skillset list [--json]
   smctl skillset install <name> [--json]
   smctl skillset doctor [--json]
@@ -76,6 +82,7 @@ Commands:
   memory   Inspect memory quality, failed docs, and recall health.
   timeline Show recent Supermemory write activity by day and container.
   cleanup  Plan safe cleanup for duplicates, test markers, vague notes, and secrets.
+  hardware Capture hardware/robot logs as local Supermemory experience memories.
   skillset Install app-specific local memory policies.
   skills   Install markdown skills that teach agents better Supermemory behavior.
   smart    Enable optional env-based LLM assistance.
@@ -99,6 +106,14 @@ function parseArgs(argv) {
     provider: null,
     apiKeyEnv: null,
     model: null,
+    name: null,
+    device: null,
+    project: null,
+    session: null,
+    from: null,
+    stdin: false,
+    serial: null,
+    mqtt: null,
     ollamaModel: "llama3.2:1b-instruct-q4_K_M",
     containerTag: null,
     timeoutMs: 30000,
@@ -143,6 +158,43 @@ function parseArgs(argv) {
       const value = argv[index + 1];
       if (!value) throw new Error("--model requires a value");
       args.model = value;
+      index += 1;
+    } else if (token === "--name") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--name requires a value");
+      args.name = value;
+      index += 1;
+    } else if (token === "--device") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--device requires a value");
+      args.device = value;
+      index += 1;
+    } else if (token === "--project") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--project requires a value");
+      args.project = value;
+      index += 1;
+    } else if (token === "--session") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--session requires a value");
+      args.session = value;
+      index += 1;
+    } else if (token === "--from") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--from requires a value");
+      args.from = value;
+      index += 1;
+    } else if (token === "--stdin") {
+      args.stdin = true;
+    } else if (token === "--serial") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--serial requires a value");
+      args.serial = value;
+      index += 1;
+    } else if (token === "--mqtt") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--mqtt requires a value");
+      args.mqtt = value;
       index += 1;
     } else if (token === "--ollama-model") {
       const value = argv[index + 1];
@@ -213,6 +265,8 @@ function parseArgs(argv) {
       args.id = token;
     } else if (args.command === "memory" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "hardware" && !args.subcommand) {
+      args.subcommand = token;
     } else if (args.command === "repair" && !args.subcommand) {
       args.subcommand = token;
     } else if (args.command === "skillset" && !args.subcommand) {
@@ -248,7 +302,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "start", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "start", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -431,6 +485,26 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit
+    });
+  }
+
+  if (args.command === "hardware") {
+    return runHardware({
+      action: args.subcommand,
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      dryRun: args.dryRun,
+      name: args.name,
+      device: args.device,
+      project: args.project,
+      session: args.session,
+      from: args.from,
+      stdin: args.stdin ? process.stdin : null,
+      serial: args.serial,
+      mqtt: args.mqtt,
+      limit: args.limit,
+      ollamaModel: args.ollamaModel
     });
   }
 
