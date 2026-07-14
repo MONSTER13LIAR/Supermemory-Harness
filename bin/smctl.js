@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runDoctor } from "../src/doctor.js";
+import { runEnhance } from "../src/enhance.js";
 import { runGuard } from "../src/guard.js";
 import { runHardware } from "../src/hardware.js";
 import { runInstall } from "../src/install.js";
@@ -18,7 +19,9 @@ import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
 import { runRepair, runRepairWizard } from "../src/repair.js";
 import { runTimeline } from "../src/timeline.js";
+import { runUi } from "../src/ui.js";
 import { runVerify } from "../src/verify.js";
+import { runWatch } from "../src/watch.js";
 
 const VERSION = "0.1.0";
 
@@ -27,7 +30,10 @@ function printHelp() {
 
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
+  smctl enhance [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
+  smctl watch [--json] [--base-url <url>] [--limit <n>]
+  smctl ui [--port <port>] [--upstream <url>]
   smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl score [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl verify [--json] [--explain] [--base-url <url>] [--container-tag <tag>] [--timeout-ms <ms>]
@@ -69,7 +75,10 @@ Usage:
 
 Commands:
   install  Install and connect the full Supermemory Harness plugin.
+  enhance  Automatically make Supermemory Local agent-memory ready.
   start    Run the project-aware Guard/enrichment layer.
+  watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
+  ui       Embed the Harness Bar into the Supermemory dashboard through a local proxy.
   status   Show one-screen health for Supermemory, memory, and Guard.
   score    Show one confidence number for Supermemory memory/retrieval health.
   verify   Prove write, recall, project scoping, and language recall work.
@@ -122,6 +131,7 @@ function parseArgs(argv) {
     upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
     guardUrl: "http://localhost:6777",
+    sourcePath: null,
     help: false,
     version: false
   };
@@ -257,6 +267,13 @@ function parseArgs(argv) {
       }
       args.guardUrl = value;
       index += 1;
+    } else if (token === "--supermemory-source") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("--supermemory-source requires a value");
+      }
+      args.sourcePath = value;
+      index += 1;
     } else if (!args.command) {
       args.command = token;
     } else if (args.command === "guard" && !args.subcommand) {
@@ -302,7 +319,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "start", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -333,6 +350,19 @@ async function runCommand(args) {
     });
   }
 
+  if (args.command === "enhance") {
+    return runEnhance({
+      baseUrl: args.baseUrl,
+      guardUrl: args.guardUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      dryRun: args.dryRun,
+      sourcePath: args.sourcePath,
+      fetch: globalThis.fetch
+    });
+  }
+
   if (args.command === "start") {
     return runStart({
       baseUrl: args.baseUrl,
@@ -344,6 +374,28 @@ async function runCommand(args) {
       dryRun: args.dryRun,
       explain: args.explain,
       ollamaModel: args.ollamaModel,
+      fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "watch") {
+    return runWatch({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
+    });
+  }
+
+  if (args.command === "ui") {
+    return runUi({
+      upstream: args.upstream,
+      port: args.port === 6777 ? 6778 : args.port,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
       fetch: globalThis.fetch
     });
   }

@@ -18,10 +18,25 @@ Install and connect Harness:
 
 ```bash
 npm install -g github:MONSTER13LIAR/Supermemory-Harness
-smctl install
+smctl enhance
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl install` is the normal user flow: it shows the Harness startup screen, checks Supermemory Local, writes Harness config, installs memory behavior skills, and asks for optional Smart Assist setup in the terminal.
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, prepares the embedded Supermemory dashboard experience, and tells the user exactly what remains before coding-agent memory is trustworthy.
+
+When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
+
+- Agent Memory readiness panel on the Supermemory Desktop home screen.
+- Local-first coding-agent MCP setup: `http://localhost:6767/mcp`, with `SUPERMEMORY_MCP_URL` as an override.
+- Project Scope Lock for MCP graph/data reads, so graph/list views do not accidentally read across every project when the user expects the active/default project.
+- Fail-open OpenAI middleware, so a temporary Supermemory retrieval failure does not crash the user's OpenAI chat request unless strict mode is explicitly enabled.
+
+To point Harness at a checkout explicitly:
+
+```bash
+smctl enhance --supermemory-source /path/to/supermemory
+```
+
+`smctl install` remains available as the lower-level install command.
 
 For local development from this repo:
 
@@ -52,10 +67,33 @@ smctl help
 Check the full Harness state:
 
 ```bash
+smctl enhance
+smctl watch
+smctl ui
 smctl status
 smctl status --explain
 smctl score
 ```
+
+`watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
+
+`ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. Keep `supermemory-server` running on `localhost:6767`, then run:
+
+```bash
+smctl ui
+```
+
+Open `http://localhost:6778` to use the Supermemory dashboard with the Harness Bar at the top.
+
+The embedded panel includes an in-Supermemory command center:
+
+- Overview: the path from local server to connected coding tools to verified recall.
+- Trust: a memory flight recorder for failed writes, missing project context, secrets, vague notes, duplicates, empty recall containers, and store risk.
+- Setup: safe local setup actions and manual coding-tool installer steps.
+- Memory: queue, dreaming, failed writes, and a verify probe.
+- Repair: the ordered repair plan from Harness diagnostics.
+- Guard: pending risky writes.
+- Events: recent Supermemory write activity.
 
 When something is wrong, use the guided path instead of guessing commands:
 
@@ -169,9 +207,13 @@ node ./bin/smctl.js guard reject <id>
 ## Current Scope
 
 - `doctor` is read-only diagnostics.
+- `enhance` is the automatic Supermemory Harness setup path: make Supermemory Local agent-memory ready, apply the native Supermemory Desktop source enhancement when available, otherwise prepare the embedded dashboard path and verify the memory loop.
 - `install` is the one-command onboarding flow for the Harness plugin.
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
+- `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
+- `ui` serves the Supermemory dashboard through a local proxy and injects the Harness Bar into the page.
+- `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
 - `score` gives one confidence number for whether Supermemory memory/retrieval looks trustworthy.
 - `status --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
