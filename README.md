@@ -69,6 +69,7 @@ Check the full Harness state:
 ```bash
 smctl enhance
 smctl watch
+smctl trust
 smctl ui
 smctl status
 smctl status --explain
@@ -76,6 +77,20 @@ smctl score
 ```
 
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
+
+`trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, and vague memories. It is read-only by default:
+
+```bash
+smctl trust
+```
+
+For a live proof, run:
+
+```bash
+smctl trust --probe
+```
+
+Probe mode writes a harmless marker and verifies ingest, processing, search, and container-scoped recall.
 
 `ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. Keep `supermemory-server` running on `localhost:6767`, then run:
 
@@ -88,7 +103,7 @@ Open `http://localhost:6778` to use the Supermemory dashboard with the Harness B
 The embedded panel includes an in-Supermemory command center:
 
 - Overview: the path from local server to connected coding tools to verified recall.
-- Trust: a memory flight recorder for failed writes, missing project context, secrets, vague notes, duplicates, empty recall containers, and store risk.
+- Trust: the Memory Trust Doctor plus a flight recorder for failed writes, missing project context, secrets, vague notes, duplicates, empty recall containers, and store risk.
 - Setup: safe local setup actions and manual coding-tool installer steps.
 - Memory: queue, dreaming, failed writes, and a verify probe.
 - Repair: the ordered repair plan from Harness diagnostics.
@@ -212,6 +227,7 @@ node ./bin/smctl.js guard reject <id>
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
+- `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
 - `ui` serves the Supermemory dashboard through a local proxy and injects the Harness Bar into the page.
 - `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.

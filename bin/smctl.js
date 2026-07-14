@@ -19,6 +19,7 @@ import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
 import { runRepair, runRepairWizard } from "../src/repair.js";
 import { runTimeline } from "../src/timeline.js";
+import { runTrust } from "../src/trust.js";
 import { runUi } from "../src/ui.js";
 import { runVerify } from "../src/verify.js";
 import { runWatch } from "../src/watch.js";
@@ -33,6 +34,7 @@ Usage:
   smctl enhance [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
+  smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
   smctl ui [--port <port>] [--upstream <url>]
   smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl score [--json] [--explain] [--base-url <url>] [--limit <n>]
@@ -78,6 +80,7 @@ Commands:
   enhance  Automatically make Supermemory Local agent-memory ready.
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
+  trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
   ui       Embed the Harness Bar into the Supermemory dashboard through a local proxy.
   status   Show one-screen health for Supermemory, memory, and Guard.
   score    Show one confidence number for Supermemory memory/retrieval health.
@@ -110,6 +113,7 @@ function parseArgs(argv) {
     apply: false,
     yes: false,
     prompt: false,
+    probe: false,
     explain: false,
     target: "all",
     provider: null,
@@ -152,6 +156,8 @@ function parseArgs(argv) {
       args.yes = true;
     } else if (token === "--prompt") {
       args.prompt = true;
+    } else if (token === "--probe") {
+      args.probe = true;
     } else if (token === "--explain") {
       args.explain = true;
     } else if (token === "--provider") {
@@ -319,7 +325,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "trust", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -386,6 +392,19 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit
+    });
+  }
+
+  if (args.command === "trust") {
+    return runTrust({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      probe: args.probe,
+      timeoutMs: args.timeoutMs
     });
   }
 

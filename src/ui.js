@@ -4,6 +4,7 @@ import { analyzeMemory } from "./insights.js";
 import { runProject } from "./project.js";
 import { runRepair } from "./repair.js";
 import { runSetup } from "./setup.js";
+import { runTrust } from "./trust.js";
 import { runVerify } from "./verify.js";
 import { runWatch } from "./watch.js";
 
@@ -70,6 +71,30 @@ async function handleRequest(context, request, response) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/__smctl/trust") {
+    sendJson(response, 200, await safeResult(() => runTrust({
+      baseUrl: context.upstream,
+      home: context.home,
+      cwd: context.cwd,
+      fetch: context.fetch,
+      limit: 50
+    })));
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/__smctl/trust/probe") {
+    sendJson(response, 200, await safeResult(() => runTrust({
+      baseUrl: context.upstream,
+      home: context.home,
+      cwd: context.cwd,
+      fetch: context.fetch,
+      limit: 50,
+      probe: true,
+      timeoutMs: 15000
+    })));
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/__smctl/setup/apply") {
     const setup = await runSetup({
       baseUrl: context.upstream,
@@ -119,7 +144,7 @@ async function embeddedSummary(context) {
 }
 
 async function embeddedPanel(context) {
-  const [summary, setup, repair, project, analysis] = await Promise.all([
+  const [summary, setup, repair, project, analysis, trust] = await Promise.all([
     embeddedSummary(context),
     safeResult(() => runSetup({
       baseUrl: context.upstream,
@@ -146,6 +171,13 @@ async function embeddedPanel(context) {
       home: context.home,
       fetch: context.fetch,
       limit: 50
+    })),
+    safeResult(() => runTrust({
+      baseUrl: context.upstream,
+      home: context.home,
+      cwd: context.cwd,
+      fetch: context.fetch,
+      limit: 50
     }))
   ]);
 
@@ -156,7 +188,8 @@ async function embeddedPanel(context) {
     repair,
     project,
     analysis,
-    journeys: journeySteps({ summary, setup, repair, project, analysis })
+    trust,
+    journeys: journeySteps({ summary, setup, repair, project, analysis, trust })
   };
 }
 
@@ -171,7 +204,7 @@ async function safeResult(fn) {
   }
 }
 
-function journeySteps({ summary, setup, repair, project, analysis }) {
+function journeySteps({ summary, setup, repair, project, analysis, trust }) {
   const steps = [];
   steps.push({
     id: "local",
@@ -198,13 +231,15 @@ function journeySteps({ summary, setup, repair, project, analysis }) {
 
   steps.push({
     id: "memory",
-    title: "Verify write and recall",
-    status: summary.memory.failed > 0 || repair?.summary?.fail > 0 || analysis?.score?.value < 70 ? "attention" : "todo",
+    title: "Trust memory before relying on it",
+    status: trust?.summary?.fail > 0 || summary.memory.failed > 0 || repair?.summary?.fail > 0 || analysis?.score?.value < 70 ? "attention" : trust?.score?.value >= 85 ? "done" : "todo",
     detail: summary.memory.failed > 0
       ? `${summary.memory.failed} failed write(s) need repair before trusting recall.`
+      : trust?.score
+        ? `Trust Doctor: ${trust.score.value}/100 (${trust.score.label}).`
       : analysis?.score
         ? `Trust score ${analysis.score.value}/100 (${analysis.score.label}).`
-        : "Run the verify probe from this panel to prove write/search/container behavior."
+        : "Run Trust Doctor from this panel to prove scope, health, and resilience."
   });
 
   steps.push({
@@ -584,6 +619,7 @@ function harnessBarAsset() {
     const repair = panelData.repair || {};
     const project = panelData.project || {};
     const analysis = panelData.analysis || {};
+    const trust = panelData.trust || {};
     if (activeTab === "Overview") {
       body.innerHTML = '<div class="smctl-grid">'
         + card("Local", (summary.local && summary.local.status) || "unknown")
@@ -600,18 +636,20 @@ function harnessBarAsset() {
     if (activeTab === "Trust") {
       const quality = analysis.quality || {};
       const docs = analysis.documents || {};
-      const score = analysis.score || {};
-      const issues = analysis.issues || [];
+      const score = trust.score || analysis.score || {};
+      const checks = trust.checks || [];
+      const issues = checks.length ? checks : (analysis.issues || []);
       body.innerHTML = '<div class="smctl-grid">'
         + card("Trust score", score.value == null ? "unknown" : score.value + "/100")
         + card("Label", score.label || "unknown")
+        + card("Mode", trust.mode || "read-only")
         + card("Failed writes", docs.failed ? docs.failed.length : 0)
         + card("Missing project", quality.missingProject ? quality.missingProject.length : 0)
         + card("Possible secrets", quality.risky ? quality.risky.length : 0)
-        + card("Duplicates", quality.duplicates ? quality.duplicates.length : 0)
-        + '</div><div class="smctl-list" style="margin-top:12px">'
+        + '</div><div class="smctl-actions"><button class="smctl-action" data-action="trustProbe">Run live trust probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
         + (issues.length ? issues.map(function (item) { return row(item.title, (item.detail || "") + (item.command ? " -> " + item.command : ""), item.status); }).join("") : row("No trust issues", "The sampled memory flow looks healthy.", "done"))
         + '</div>';
+      wireActions();
       return;
     }
     if (activeTab === "Setup") {
@@ -678,7 +716,7 @@ function harnessBarAsset() {
         }
         button.disabled = true;
         button.textContent = action === "setup" ? "Applying..." : "Running...";
-        const url = action === "setup" ? "/__smctl/setup/apply" : "/__smctl/verify";
+        const url = action === "setup" ? "/__smctl/setup/apply" : action === "trustProbe" ? "/__smctl/trust/probe" : "/__smctl/verify";
         fetch(url, { method: "POST", cache: "no-store" })
           .then(function (response) { return response.json(); })
           .then(function (result) {
