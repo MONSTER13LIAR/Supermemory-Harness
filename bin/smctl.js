@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runDoctor } from "../src/doctor.js";
+import { runAgentBridge } from "../src/agent-bridge.js";
 import { runEnhance } from "../src/enhance.js";
 import { runGuard } from "../src/guard.js";
 import { runHardware } from "../src/hardware.js";
@@ -17,6 +18,7 @@ import { runSmart } from "../src/smart.js";
 import { runSmoke } from "../src/smoke.js";
 import { runStart } from "../src/start.js";
 import { runStatus } from "../src/status.js";
+import { runSupermemoryTerminal } from "../src/supermemory-terminal.js";
 import { runRepair, runRepairWizard } from "../src/repair.js";
 import { runTimeline } from "../src/timeline.js";
 import { runTrust } from "../src/trust.js";
@@ -35,6 +37,9 @@ Usage:
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
+  smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
+  smctl agent connect [codex|claude|all] [--json] [--dry-run] [--base-url <url>]
+  smctl agent status [--json]
   smctl ui [--port <port>] [--upstream <url>]
   smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl score [--json] [--explain] [--base-url <url>] [--limit <n>]
@@ -81,6 +86,8 @@ Commands:
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
   trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
+  supermemory Start Supermemory Local with Harness health events in the same terminal.
+  agent    Connect Codex/Claude-style agents to Harness diagnostics.
   ui       Embed the Harness Bar into the Supermemory dashboard through a local proxy.
   status   Show one-screen health for Supermemory, memory, and Guard.
   score    Show one confidence number for Supermemory memory/retrieval health.
@@ -131,6 +138,7 @@ function parseArgs(argv) {
     containerTag: null,
     timeoutMs: 30000,
     limit: 50,
+    intervalMs: 30000,
     port: 6777,
     upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
@@ -245,6 +253,13 @@ function parseArgs(argv) {
       }
       args.limit = value;
       index += 1;
+    } else if (token === "--interval-ms") {
+      const value = Number(argv[index + 1]);
+      if (!Number.isInteger(value) || value <= 0) {
+        throw new Error("--interval-ms requires a positive integer");
+      }
+      args.intervalMs = value;
+      index += 1;
     } else if (token === "--port") {
       const value = Number(argv[index + 1]);
       if (!Number.isInteger(value) || value <= 0 || value > 65535) {
@@ -304,6 +319,12 @@ function parseArgs(argv) {
       args.subcommand = token;
     } else if (args.command === "brain" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "supermemory" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "agent" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "agent" && !args.id) {
+      args.id = token;
     } else {
       throw new Error(`Unknown argument: ${token}`);
     }
@@ -325,7 +346,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "trust", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "trust", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -416,6 +437,32 @@ async function runCommand(args) {
       env: process.env,
       home: process.env.HOME,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "supermemory") {
+    return runSupermemoryTerminal({
+      action: args.subcommand,
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      dryRun: args.dryRun,
+      intervalMs: args.intervalMs
+    });
+  }
+
+  if (args.command === "agent") {
+    return runAgentBridge({
+      action: args.subcommand,
+      target: args.id ?? "all",
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      dryRun: args.dryRun
     });
   }
 

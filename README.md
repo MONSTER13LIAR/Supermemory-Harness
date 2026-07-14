@@ -70,6 +70,8 @@ Check the full Harness state:
 smctl enhance
 smctl watch
 smctl trust
+smctl supermemory start
+smctl agent connect all
 smctl ui
 smctl status
 smctl status --explain
@@ -91,6 +93,30 @@ smctl trust --probe
 ```
 
 Probe mode writes a harmless marker and verifies ingest, processing, search, and container-scoped recall.
+
+`supermemory start` is the terminal-native mode. It starts `supermemory-server`, streams Supermemory's own output, and injects Harness health events into the same terminal stream:
+
+```bash
+smctl supermemory start
+```
+
+Example stream:
+
+```text
+[supermemory] server listening on :6767
+[harness] startup Trust 82/100 (Usable); 0 fail, 2 warn
+[harness] Local: online | Agents: 2/4 | Writes: 12 | Queue: 0
+```
+
+`agent connect` installs a local bridge for Codex and Claude Code-style agents so they know how to query Harness before relying on Supermemory:
+
+```bash
+smctl agent connect codex
+smctl agent connect claude
+smctl agent status
+```
+
+The bridge tells agents to run `smctl trust --json`, `smctl repair wizard`, and `smctl trust --probe` when the user asks what is happening with Supermemory.
 
 `ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. Keep `supermemory-server` running on `localhost:6767`, then run:
 
@@ -228,6 +254,8 @@ node ./bin/smctl.js guard reject <id>
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
 - `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
+- `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
+- `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
 - `ui` serves the Supermemory dashboard through a local proxy and injects the Harness Bar into the page.
 - `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
