@@ -76,7 +76,9 @@ Harness fix:
   source anchors; surface them in trust, repair, UI, and terminal overlay.
 
 Status:
-- Planned.
+- Shipped for Codex/Claude bridge installs. Agent bridge instructions now include a Harness
+  Compaction Contract that preserves literal request, end state, files touched, negative
+  constraints, memory decisions, and remaining work before compaction/handoff.
 
 ## Gap 5: Retrieval Quality Is Not Proved Before The Agent Relies On It
 

@@ -126,6 +126,20 @@ This file teaches ${agent} how to communicate with Supermemory Harness.
 - If the user wants a live proof, run: smctl trust --probe
 - Use project-scoped Supermemory memory whenever an active project profile exists.
 - Do not ask the user to inspect Supermemory logs first; run Harness diagnostics and summarize the result.
+- Before compacting, summarizing, or handing off a long coding session, preserve the Harness compaction contract below and store the result as project-scoped memory when possible.
+
+## Harness Compaction Contract
+
+When context is getting large, preserve these fields exactly and do not replace them with a vague progress summary:
+
+- Literal user request: the user's actual goal and wording when it affects implementation.
+- End state: what must be true when the work is done.
+- Files touched: paths changed, tests added, commands run, commits made, and pushes completed.
+- Negative constraints: things the user forbade, approaches rejected, and failed attempts.
+- Memory decisions: project scope, container tag, relevant prior memories, and any recall/trust warnings.
+- Remaining work: blockers, next command, and the smallest safe continuation step.
+
+If any of those fields are unknown, write "unknown" instead of inventing it.
 
 ## Current Supermemory Target
 
