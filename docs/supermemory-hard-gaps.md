@@ -135,7 +135,9 @@ Harness fix:
   possible so risky writes are redacted before Supermemory stores them.
 
 Status:
-- Partially shipped through Guard risk checks. Needs stronger detectors and native write patch.
+- Shipped for the Guard write path. Guard now detects broader credential shapes and recursively
+  redacts secret-like values before storing pending writes or forwarding approved writes upstream.
+  Native source-level write interception remains a later hardening step.
 
 ## Gap 9: MCP Connection Reliability Is A Known Failure Mode
 

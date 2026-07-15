@@ -8,6 +8,17 @@ import { applySkillsetToRequest, readActiveSkillset } from "./skillset.js";
 
 const WRITE_ROUTES = new Set(["POST /v3/documents"]);
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
+const SECRET_PATTERNS = [
+  ["OpenAI key", /sk-[A-Za-z0-9_-]{20,}/g],
+  ["Supermemory key", /sm_[A-Za-z0-9_-]{40,}/g],
+  ["GitHub token", /gh[pousr]_[A-Za-z0-9_]{30,}/g],
+  ["AWS access key", /AKIA[0-9A-Z]{16}/g],
+  ["Slack token", /xox[baprs]-[A-Za-z0-9-]{20,}/g],
+  ["Google API key", /AIza[0-9A-Za-z_-]{35}/g],
+  ["JWT", /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g],
+  ["Private key", /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g],
+  ["env secret assignment", /\b[A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY)\s*=\s*["']?[^"'\s,;]+/g]
+];
 
 export async function runGuard(options = {}) {
   const context = guardContext(options);
@@ -170,7 +181,9 @@ export async function quarantineWrite(context, request) {
   const skillset = await readActiveSkillset(context.home);
   const skillsetResult = applySkillsetToRequest(skillset, request);
   const projectResult = applyProjectToRequest(project, request);
-  const body = applyContextMetadata(request.body, skillsetResult, projectResult);
+  const baseRisk = scanRisk(request);
+  const redactedBody = redactSecretsFromValue(request.body);
+  const body = applyContextMetadata(redactedBody, skillsetResult, projectResult);
   const item = {
     id: `guard_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     status: "pending",
@@ -181,7 +194,7 @@ export async function quarantineWrite(context, request) {
       body,
       rawBody: JSON.stringify(body)
     },
-    preview: previewRequest(request),
+    preview: previewRequest({ ...request, body }),
     skillset: skillset ? {
       name: skillset.name,
       title: skillset.title,
@@ -194,7 +207,7 @@ export async function quarantineWrite(context, request) {
       containerTag: project.containerTag,
       metadata: projectResult.metadata
     } : null,
-    risk: mergeRisk(scanRisk(request), skillsetResult.findings)
+    risk: mergeRisk(baseRisk, skillsetResult.findings)
   };
   pending.push(item);
   await writePending(context, pending);
@@ -275,18 +288,11 @@ function scanRisk(request) {
   const findings = [];
   const text = JSON.stringify(request.body ?? {});
 
-  const secretPatterns = [
-    ["OpenAI key", /sk-[A-Za-z0-9_-]{20,}/],
-    ["Supermemory key", /sm_[A-Za-z0-9_-]{40,}/],
-    ["GitHub token", /gh[pousr]_[A-Za-z0-9_]{30,}/],
-    ["AWS access key", /AKIA[0-9A-Z]{16}/],
-    ["Private key", /-----BEGIN [A-Z ]*PRIVATE KEY-----/]
-  ];
-
-  for (const [label, pattern] of secretPatterns) {
+  for (const [label, pattern] of SECRET_PATTERNS) {
     if (pattern.test(text)) {
       findings.push({ severity: "high", type: "secret", message: `${label} pattern detected` });
     }
+    pattern.lastIndex = 0;
   }
 
   const injectionPatterns = [
@@ -311,6 +317,24 @@ function scanRisk(request) {
       : findings.length > 0 ? "medium" : "low",
     findings
   };
+}
+
+function redactSecretsFromValue(value) {
+  if (typeof value === "string") return redactSecretsFromString(value);
+  if (Array.isArray(value)) return value.map(redactSecretsFromValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, redactSecretsFromValue(item)])
+    );
+  }
+  return value;
+}
+
+function redactSecretsFromString(value) {
+  return SECRET_PATTERNS.reduce((text, [, pattern]) => {
+    pattern.lastIndex = 0;
+    return text.replace(pattern, "[REDACTED]");
+  }, value);
 }
 
 function previewRequest(request) {

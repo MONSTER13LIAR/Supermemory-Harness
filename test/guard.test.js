@@ -57,6 +57,64 @@ test("guard approve forwards stored write and removes it from inbox", async () =
   assert.equal(inbox.pending.length, 0);
 });
 
+test("guard redacts detected secrets before storing or forwarding writes", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  const context = guardContext({ home });
+  const secret = "sk-testsecretvalue1234567890";
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: {
+      content: `Remember the key is ${secret}`,
+      metadata: {
+        note: `OPENAI_API_KEY=${secret}`
+      }
+    },
+    rawBody: JSON.stringify({ content: `Remember the key is ${secret}` })
+  });
+
+  assert.equal(item.risk.level, "high");
+  assert.match(item.request.body.content, /\[REDACTED\]/);
+  assert.match(item.request.body.metadata.note, /\[REDACTED\]/);
+  assert.doesNotMatch(JSON.stringify(item), new RegExp(secret));
+
+  const forwarded = [];
+  const approved = await runGuard({
+    home,
+    action: "approve",
+    id: item.id,
+    fetch: async (url, init) => {
+      forwarded.push({ url, init });
+      return response(200, { id: "upstream_doc", status: "queued" });
+    }
+  });
+
+  assert.equal(approved.exitCode, 0);
+  assert.doesNotMatch(forwarded[0].init.body, new RegExp(secret));
+  assert.match(forwarded[0].init.body, /\[REDACTED\]/);
+});
+
+test("guard detects common untagged credential shapes", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  const context = guardContext({ home });
+  const slackToken = ["xoxb", "123456789012", "abcdefghijklmnop"].join("-");
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: {
+      content: `Debug log included SLACK_BOT_TOKEN=${slackToken}`
+    },
+    rawBody: "{}"
+  });
+
+  assert.equal(item.risk.level, "high");
+  assert.match(item.request.body.content, /\[REDACTED\]/);
+});
+
 test("guard applies active skillset metadata", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
   await runSkillset({ home, action: "install", name: "developer" });
