@@ -93,7 +93,8 @@ Harness fix:
   semantic search, multilingual recall, and negative controls.
 
 Status:
-- Partially shipped through verify/smoke/trust probes. Needs canary suite.
+- Shipped. `smctl verify` now runs a recall canary suite with exact scoped recall,
+  semantic scoped recall, negative control, and cross-container isolation probes.
 
 ## Gap 6: Project/User Scope Is Easy To Get Wrong
 

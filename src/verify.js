@@ -50,6 +50,9 @@ export async function runVerify(options = {}) {
     checks.push(warn("Possible container mismatch", "Memory appears searchable without the expected project container"));
   }
 
+  const canaries = await recallCanarySuite(context, containerTag, marker);
+  checks.push(...canaries.checks);
+
   const language = await languageProbe(context, containerTag, options.languageMarker);
   checks.push(language.status === "ok"
     ? ok("Language recall probe", language.detail)
@@ -70,6 +73,7 @@ export async function runVerify(options = {}) {
       elapsedMs: smoke.elapsedMs
     },
     language,
+    canaries: canaries.results,
     checks,
     summary,
     exitCode: summary.fail > 0 ? 1 : 0
@@ -83,6 +87,98 @@ export async function runVerify(options = {}) {
     result.text = appendExplanation(result.text, result.explanation);
   }
   return result;
+}
+
+async function recallCanarySuite(context, containerTag, marker) {
+  const semanticPhrase = `Harness canary durable decision ${marker}`;
+  const wrongContainer = `${containerTag}:wrong-scope`;
+  const probes = [
+    {
+      name: "exact scoped recall",
+      query: marker,
+      containerTag,
+      expectFound: true
+    },
+    {
+      name: "semantic scoped recall",
+      query: "durable decision harness canary",
+      containerTag,
+      expectFound: true
+    },
+    {
+      name: "negative recall control",
+      query: `absent-${marker}`,
+      containerTag,
+      expectFound: false
+    },
+    {
+      name: "cross-container isolation",
+      query: marker,
+      containerTag: wrongContainer,
+      expectFound: false
+    }
+  ];
+
+  const add = await postJson(context.fetch, `${context.baseUrl}/v3/documents`, {
+    content: [
+      "Supermemory Harness recall canary.",
+      `Exact marker: ${marker}.`,
+      semanticPhrase,
+      "This document verifies scoped exact recall, semantic recall, negative controls, and cross-container isolation."
+    ].join(" "),
+    containerTag,
+    customId: `smctl-canary-${marker}`,
+    metadata: {
+      source: "smctl-verify",
+      smctlProbe: "recall-canary",
+      marker
+    }
+  });
+
+  if (!add.ok || !add.body?.id) {
+    return {
+      checks: [warn("Recall canary suite", `canary write skipped: ${responseDetail(add)}`)],
+      results: []
+    };
+  }
+
+  const doc = await waitForDocument(context, add.body.id, Date.now());
+  if (doc.status !== "done") {
+    return {
+      checks: [warn("Recall canary suite", `canary document status ${doc.status ?? "unknown"}`)],
+      results: [{ id: add.body.id, status: doc.status ?? "unknown" }]
+    };
+  }
+
+  const results = [];
+  for (const probe of probes) {
+    const response = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+      q: probe.query,
+      containerTag: probe.containerTag,
+      limit: 5,
+      includeFullDocs: true
+    });
+    const text = JSON.stringify(response.body ?? {});
+    const found = response.ok && text.includes(marker);
+    const passed = probe.expectFound ? found : !found;
+    results.push({
+      name: probe.name,
+      query: probe.query,
+      containerTag: probe.containerTag,
+      expectFound: probe.expectFound,
+      found,
+      passed,
+      detail: responseDetail(response)
+    });
+  }
+
+  const failed = results.filter((result) => !result.passed);
+  return {
+    results,
+    checks: failed.length === 0
+      ? [ok("Recall canary suite", "exact, semantic, negative, and cross-container probes passed")]
+      : [fail("Recall canary suite", failed.map((result) => result.name).join(", "))]
+  };
 }
 
 async function probeContainerSearch(context, containerTag, marker) {

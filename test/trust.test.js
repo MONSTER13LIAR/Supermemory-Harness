@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { runTrust } from "../src/trust.js";
 
+let latestProbeMarker = "marker";
+
 test("trust doctor reports scoped memory health without writing by default", async () => {
   const home = await fakeHome();
   const result = await runTrust({
@@ -78,6 +80,8 @@ async function fakeFetch(url, init = {}) {
     });
   }
   if (path === "/v3/documents" && init.method === "POST") {
+    const body = JSON.parse(init.body || "{}");
+    latestProbeMarker = String(body.content ?? "").match(/smctl_verify_[a-z0-9_]+/)?.[0] ?? latestProbeMarker;
     return response(200, { id: "probe-doc", status: "queued" });
   }
   if (path === "/v3/documents/probe-doc") {
@@ -85,7 +89,10 @@ async function fakeFetch(url, init = {}) {
   }
   if (path === "/v3/search") {
     const body = JSON.parse(init.body || "{}");
-    return response(200, { total: 1, results: [{ content: body.q || "marker" }] });
+    if (String(body.containerTag ?? "").includes("wrong-scope") || String(body.q ?? "").startsWith("absent-")) {
+      return response(200, { total: 0, results: [] });
+    }
+    return response(200, { total: 1, results: [{ content: `${body.q || "marker"} ${latestProbeMarker}` }] });
   }
   return response(404, { error: "not found" });
 }

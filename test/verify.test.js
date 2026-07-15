@@ -35,9 +35,11 @@ test("verify proves project scoped write, recall, and language probe", async () 
       }
       if (url.endsWith("/v3/search")) {
         const body = JSON.parse(init.body);
+        const terms = String(body.q).toLowerCase().split(/\s+/).filter(Boolean);
         const found = [...documents.values()].filter((doc) => {
           const sameContainer = !body.containerTag || doc.containerTag === body.containerTag;
-          return sameContainer && doc.content.includes(body.q);
+          const content = doc.content.toLowerCase();
+          return sameContainer && (doc.content.includes(body.q) || terms.every((term) => content.includes(term)));
         });
         return response(200, { total: found.length, results: found });
       }
@@ -47,6 +49,8 @@ test("verify proves project scoped write, recall, and language probe", async () 
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.containerTag, "project:verify-project");
+  assert.equal(result.canaries.every((canary) => canary.passed), true);
+  assert.match(result.text, /Recall canary suite/);
   assert.match(result.text, /Language recall probe/);
 });
 
