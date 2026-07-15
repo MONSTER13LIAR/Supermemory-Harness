@@ -46,7 +46,9 @@ Harness fix:
   failed writes, project scope, recall probe status, bridge status, and exact next command.
 
 Status:
-- Partially shipped. Existing overlay prints trust and watch snapshots. Needs richer diagnosis.
+- Shipped. The terminal overlay now prints trust score, blockers/warnings, agent bridge state,
+  memory queue/failed/dreaming state, Guard risk, and the next command directly into the
+  Supermemory server log stream.
 
 ## Gap 3: Dynamic Dreaming Has No Review, Diff, Or Grounding View
 

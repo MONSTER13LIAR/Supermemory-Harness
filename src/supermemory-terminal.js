@@ -86,10 +86,6 @@ async function printHarnessSnapshot(context, label) {
     fetch: context.fetch,
     limit: 25
   });
-  process.stdout.write(`[harness] ${label} ${now} Trust ${trust.score.value}/100 (${trust.score.label}); ${trust.summary.fail} fail, ${trust.summary.warn} warn\n`);
-  if (trust.next.length > 0) {
-    process.stdout.write(`[harness] next: ${trust.next.join(" | ")}\n`);
-  }
 
   const watch = await runWatch({
     baseUrl: context.baseUrl,
@@ -99,7 +95,37 @@ async function printHarnessSnapshot(context, label) {
     fetch: context.fetch,
     limit: 8
   });
-  process.stdout.write(`[harness] ${watch.bar.join(" | ")}\n`);
+  for (const line of formatHarnessSnapshotLines({ label, now, trust, watch })) {
+    process.stdout.write(`${line}\n`);
+  }
+}
+
+export function formatHarnessSnapshotLines({ label, now, trust, watch }) {
+  const lines = [
+    `[harness] ${label} ${now} Trust ${trust.score.value}/100 (${trust.score.label}); ${trust.summary.fail} fail, ${trust.summary.warn} warn`
+  ];
+
+  const failures = trust.checks.filter((check) => check.status === "fail").slice(0, 2);
+  const warnings = trust.checks.filter((check) => check.status === "warn").slice(0, 2);
+  if (failures.length > 0) {
+    for (const failure of failures) {
+      lines.push(`[harness] blocker: ${failure.title} - ${failure.detail}`);
+    }
+  } else if (warnings.length > 0) {
+    for (const warning of warnings) {
+      lines.push(`[harness] warning: ${warning.title} - ${warning.detail}`);
+    }
+  } else {
+    lines.push("[harness] blockers: none detected in current trust snapshot");
+  }
+
+  lines.push(`[harness] agents: ${watch.agents.configured}/${watch.agents.total} configured; active: ${watch.agents.active.length ? watch.agents.active.join(", ") : "none"}`);
+  lines.push(`[harness] memory: writes ${watch.memory.sampled}; queue ${watch.memory.queued}; failed ${watch.memory.failed}; dreaming ${watch.memory.dreaming.label}`);
+  lines.push(`[harness] guard: ${watch.guard.pending} pending; risk low:${watch.guard.risk.low} medium:${watch.guard.risk.medium} high:${watch.guard.risk.high}`);
+
+  const next = trust.next.length > 0 ? trust.next.join(" | ") : watch.next;
+  lines.push(`[harness] next: ${next}`);
+  return lines;
 }
 
 async function findSupermemoryServer(context) {
