@@ -21,7 +21,7 @@ npm install -g github:MONSTER13LIAR/Supermemory-Harness
 smctl enhance
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, prepares the embedded Supermemory dashboard experience, and tells the user exactly what remains before coding-agent memory is trustworthy.
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, connects Codex/Claude-style agents to Harness diagnostics, prepares the embedded Supermemory dashboard experience, and tells the user exactly what remains before coding-agent memory is trustworthy.
 
 When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
 
@@ -44,16 +44,16 @@ For local development from this repo:
 node ./bin/smctl.js install
 ```
 
+After enhancement, run Supermemory through Harness when you want the normal terminal server view plus Harness trust events in the same stream:
+
+```bash
+smctl supermemory start
+```
+
 Initialize the current app/project so Harness can tag Supermemory writes with project context:
 
 ```bash
 smctl init
-```
-
-Start the project-aware Guard/enrichment layer:
-
-```bash
-smctl start
 ```
 
 The commands below are optional diagnostics and advanced controls.
@@ -108,7 +108,7 @@ Example stream:
 [harness] Local: online | Agents: 2/4 | Writes: 12 | Queue: 0
 ```
 
-`agent connect` installs a local bridge for Codex and Claude Code-style agents so they know how to query Harness before relying on Supermemory:
+`agent connect` installs a local bridge for Codex and Claude Code-style agents so they know how to query Harness before relying on Supermemory. `smctl enhance` already runs this automatically; the command remains available when you want to refresh or inspect the bridge directly:
 
 ```bash
 smctl agent connect codex

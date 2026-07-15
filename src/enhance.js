@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
+import { runAgentBridge } from "./agent-bridge.js";
 import { runDoctor } from "./doctor.js";
 import { runInstall } from "./install.js";
 import { runNativeEnhance } from "./native-enhance.js";
@@ -44,6 +45,16 @@ export async function runEnhance(options = {}) {
     dryRun: context.dryRun,
     interactive: false
   });
+  const agentBridge = await runAgentBridge({
+    action: "connect",
+    target: "all",
+    baseUrl: context.baseUrl,
+    cwd: context.cwd,
+    env: context.env,
+    home: context.home,
+    fetch: context.fetch,
+    dryRun: context.dryRun
+  });
   const project = await projectDoctor({
     home: context.home,
     cwd: context.cwd
@@ -71,7 +82,9 @@ export async function runEnhance(options = {}) {
     actionFromResult("Supermemory Local", doctor.exitCode === 0 ? "ready" : "needs-attention", doctor.exitCode === 0 ? "Local server is reachable." : "Start supermemory-server first."),
     actionFromResult("Local agent config", setup.exitCode === 0 ? "ready" : "needs-attention", setupSummary(setup)),
     actionFromResult("Harness plugin layer", install.exitCode === 0 ? "ready" : "needs-attention", installSummary(install)),
+    actionFromResult("Codex and Claude agent bridge", agentBridgeStatus(agentBridge), agentBridgeSummary(agentBridge)),
     actionFromResult("Project memory scope", project.exitCode === 0 ? "ready" : "needs-attention", project.profile ? `${project.profile.name} -> ${project.profile.containerTag}` : "Run smctl init from your project folder."),
+    actionFromResult("Terminal-native Supermemory runtime", "ready", "Use smctl supermemory start so Harness health appears in the Supermemory log stream."),
     actionFromResult("Native Supermemory enhancement", nativeActionStatus(native), nativeSummary(native)),
     ui,
     actionFromResult("Memory loop visibility", watch ? "ready" : "needs-attention", watch ? watch.bar.join(" | ") : "Skipped until Supermemory is reachable.")
@@ -91,6 +104,12 @@ export async function runEnhance(options = {}) {
     doctor: { exitCode: doctor.exitCode, summary: doctor.summary },
     setup: { exitCode: setup.exitCode, summary: setup.summary },
     install: { exitCode: install.exitCode, summary: install.summary },
+    agentBridge: {
+      exitCode: agentBridge.exitCode,
+      target: agentBridge.target,
+      summary: agentBridge.summary,
+      actions: agentBridge.actions
+    },
     project: project.profile ?? null,
     native: {
       status: native.status,
@@ -172,9 +191,10 @@ function formatEnhance(result) {
 
 function nextSteps({ doctor, project, ui, watch, context }) {
   const steps = [];
-  if (doctor.exitCode !== 0) steps.push("Start Supermemory Local: supermemory-server");
+  if (doctor.exitCode !== 0) steps.push("Start Supermemory Local through Harness: smctl supermemory start");
   if (project.exitCode !== 0) steps.push("Run smctl init from your code project");
   if (ui.status !== "ready") steps.push("Run smctl ui");
+  steps.push("Use smctl supermemory start for the normal Supermemory terminal");
   if (watch?.next) steps.push(watch.next);
   steps.push(`Open ${context.uiUrl}`);
   return [...new Set(steps)].slice(0, 5);
@@ -191,6 +211,23 @@ function setupSummary(setup) {
 
 function installSummary(install) {
   return `${install.summary.ok} ok, ${install.summary.warn} warn, ${install.summary.fail} fail`;
+}
+
+function agentBridgeStatus(agentBridge) {
+  if (agentBridge.exitCode !== 0) return "needs-attention";
+  if (agentBridge.dryRun) return "planned";
+  return "ready";
+}
+
+function agentBridgeSummary(agentBridge) {
+  const summary = agentBridge.summary;
+  const installed = summary.connected ?? 0;
+  const planned = summary.planned ?? 0;
+  const failed = summary.failed ?? 0;
+  if (agentBridge.dryRun) {
+    return `${planned} bridge file(s) would be installed for ${agentBridge.target}.`;
+  }
+  return `${installed} bridge file(s) installed for ${agentBridge.target}; ${failed} failed.`;
 }
 
 function nativeActionStatus(native) {

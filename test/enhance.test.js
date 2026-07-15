@@ -19,10 +19,14 @@ test("enhance automates the agent-memory readiness path", async () => {
   assert.equal(result.feature, "Harness Enhance");
   assert.match(result.text, /Supermemory Harness Enhance/);
   assert.match(result.text, /Embedded Supermemory dashboard/);
+  assert.match(result.text, /Codex and Claude agent bridge/);
+  assert.match(result.text, /smctl supermemory start/);
   assert.match(result.text, /Open http:\/\/localhost:6778/);
   assert.doesNotMatch(result.text, /sm_aaaaaaaa/);
   assert.doesNotMatch(JSON.stringify(result), /sm_aaaaaaaa/);
   assert.equal(result.actions.some((action) => action.title === "Harness plugin layer"), true);
+  assert.equal(result.actions.some((action) => action.title === "Codex and Claude agent bridge"), true);
+  assert.equal(result.agentBridge.summary.planned, 2);
 });
 
 async function fakeHome() {

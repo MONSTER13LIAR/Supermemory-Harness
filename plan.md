@@ -297,3 +297,21 @@ Important next discussion checkpoint:
   - dashboard embedding through `smctl ui`,
   - true source-level Supermemory modifications when the user has the editable Supermemory repo.
 - The next product conversation should explain this architecture clearly so we can decide how automatic the install flow should be without surprising users or hiding what process is being run.
+
+## 17. Automatic Enhancement Direction (July 15)
+Product decision:
+- Treat `smctl enhance` as the single normal-user install/enhancement path, not as one option among several architectures.
+- The user should not have to discover and run one command at a time. The install should do the useful work automatically, then explain only what remains.
+- Internal implementation can still use multiple mechanisms: setup config, agent bridge files, terminal wrapping, dashboard proxy injection, and source-level enhancement when source is available. Those are implementation details behind the one enhancement flow.
+
+Implemented update:
+- `smctl enhance` now installs the Codex and Claude agent bridge automatically.
+- `smctl enhance` now reports the agent bridge as a first-class action.
+- `smctl enhance` now points users toward `smctl supermemory start` as the normal Supermemory terminal runtime so Harness health appears in the same log stream as Supermemory.
+- README now states that `agent connect` is normally run by `enhance` and remains available only for refresh/inspection.
+
+Direction going forward:
+- Keep the default experience automatic and low-interaction.
+- Do not force users to choose between "modes" during install.
+- Use deeper Supermemory source enhancement when a source checkout is available, but keep the user-facing command the same: `smctl enhance`.
+- Avoid binary patching the compiled Supermemory server. The powerful path is automatic enhancement through supported local files, runtime wrapping, dashboard proxying, and source patches when editable source exists.
