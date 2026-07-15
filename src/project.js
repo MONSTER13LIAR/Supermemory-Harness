@@ -90,13 +90,17 @@ export function applyProjectToRequest(profile, request) {
   if (!profile) {
     return { metadata: {}, containerTag: null };
   }
+  const requestedContainerTag = request.body?.containerTag;
 
   return {
-    containerTag: request.body?.containerTag ?? profile.containerTag,
+    containerTag: profile.containerTag,
     metadata: {
       smctlProject: profile.name,
       smctlProjectRoot: profile.root,
       smctlProjectId: profile.id,
+      smctlOriginalContainerTag: requestedContainerTag && requestedContainerTag !== profile.containerTag
+        ? requestedContainerTag
+        : undefined,
       smctlGitRemote: profile.gitRemote ?? undefined,
       smctlPackageName: profile.packageName ?? undefined
     }

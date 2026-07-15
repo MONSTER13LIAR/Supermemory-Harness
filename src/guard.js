@@ -182,6 +182,7 @@ export async function quarantineWrite(context, request) {
   const skillsetResult = applySkillsetToRequest(skillset, request);
   const projectResult = applyProjectToRequest(project, request);
   const baseRisk = scanRisk(request);
+  const scopeFindings = scanScopeRisk(project, request);
   const redactedBody = redactSecretsFromValue(request.body);
   const body = applyContextMetadata(redactedBody, skillsetResult, projectResult);
   const item = {
@@ -207,7 +208,7 @@ export async function quarantineWrite(context, request) {
       containerTag: project.containerTag,
       metadata: projectResult.metadata
     } : null,
-    risk: mergeRisk(baseRisk, skillsetResult.findings)
+    risk: mergeRisk(baseRisk, [...skillsetResult.findings, ...scopeFindings])
   };
   pending.push(item);
   await writePending(context, pending);
@@ -234,6 +235,17 @@ function mergeRisk(baseRisk, findings) {
       : mergedFindings.length > 0 ? "medium" : "low",
     findings: mergedFindings
   };
+}
+
+function scanScopeRisk(project, request) {
+  if (!project?.containerTag) return [];
+  const requested = request.body?.containerTag;
+  if (!requested || requested === project.containerTag) return [];
+  return [{
+    severity: "medium",
+    type: "scope-drift",
+    message: `Write requested ${requested}; Guard forced active project scope ${project.containerTag}`
+  }];
 }
 
 async function forwardStoredWrite(context, item) {

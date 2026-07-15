@@ -107,8 +107,9 @@ Harness fix:
   reads occur without a container/project tag.
 
 Status:
-- Partially shipped through project profile, Guard enrichment, and native MCP default-project
-  patch. Needs stricter write-time enforcement.
+- Shipped for Guard writes. When an active project profile exists, Guard now forces writes into
+  the active project container, preserves the originally requested container in metadata, and
+  flags cross-container attempts as scope drift.
 
 ## Gap 7: Preemptive Compaction Is Agent-Specific Instead Of Universal
 

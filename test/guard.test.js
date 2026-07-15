@@ -156,6 +156,31 @@ test("guard applies active project profile metadata", async () => {
   assert.equal(item.request.body.metadata.smctlProjectRoot, repo);
 });
 
+test("guard forces active project scope when a write asks for another container", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  const repo = await mkdtemp(join(tmpdir(), "smctl-guard-repo-"));
+  await writeFile(join(repo, "package.json"), JSON.stringify({ name: "scope-lock" }));
+  await projectInit({ home, cwd: repo, name: "Scope Lock" });
+  const context = guardContext({ home });
+
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: {
+      content: "Decision belongs to the active repo.",
+      containerTag: "project:other-repo"
+    },
+    rawBody: "{}"
+  });
+
+  assert.equal(item.request.body.containerTag, "project:scope-lock");
+  assert.equal(item.request.body.metadata.smctlOriginalContainerTag, "project:other-repo");
+  assert.equal(item.risk.level, "medium");
+  assert.equal(item.risk.findings.some((finding) => finding.type === "scope-drift"), true);
+});
+
 function response(status, body) {
   return {
     ok: status >= 200 && status < 300,
