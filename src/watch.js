@@ -59,8 +59,10 @@ export async function runWatch(options = {}) {
     watchdog
   });
   const localStatus = doctor.server.reachable ? "online" : "offline";
+  const mcpStatus = mcpState(doctor.server.mcpStatus);
   const bar = [
     `Local: ${localStatus}`,
+    `MCP: ${mcpStatus.label}`,
     `Agents: ${agents.configured}/${agents.total}`,
     `Writes: ${documents.length}`,
     `Queue: ${queued}`,
@@ -78,6 +80,8 @@ export async function runWatch(options = {}) {
       status: localStatus,
       dashboardStatus: doctor.server.dashboardStatus,
       openApiStatus: doctor.server.openApiStatus,
+      mcpStatus: doctor.server.mcpStatus,
+      mcp: mcpStatus,
       summary: doctor.summary
     },
     agents,
@@ -173,7 +177,8 @@ function formatWatch(result) {
   lines.push("");
 
   lines.push("[local]");
-  lines.push(`   Supermemory Local is ${result.local.status}. Dashboard: ${result.local.dashboardStatus ?? "unreachable"}, OpenAPI: ${result.local.openApiStatus ?? "unreachable"}`);
+  lines.push(`   Supermemory Local is ${result.local.status}. Dashboard: ${result.local.dashboardStatus ?? "unreachable"}, OpenAPI: ${result.local.openApiStatus ?? "unreachable"}, MCP: ${result.local.mcpStatus ?? "unreachable"}`);
+  lines.push(`   MCP: ${result.local.mcp.detail}`);
   lines.push(`   Doctor: ${result.local.summary.ok} ok, ${result.local.summary.warn} warn, ${result.local.summary.fail} fail`);
   lines.push("");
 
@@ -268,6 +273,22 @@ function summarizeDreaming(processing, queuedDocuments) {
     label: "idle",
     detail: "No active processing backlog detected from the sampled endpoints."
   };
+}
+
+function mcpState(status) {
+  if (status === 405) {
+    return { label: "ready", detail: "/mcp is reachable and rejected this probe method, which still proves the route exists." };
+  }
+  if (typeof status === "number" && status >= 200 && status < 400) {
+    return { label: "ready", detail: `/mcp returned HTTP ${status}.` };
+  }
+  if (status === 404) {
+    return { label: "missing", detail: "/mcp returned 404; MCP clients pointed at localhost:6767/mcp will not connect." };
+  }
+  if (status == null) {
+    return { label: "offline", detail: "/mcp could not be probed because Supermemory Local is unreachable." };
+  }
+  return { label: "check", detail: `/mcp returned HTTP ${status}; verify the local server version and MCP config.` };
 }
 
 function countWarnings({ doctor, documentsResult, processingResult, failed, queued, guardRisk, watchdog }) {

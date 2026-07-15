@@ -120,6 +120,7 @@ export function formatHarnessSnapshotLines({ label, now, trust, watch }) {
   }
 
   lines.push(`[harness] agents: ${watch.agents.configured}/${watch.agents.total} configured; active: ${watch.agents.active.length ? watch.agents.active.join(", ") : "none"}`);
+  lines.push(`[harness] mcp: ${watch.local.mcp.label} - ${watch.local.mcp.detail}`);
   lines.push(`[harness] memory: writes ${watch.memory.sampled}; queue ${watch.memory.queued}; failed ${watch.memory.failed}; dreaming ${watch.memory.dreaming.label}`);
   lines.push(`[harness] guard: ${watch.guard.pending} pending; risk low:${watch.guard.risk.low} medium:${watch.guard.risk.medium} high:${watch.guard.risk.high}`);
 

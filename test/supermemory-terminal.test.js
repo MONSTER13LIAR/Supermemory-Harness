@@ -38,6 +38,12 @@ test("terminal overlay snapshot shows actionable memory diagnosis", () => {
       next: ["smctl repair wizard", "smctl trust --probe"]
     },
     watch: {
+      local: {
+        mcp: {
+          label: "missing",
+          detail: "/mcp returned 404; MCP clients pointed at localhost:6767/mcp will not connect."
+        }
+      },
       agents: { configured: 1, total: 4, active: ["codex"] },
       memory: {
         sampled: 8,
@@ -56,6 +62,7 @@ test("terminal overlay snapshot shows actionable memory diagnosis", () => {
   assert.match(lines.join("\n"), /Trust 52\/100 \(Risky\)/);
   assert.match(lines.join("\n"), /blocker: Failed memory writes/);
   assert.match(lines.join("\n"), /agents: 1\/4 configured; active: codex/);
+  assert.match(lines.join("\n"), /mcp: missing - \/mcp returned 404/);
   assert.match(lines.join("\n"), /memory: writes 8; queue 3; failed 2; dreaming active/);
   assert.match(lines.join("\n"), /guard: 1 pending; risk low:0 medium:1 high:0/);
   assert.match(lines.join("\n"), /next: smctl repair wizard \| smctl trust --probe/);

@@ -184,6 +184,7 @@ async function inspectServer(context, homeStore) {
     reachable: false,
     dashboardStatus: null,
     openApiStatus: null,
+    mcpStatus: null,
     routes: {},
     lastStartupError: null
   };
@@ -222,6 +223,21 @@ async function inspectServer(context, homeStore) {
     checks.push(warn("OpenAPI document is not reachable", openApi.error));
   } else {
     checks.push(warn("OpenAPI document returned unexpected status", String(openApi.status)));
+  }
+
+  const mcp = await request(context.fetch, `${context.baseUrl}/mcp`, {
+    method: "GET",
+    headers: { accept: "text/event-stream, application/json, text/plain" }
+  });
+  data.mcpStatus = mcp.status;
+  if (mcp.ok || mcp.status === 405) {
+    checks.push(ok("MCP endpoint is reachable", `/mcp returned ${mcp.status}`));
+  } else if (mcp.status === 404) {
+    checks.push(warn("MCP endpoint is not exposed", "/mcp returned 404; coding-tool MCP clients may fail to connect."));
+  } else if (mcp.error) {
+    checks.push(warn("MCP endpoint is not reachable", mcp.error));
+  } else {
+    checks.push(warn("MCP endpoint returned unexpected status", String(mcp.status)));
   }
 
   for (const route of ROUTES_TO_REPORT) {

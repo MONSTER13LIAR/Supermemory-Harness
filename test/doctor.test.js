@@ -35,11 +35,16 @@ test("doctor redacts API key and reports localhost auth limitation separately", 
           }
         });
       }
+      if (url.endsWith("/mcp")) {
+        return response(405, "");
+      }
       return response(200, "<html></html>");
     }
   });
 
   assert.equal(result.apiKey.apiKeyFile.shape, "looks-valid");
+  assert.equal(result.server.mcpStatus, 405);
+  assert.match(result.text, /MCP endpoint is reachable/);
   assert.match(result.text, /Localhost auth note/);
   assert.doesNotMatch(result.text, /sm_aaaaaaaa/);
 });

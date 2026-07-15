@@ -18,11 +18,12 @@ test("watch renders the activity bar and focused panels", async () => {
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.local.status, "online");
+  assert.equal(result.local.mcp.label, "ready");
   assert.equal(result.memory.queued, 1);
   assert.equal(result.guard.pending, 1);
   assert.equal(result.guard.risk.high, 1);
   assert.match(result.text, /Supermemory Harness Bar/);
-  assert.match(result.text, /Local: online \| Agents: 0\/4 \| Writes: 3 \| Queue: 1 \| Dreaming: active \| Guard: 1/);
+  assert.match(result.text, /Local: online \| MCP: ready \| Agents: 0\/4 \| Writes: 3 \| Queue: 1 \| Dreaming: active \| Guard: 1/);
   assert.match(result.text, /\[memory flow\]/);
   assert.match(result.text, /robot-arm-v1/);
   assert.match(result.text, /Recommended: smctl guard inbox/);

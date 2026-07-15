@@ -62,7 +62,8 @@ Harness fix:
   inferred transformations, and flag high-risk profile changes for review.
 
 Status:
-- Planned.
+- Shipped. `doctor` now probes `/mcp`, `watch` carries MCP readiness in the Harness Bar, and
+  the terminal overlay prints MCP readiness/failure in the Supermemory log stream.
 
 ## Gap 4: Contradictions Can Be Resolved Invisibly
 
