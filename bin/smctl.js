@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runDoctor } from "../src/doctor.js";
+import { runDreams } from "../src/dreams.js";
 import { runAgentBridge } from "../src/agent-bridge.js";
 import { runEnhance } from "../src/enhance.js";
 import { runGuard } from "../src/guard.js";
@@ -47,6 +48,7 @@ Usage:
   smctl repair [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl repair wizard [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
+  smctl dreams [--json] [--dry-run] [--base-url <url>] [--limit <n>]
   smctl init [--json]
   smctl project [--json] [--base-url <url>] [--limit <n>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
@@ -94,6 +96,7 @@ Commands:
   verify   Prove write, recall, project scoping, and language recall work.
   repair   Diagnose stuck docs, retry loops, store growth, and recall mismatch risks.
   doctor   Inspect Supermemory Local install, server reachability, and tool configs.
+  dreams   Record and compare Supermemory processing/dreaming snapshots.
   init     Detect the current project and create a project-aware memory profile.
   project  Show the active project memory dashboard.
   setup    Write safe local integration config for Supermemory Local.
@@ -346,7 +349,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "trust", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "trust", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -437,6 +440,16 @@ async function runCommand(args) {
       env: process.env,
       home: process.env.HOME,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "dreams") {
+    return runDreams({
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      dryRun: args.dryRun
     });
   }
 

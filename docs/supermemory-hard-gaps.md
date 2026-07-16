@@ -153,7 +153,9 @@ Harness fix:
   connections, unreachable `/mcp`, wrong URL mode, and client config drift.
 
 Status:
-- Planned.
+- Shipped. Added `smctl dreams`, a local Dream Flight Recorder that snapshots recent
+  Supermemory document processing state and reports new, completed, failed, disappeared, and
+  changed items on the next run.
 
 ## Gap 10: Memory Needs Governance, Not Just Recall
 
