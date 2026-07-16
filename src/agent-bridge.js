@@ -121,6 +121,7 @@ This file teaches ${agent} how to communicate with Supermemory Harness.
 ## Contract
 
 - Before relying on memory, run: smctl trust --json
+- Before risky edits, tests, migrations, or dependency changes, run: smctl gate
 - If the user asks whether Supermemory is healthy, run: smctl trust
 - If memory feels wrong, run: smctl repair wizard
 - If the user wants a live proof, run: smctl trust --probe

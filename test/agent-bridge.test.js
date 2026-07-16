@@ -20,6 +20,7 @@ test("agent bridge connects codex with Harness instructions", async () => {
   assert.equal(result.actions[0].agent, "codex");
   const bridge = await readFile(join(home, ".codex", "harness", "supermemory-bridge.md"), "utf8");
   assert.match(bridge, /smctl trust --json/);
+  assert.match(bridge, /smctl gate/);
   assert.match(bridge, /Supermemory Harness Agent Bridge/);
   assert.match(bridge, /Harness Compaction Contract/);
   assert.match(bridge, /Negative constraints/);

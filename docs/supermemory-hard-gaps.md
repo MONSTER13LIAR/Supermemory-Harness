@@ -170,4 +170,6 @@ Harness fix:
   instructions and terminal overlay.
 
 Status:
-- Planned.
+- Shipped. Added `smctl gate`, a pre-action memory governance gate for coding agents. It
+  blocks when project memory is unscoped or memory health has failures, warns on contradictions
+  and quality risks, and tells the agent the next repair/proceed command.

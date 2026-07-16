@@ -5,6 +5,7 @@ import { runDreams } from "../src/dreams.js";
 import { runAgentBridge } from "../src/agent-bridge.js";
 import { runEnhance } from "../src/enhance.js";
 import { runGuard } from "../src/guard.js";
+import { runGate } from "../src/gate.js";
 import { runHardware } from "../src/hardware.js";
 import { runInstall } from "../src/install.js";
 import { localBrainDoctor } from "../src/local-brain.js";
@@ -38,6 +39,7 @@ Usage:
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
+  smctl gate [--json] [--base-url <url>] [--limit <n>]
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
   smctl agent connect [codex|claude|all] [--json] [--dry-run] [--base-url <url>]
   smctl agent status [--json]
@@ -88,6 +90,7 @@ Commands:
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
   trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
+  gate     Run the pre-action memory governance gate before edits/tests.
   supermemory Start Supermemory Local with Harness health events in the same terminal.
   agent    Connect Codex/Claude-style agents to Harness diagnostics.
   ui       Embed the Harness Bar into the Supermemory dashboard through a local proxy.
@@ -349,7 +352,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "trust", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "trust", "gate", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -429,6 +432,17 @@ async function runCommand(args) {
       limit: args.limit,
       probe: args.probe,
       timeoutMs: args.timeoutMs
+    });
+  }
+
+  if (args.command === "gate") {
+    return runGate({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 
