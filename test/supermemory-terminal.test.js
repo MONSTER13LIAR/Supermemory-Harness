@@ -5,7 +5,7 @@ import { PassThrough } from "node:stream";
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { formatHarnessSnapshotLines, prefixLines, runSupermemoryTerminal } from "../src/supermemory-terminal.js";
+import { createSupermemoryLogFilter, filterSupermemoryLogChunk, formatHarnessSnapshotLines, prefixLines, runSupermemoryTerminal } from "../src/supermemory-terminal.js";
 
 test("supermemory terminal dry-run shows combined terminal plan", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-supermemory-home-"));
@@ -64,6 +64,25 @@ test("supermemory terminal redacts api keys from prefixed output", () => {
 
   assert.match(lines, /sm_\[redacted\]/);
   assert.doesNotMatch(lines, /abcdefghijklmnopqrstuvwxyz1234567890/);
+});
+
+test("supermemory terminal collapses schema mismatch stack traces", () => {
+  const seen = new Set();
+  const output = filterSupermemoryLogChunk('error: column "dreaming_status" does not exist\nFailed query: select "dreaming_status" from "document"\n    at queryWithCache (/$bunfs/root/supermemory-server:19:37806)', seen);
+  const repeated = filterSupermemoryLogChunk('error: column "dreaming_status" does not exist\nFailed query: select "dreaming_status" from "document"', seen);
+
+  assert.match(output, /Supermemory schema mismatch detected/);
+  assert.match(output, /supermemory-server upgrade/);
+  assert.doesNotMatch(output, /queryWithCache/);
+  assert.equal(repeated, "");
+});
+
+test("supermemory terminal collapses repeated auth warning noise", () => {
+  const filter = createSupermemoryLogFilter();
+  const warning = "[better-auth/magic-link] `allowedAttempts` is ignored: tokens are consumed atomically";
+
+  assert.match(filter(warning), /collapsed repeated Supermemory auth warning/);
+  assert.equal(filter(warning), "");
 });
 
 test("terminal overlay snapshot shows actionable memory diagnosis", () => {

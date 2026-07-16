@@ -44,14 +44,16 @@ export async function runSupermemoryTerminal(options = {}) {
 
   process.stdout.write(`[harness] launching Supermemory Local with Harness terminal overlay: ${command}\n`);
   process.stdout.write(`[harness] launch cwd: ${launchCwd}\n`);
+  const stdoutFilter = createSupermemoryLogFilter();
+  const stderrFilter = createSupermemoryLogFilter();
   const child = context.spawn(command, [], {
     cwd: launchCwd,
     env: context.env,
     stdio: ["inherit", "pipe", "pipe"]
   });
 
-  child.stdout.on("data", (chunk) => process.stdout.write(prefixLines("supermemory", chunk)));
-  child.stderr.on("data", (chunk) => process.stderr.write(prefixLines("supermemory", chunk)));
+  child.stdout.on("data", (chunk) => process.stdout.write(prefixLines("supermemory", stdoutFilter(chunk))));
+  child.stderr.on("data", (chunk) => process.stderr.write(prefixLines("supermemory", stderrFilter(chunk))));
 
   const printWatchdog = (label) => {
     printHarnessSnapshot(context, label).catch((error) => {
@@ -154,6 +156,47 @@ export function prefixLines(prefix, chunk) {
     .split(/(\r?\n)/)
     .map((part) => part === "\n" || part === "\r\n" || part === "" ? part : `[${prefix}] ${part}`)
     .join("");
+}
+
+export function createSupermemoryLogFilter() {
+  const seen = new Set();
+  return (chunk) => filterSupermemoryLogChunk(chunk, seen);
+}
+
+export function filterSupermemoryLogChunk(chunk, seen = new Set()) {
+  const text = redactSecrets(String(chunk));
+  if (isAuthNoise(text)) {
+    return once(seen, "better-auth-allowed-attempts", "[harness] collapsed repeated Supermemory auth warning: better-auth allowedAttempts is ignored.\n");
+  }
+  if (isSchemaMismatch(text)) {
+    const columns = [];
+    if (/dreaming_status/.test(text)) columns.push("dreaming_status");
+    if (/profile_buckets/.test(text)) columns.push("profile_buckets");
+    const columnText = columns.length > 0 ? columns.join(", ") : "expected columns";
+    return once(seen, `schema-mismatch:${columnText}`, [
+      `[harness] Supermemory schema mismatch detected: missing ${columnText}.`,
+      "[harness] Fix: stop this process, run `supermemory-server upgrade`, then restart with `smctl supermemory start`."
+    ].join("\n") + "\n");
+  }
+  if (/Failed query:|queryWithCache|\/\$bunfs\/root\/supermemory-server|processTicksAndRejections|parse_relation\.c|errorMissingColumn/.test(text)) {
+    return once(seen, "stacktrace-collapsed", "[harness] collapsed repeated Supermemory stack trace; run `supermemory-server upgrade` if schema errors continue.\n");
+  }
+  return text;
+}
+
+function once(seen, key, message) {
+  if (seen.has(key)) return "";
+  seen.add(key);
+  return message;
+}
+
+function isAuthNoise(text) {
+  return text.includes("[better-auth/magic-link]") && text.includes("allowedAttempts");
+}
+
+function isSchemaMismatch(text) {
+  return /column "(dreaming_status|profile_buckets)" does not exist/.test(text)
+    || (/Failed query:/.test(text) && /"(dreaming_status|profile_buckets)"/.test(text));
 }
 
 function redactSecrets(text) {
