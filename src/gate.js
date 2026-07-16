@@ -29,7 +29,7 @@ function decideGate({ analysis, blockers, warnings }) {
       detail: "No active project profile; edits/tests may read or write unscoped memory."
     };
   }
-  if (blockers.some((issue) => /secret|Failed memory writes|Stuck queued|Retry loop/i.test(issue.title))) {
+  if (blockers.length > 0) {
     return {
       status: "block",
       label: "Repair memory before relying on it",

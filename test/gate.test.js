@@ -29,6 +29,18 @@ test("pre-action gate warns on contradictory project memory", async () => {
   assert.match(result.text, /Contradictory project memories/);
 });
 
+test("pre-action gate blocks on document inventory failure", async () => {
+  const home = await fakeHome(true);
+  const result = await runGate({
+    home,
+    fetch: async () => response(500, { error: "inventory unavailable" })
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.decision.status, "block");
+  assert.match(result.text, /Document inventory unavailable/);
+});
+
 test("pre-action gate passes when scoped memory has no issues", async () => {
   const home = await fakeHome(true);
   const result = await runGate({
