@@ -121,7 +121,9 @@ This file teaches ${agent} how to communicate with Supermemory Harness.
 ## Contract
 
 - Before relying on memory, run: smctl trust --json
-- Before risky edits, tests, migrations, or dependency changes, run: smctl gate
+- Before risky edits, tests, migrations, or dependency changes, run: smctl session pre-action
+- Before compacting context, run: smctl session pre-compact
+- Before ending or handing off a session, run: smctl session stop
 - If the user asks whether Supermemory is healthy, run: smctl trust
 - If memory feels wrong, run: smctl repair wizard
 - If the user wants a live proof, run: smctl trust --probe
@@ -141,6 +143,14 @@ When context is getting large, preserve these fields exactly and do not replace 
 - Remaining work: blockers, next command, and the smallest safe continuation step.
 
 If any of those fields are unknown, write "unknown" instead of inventing it.
+
+## Hookable Commands
+
+- Pre-action gate: smctl session pre-action --json
+- Pre-compact contract: smctl session pre-compact --json
+- Stop/handoff check: smctl session stop --json
+- Manual trust doctor: smctl trust --json
+- Repair plan: smctl repair wizard --json
 
 ## Current Supermemory Target
 

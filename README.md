@@ -72,6 +72,7 @@ smctl workflow
 smctl watch
 smctl trust
 smctl supermemory start
+smctl session pre-action
 smctl agent connect all
 smctl ui
 smctl status
@@ -120,7 +121,9 @@ smctl agent connect claude
 smctl agent status
 ```
 
-The bridge tells agents to run `smctl trust --json`, `smctl repair wizard`, and `smctl trust --probe` when the user asks what is happening with Supermemory.
+The bridge tells agents to run `smctl session pre-action`, `smctl session pre-compact`, `smctl session stop`, `smctl trust --json`, `smctl repair wizard`, and `smctl trust --probe` when the user asks what is happening with Supermemory or when the agent reaches a lifecycle boundary.
+
+`session` is Agent Memory Autopilot. It exposes hookable lifecycle gates for coding tools: `pre-action` blocks or warns before risky edits when memory is not trustworthy, `pre-compact` prints the exact handoff contract to preserve before context compaction, and `stop` checks whether the session can hand off with usable Supermemory state.
 
 `ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. `smctl enhance` starts it automatically when Supermemory Local is reachable; the command remains available if you want to restart it:
 
@@ -261,6 +264,7 @@ node ./bin/smctl.js guard reject <id>
 - `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
 - `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
 - `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
+- `session` provides hookable coding-agent lifecycle gates for pre-action memory governance, pre-compaction handoff, and stop/handoff trust checks.
 - `ui` serves the Supermemory dashboard through a local proxy and injects the Harness Bar into the page.
 - `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.

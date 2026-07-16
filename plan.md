@@ -365,3 +365,22 @@ Implemented direction:
 - Add `smctl workflow` as the architecture command.
 - It calls the Harness Bar state, explains the install-to-trust path, maps real pain points to Harness features, states moral automation boundaries, and recommends the next command.
 - Keep `workflow` read-only. The mutating command remains `smctl enhance`; risky persistence remains behind Guard/review or explicit probes.
+
+## 20. Agent Memory Autopilot (July 16)
+Hackathon-winning differentiator: Harness must not look like a wrapper around Supermemory. It should add the missing governance layer that Supermemory users need every day when coding agents rely on persistent memory.
+
+Product decision:
+- Add hookable session lifecycle commands that coding tools can call automatically.
+- Keep them deterministic, local, and auditable.
+- Do not require the user to manually remember every diagnostic command.
+
+Implemented direction:
+- `smctl session pre-action` runs the pre-action memory gate and exits nonzero when memory should not be trusted.
+- `smctl session pre-compact` prints the exact handoff contract that must survive context compaction.
+- `smctl session stop` checks whether a session can hand off with usable Supermemory state or should repair first.
+- `smctl agent connect` now teaches Codex/Claude-style agents to use these lifecycle commands.
+
+Why this matters:
+- Supermemory can store memories, but coding agents still need a decision point before using them.
+- Context compaction can destroy the details that should become durable memory unless the contract is explicit.
+- Session endings are where unresolved memory failures get hidden; Harness turns them into a clear next command.

@@ -13,6 +13,7 @@ import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
 import { runCleanup } from "../src/cleanup.js";
 import { runScore } from "../src/score.js";
+import { runSession } from "../src/session.js";
 import { runSkillset } from "../src/skillset.js";
 import { runSkills } from "../src/skills.js";
 import { runSmart } from "../src/smart.js";
@@ -44,6 +45,7 @@ Usage:
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
   smctl agent connect [codex|claude|all] [--json] [--dry-run] [--base-url <url>]
   smctl agent status [--json]
+  smctl session pre-action|pre-compact|stop [--json] [--base-url <url>] [--limit <n>]
   smctl ui [--port <port>] [--upstream <url>]
   smctl status [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl score [--json] [--explain] [--base-url <url>] [--limit <n>]
@@ -95,6 +97,7 @@ Commands:
   gate     Run the pre-action memory governance gate before edits/tests.
   supermemory Start Supermemory Local with Harness health events in the same terminal.
   agent    Connect Codex/Claude-style agents to Harness diagnostics.
+  session  Hookable coding-agent lifecycle gates for pre-action, compaction, and stop.
   ui       Embed the Harness Bar into the Supermemory dashboard through a local proxy.
   status   Show one-screen health for Supermemory, memory, and Guard.
   score    Show one confidence number for Supermemory memory/retrieval health.
@@ -311,6 +314,8 @@ function parseArgs(argv) {
       args.id = token;
     } else if (args.command === "memory" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "session" && !args.subcommand) {
+      args.subcommand = token;
     } else if (args.command === "hardware" && !args.subcommand) {
       args.subcommand = token;
     } else if (args.command === "repair" && !args.subcommand) {
@@ -354,7 +359,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -509,6 +514,17 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       dryRun: args.dryRun
+    });
+  }
+
+  if (args.command === "session") {
+    return runSession({
+      action: args.subcommand,
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 
