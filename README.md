@@ -12,6 +12,8 @@
 
 `smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can use a local Llama brain through Ollama for plain-English explanations.
 
+The CLI banner uses a Supermemory-style blue terminal texture when color output is available. It respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
+
 ## Run
 
 Install and connect Harness:
