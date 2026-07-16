@@ -48,6 +48,31 @@ test("dream flight recorder reports status changes since previous snapshot", asy
   assert.equal(result.next, "smctl repair wizard");
 });
 
+test("dream flight recorder counts new failed documents as failures", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-dreams-home-"));
+  await runDreams({
+    home,
+    now: "2026-07-15T00:00:00.000Z",
+    fetch: fakeFetch([
+      { id: "doc_1", status: "done", title: "Existing memory", containerTags: ["project:demo"] }
+    ])
+  });
+
+  const result = await runDreams({
+    home,
+    now: "2026-07-15T00:05:00.000Z",
+    fetch: fakeFetch([
+      { id: "doc_1", status: "done", title: "Existing memory", containerTags: ["project:demo"] },
+      { id: "doc_2", status: "failed", title: "New failed canary", containerTags: ["project:demo"] }
+    ])
+  });
+
+  assert.equal(result.diff.newDocuments.length, 1);
+  assert.equal(result.diff.failed.length, 1);
+  assert.equal(result.next, "smctl repair wizard");
+  assert.match(result.text, /Failed: 1/);
+});
+
 function fakeFetch(documents) {
   return async (url) => {
     if (url.endsWith("/v3/documents/list")) {

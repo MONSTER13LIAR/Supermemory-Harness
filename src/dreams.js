@@ -91,6 +91,9 @@ function diffSnapshots(previous, current) {
     const old = before.get(doc.id);
     if (!old) {
       newDocuments.push(doc);
+      if (["failed", "error"].includes(doc.status)) {
+        failed.push({ id: doc.id, title: doc.title, from: "new", to: doc.status, containerTags: doc.containerTags });
+      }
       continue;
     }
     if (old.status !== doc.status) {
