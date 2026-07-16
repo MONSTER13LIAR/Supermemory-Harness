@@ -283,7 +283,7 @@ function mcpState(status) {
     return { label: "ready", detail: `/mcp returned HTTP ${status}.` };
   }
   if (status === 404) {
-    return { label: "missing", detail: "/mcp returned 404; MCP clients pointed at localhost:6767/mcp will not connect." };
+    return { label: "missing", detail: "/mcp returned 404; run supermemory-server upgrade, restart with smctl supermemory start, then re-run smctl doctor." };
   }
   if (status == null) {
     return { label: "offline", detail: "/mcp could not be probed because Supermemory Local is unreachable." };

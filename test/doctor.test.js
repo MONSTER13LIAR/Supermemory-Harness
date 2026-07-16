@@ -67,6 +67,33 @@ test("doctor warns when a project-local store exists beside home store", async (
   assert(result.checks.some((check) => check.status === "warn" && check.title.includes("Both home and project-local")));
 });
 
+test("doctor gives upgrade guidance when MCP endpoint is missing", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-home-"));
+  const cwd = await mkdtemp(join(tmpdir(), "smctl-cwd-"));
+  const store = join(home, ".supermemory");
+  await mkdir(join(store, "bin"), { recursive: true });
+  await mkdir(join(store, "runtime"), { recursive: true });
+  await writeFile(join(store, "bin", "supermemory-server"), "");
+  await writeFile(join(store, "bin", "supermemory-server.version"), "0.0.3\n");
+  await writeFile(join(store, "data"), "");
+  await writeFile(join(store, "api-key"), `sm_${"a".repeat(87)}\n`);
+
+  const result = await runDoctor({
+    home,
+    cwd,
+    env: { PATH: "" },
+    fetch: async (url) => {
+      if (url.endsWith("/mcp")) return response(404, { error: "not found" });
+      if (url.endsWith("/v4/openapi")) return response(200, { paths: {} });
+      return response(200, "<html></html>");
+    }
+  });
+
+  assert.equal(result.server.mcpStatus, 404);
+  assert.match(result.text, /supermemory-server upgrade/);
+  assert.match(result.text, /smctl supermemory start/);
+});
+
 function response(status, body) {
   return {
     ok: status >= 200 && status < 300,

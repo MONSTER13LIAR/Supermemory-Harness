@@ -233,7 +233,7 @@ async function inspectServer(context, homeStore) {
   if (mcp.ok || mcp.status === 405) {
     checks.push(ok("MCP endpoint is reachable", `/mcp returned ${mcp.status}`));
   } else if (mcp.status === 404) {
-    checks.push(warn("MCP endpoint is not exposed", "/mcp returned 404; coding-tool MCP clients may fail to connect."));
+    checks.push(warn("MCP endpoint is not exposed", "/mcp returned 404; run `supermemory-server upgrade`, restart with `smctl supermemory start`, then re-run `smctl doctor`."));
   } else if (mcp.error) {
     checks.push(warn("MCP endpoint is not reachable", mcp.error));
   } else {

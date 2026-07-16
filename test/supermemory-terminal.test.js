@@ -41,7 +41,7 @@ test("terminal overlay snapshot shows actionable memory diagnosis", () => {
       local: {
         mcp: {
           label: "missing",
-          detail: "/mcp returned 404; MCP clients pointed at localhost:6767/mcp will not connect."
+          detail: "/mcp returned 404; run supermemory-server upgrade, restart with smctl supermemory start, then re-run smctl doctor."
         }
       },
       agents: { configured: 1, total: 4, active: ["codex"] },

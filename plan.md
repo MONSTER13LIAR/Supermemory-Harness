@@ -334,3 +334,6 @@ Current essential activation bundle:
 - native Supermemory source enhancement when source is available,
 - memory visibility/watch snapshot,
 - activation receipt.
+
+Follow-up local improvement:
+- When the live Supermemory server exposes OpenAPI but `/mcp` returns 404, Harness now gives the exact repair path: run `supermemory-server upgrade`, restart with `smctl supermemory start`, then re-run `smctl doctor`.
