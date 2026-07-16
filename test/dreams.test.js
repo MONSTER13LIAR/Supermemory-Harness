@@ -17,7 +17,9 @@ test("dream flight recorder saves a first snapshot", async () => {
   assert.equal(result.exitCode, 0);
   assert.equal(result.diff.firstRun, true);
   assert.equal(result.diff.newDocuments.length, 1);
+  assert.equal(result.smartSections.some((section) => section.id === "dreams"), true);
   assert.match(result.text, /Dream Flight Recorder/);
+  assert.match(result.text, /Smart Sections:/);
 });
 
 test("dream flight recorder reports status changes since previous snapshot", async () => {

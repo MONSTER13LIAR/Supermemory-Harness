@@ -76,6 +76,7 @@ smctl ui
 smctl status
 smctl status --explain
 smctl score
+smctl gate --explain
 ```
 
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
@@ -260,7 +261,8 @@ node ./bin/smctl.js guard reject <id>
 - `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
 - `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
 - `score` gives one confidence number for whether Supermemory memory/retrieval looks trustworthy.
-- `status --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
+- `score`, `gate`, `dreams`, and `enhance` add Smart Sections automatically so the output names the decision, confidence, risks, activation state, and next command.
+- `status --explain`, `score --explain`, `gate --explain`, `dreams --explain`, `enhance --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
 - `project` shows the active app profile, project container, sampled project memories, and writes missing project context.
 - `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
 - `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.

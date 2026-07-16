@@ -26,6 +26,7 @@ test("enhance automates the agent-memory readiness path", async () => {
   assert.doesNotMatch(JSON.stringify(result), /sm_aaaaaaaa/);
   assert.equal(result.actions.some((action) => action.title === "Harness plugin layer"), true);
   assert.equal(result.actions.some((action) => action.title === "Codex and Claude agent bridge"), true);
+  assert.equal(result.smartSections.some((section) => section.id === "activation"), true);
   assert.equal(result.agentBridge.summary.planned, 2);
   assert.equal(result.activation.status, "planned");
   assert.equal(result.activation.receipt.automatic.dashboardInjection, true);

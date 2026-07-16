@@ -11,7 +11,9 @@ test("pre-action gate blocks when project memory is missing", async () => {
 
   assert.equal(result.exitCode, 1);
   assert.equal(result.decision.status, "block");
+  assert.equal(result.smartSections.some((section) => section.id === "decision"), true);
   assert.match(result.text, /Initialize project memory first/);
+  assert.match(result.text, /Smart Sections:/);
 });
 
 test("pre-action gate warns on contradictory project memory", async () => {

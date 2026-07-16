@@ -31,6 +31,8 @@ test("insight commands surface memory score, cleanup, coach, timeline, project, 
   assert.match(score.text, /Memory Recall Score/);
   assert.match(score.text, /Failed memory writes/);
   assert.match(score.text, /Contradictory project memories/);
+  assert.match(score.text, /Smart Sections:/);
+  assert.equal(score.smartSections.some((section) => section.id === "score"), true);
 
   const cleanup = await runCleanup({ home, fetch });
   assert.equal(cleanup.exitCode, 1);

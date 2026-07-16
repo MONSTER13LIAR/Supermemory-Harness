@@ -9,6 +9,7 @@ import { runNativeEnhance } from "./native-enhance.js";
 import { projectDoctor, projectInit } from "./project.js";
 import { runSetup } from "./setup.js";
 import { runWatch } from "./watch.js";
+import { attachSmartSections } from "./smart-sections.js";
 
 export async function runEnhance(options = {}) {
   const context = {
@@ -142,7 +143,7 @@ export async function runEnhance(options = {}) {
     exitCode: summary["needs-attention"] > 0 ? 1 : 0
   };
   result.text = formatEnhance(result);
-  return result;
+  return attachSmartSections(result, options);
 }
 
 async function enhanceUi(context, doctor) {

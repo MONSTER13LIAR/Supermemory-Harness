@@ -34,11 +34,11 @@ function printHelp() {
 
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
-  smctl enhance [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
+  smctl enhance [--json] [--dry-run] [--explain] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
-  smctl gate [--json] [--base-url <url>] [--limit <n>]
+  smctl gate [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
   smctl agent connect [codex|claude|all] [--json] [--dry-run] [--base-url <url>]
   smctl agent status [--json]
@@ -49,7 +49,7 @@ Usage:
   smctl repair [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl repair wizard [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl doctor [--json] [--base-url <url>]
-  smctl dreams [--json] [--dry-run] [--base-url <url>] [--limit <n>]
+  smctl dreams [--json] [--dry-run] [--explain] [--base-url <url>] [--limit <n>]
   smctl init [--json]
   smctl project [--json] [--base-url <url>] [--limit <n>]
   smctl setup [--json] [--dry-run] [--target <all|env|cursor>] [--base-url <url>]
@@ -376,6 +376,8 @@ async function runCommand(args) {
       home: process.env.HOME,
       dryRun: args.dryRun,
       sourcePath: args.sourcePath,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel,
       fetch: globalThis.fetch
     });
   }
@@ -389,6 +391,8 @@ async function runCommand(args) {
       home: process.env.HOME,
       dryRun: args.dryRun,
       sourcePath: args.sourcePath,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel,
       fetch: globalThis.fetch
     });
   }
@@ -415,7 +419,9 @@ async function runCommand(args) {
       env: process.env,
       home: process.env.HOME,
       fetch: globalThis.fetch,
-      limit: args.limit
+      limit: args.limit,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 
@@ -460,7 +466,9 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit,
-      dryRun: args.dryRun
+      dryRun: args.dryRun,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 

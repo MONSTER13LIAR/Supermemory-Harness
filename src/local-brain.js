@@ -110,6 +110,7 @@ function buildPrompt(result) {
     "Next: ...",
     "If exitCode is non-zero or any fail exists, Needs attention must mention the failure.",
     "Use only these commands: smctl repair wizard, smctl repair, smctl verify, smctl score, smctl cleanup, smctl memory coach, smctl memory doctor, smctl memory replay.",
+    "Treat any status/title/detail rows as Smart Sections.",
     compactToLines(compact)
   ].join("\n");
 }

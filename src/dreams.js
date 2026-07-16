@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { attachSmartSections } from "./smart-sections.js";
 
 export async function runDreams(options = {}) {
   const context = {
@@ -34,7 +35,7 @@ export async function runDreams(options = {}) {
   }
 
   result.text = formatDreams(result);
-  return result;
+  return attachSmartSections(result, options);
 }
 
 async function collectDreamState(context) {

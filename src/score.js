@@ -1,5 +1,5 @@
 import { analyzeMemory, symbol } from "./insights.js";
-import { appendExplanation, explainHarnessResult } from "./local-brain.js";
+import { attachSmartSections } from "./smart-sections.js";
 
 export async function runScore(options = {}) {
   const analysis = await analyzeMemory(options);
@@ -15,14 +15,7 @@ export async function runScore(options = {}) {
     exitCode: analysis.score.value < 40 || analysis.issues.some((issue) => issue.status === "fail") ? 1 : 0
   };
   result.text = formatScore(result);
-  if (options.explain) {
-    result.explanation = await explainHarnessResult(result, {
-      fetch: options.fetch,
-      ollamaModel: options.ollamaModel
-    });
-    result.text = appendExplanation(result.text, result.explanation);
-  }
-  return result;
+  return attachSmartSections(result, options);
 }
 
 function formatScore(result) {

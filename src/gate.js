@@ -1,4 +1,5 @@
 import { analyzeMemory, symbol } from "./insights.js";
+import { attachSmartSections } from "./smart-sections.js";
 
 export async function runGate(options = {}) {
   const analysis = await analyzeMemory(options);
@@ -18,7 +19,7 @@ export async function runGate(options = {}) {
     exitCode: decision.status === "block" ? 1 : 0
   };
   result.text = formatGate(result);
-  return result;
+  return attachSmartSections(result, options);
 }
 
 function decideGate({ analysis, blockers, warnings }) {
