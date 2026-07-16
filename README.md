@@ -4,7 +4,7 @@
 
 `smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can use a local Llama brain through Ollama for plain-English explanations.
 
-The CLI banner uses a Supermemory-style blue terminal texture when color output is available. It respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
+The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. GitHub cannot render live ANSI terminal color in Markdown, so the banner above is a terminal-faithful SVG render of the same output. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
 
 ## Run
 
