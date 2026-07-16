@@ -1,24 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="340" viewBox="0 0 920 340" role="img" aria-labelledby="title desc">
-  <title id="title">Supermemory Harness smctl banner</title>
-  <desc id="desc">Terminal-faithful blue ANSI smctl ASCII banner for Supermemory Harness.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="430" viewBox="0 0 1100 430" role="img" aria-labelledby="title desc">
+  <title id="title">Supermemory Harness smctl terminal banner</title>
+  <desc id="desc">A polished terminal-style render of the blue ANSI smctl startup banner.</desc>
   <defs>
-    <linearGradient id="terminal" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#07111f"/>
+    <linearGradient id="page" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#06111f"/>
+      <stop offset="0.58" stop-color="#08172b"/>
       <stop offset="1" stop-color="#020817"/>
     </linearGradient>
+    <linearGradient id="screen" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#031123"/>
+      <stop offset="1" stop-color="#010712"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#071c36"/>
+      <stop offset="0.58" stop-color="#041528"/>
+      <stop offset="1" stop-color="#02101f"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0ea5e9" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#1d4ed8" stop-opacity="0.18"/>
+    </linearGradient>
+    <pattern id="scanlines" width="1" height="6" patternUnits="userSpaceOnUse">
+      <path d="M0 0H1V1H0Z" fill="#38bdf8" opacity="0.035"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="18" flood-color="#000814" flood-opacity="0.55"/>
+    </filter>
+    <filter id="ansiGlow" x="-12%" y="-30%" width="124%" height="170%">
+      <feGaussianBlur stdDeviation="1.3" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      }
+      .ascii {
+        font-size: 35px;
+        letter-spacing: 0;
+      }
+    </style>
   </defs>
-  <rect width="920" height="340" rx="18" fill="url(#terminal)"/>
-  <rect x="42" y="34" width="836" height="272" rx="10" fill="#020817" stroke="#0b2b4f"/>
-  <circle cx="66" cy="56" r="5" fill="#38bdf8"/>
-  <circle cx="84" cy="56" r="5" fill="#0087ff"/>
-  <circle cx="102" cy="56" r="5" fill="#00d7ff"/>
-  <path d="M42 78H878" stroke="#0b2b4f" stroke-width="1"/>
-  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="30">
-    <text x="68" y="120" fill="#005fff" xml:space="preserve">  ___ _ __ ___   ___| |_| |</text>
-    <text x="68" y="156" fill="#0087ff" xml:space="preserve"> / __| '_ ` _ \ / __| __| |</text>
-    <text x="68" y="192" fill="#00d7ff" xml:space="preserve"> \__ \ | | | | | (__| |_| |</text>
-    <text x="68" y="228" fill="#0087ff" xml:space="preserve"> |___/_| |_| |_|\___|\__|_|</text>
+
+  <rect width="1100" height="430" rx="28" fill="url(#page)"/>
+  <rect x="58" y="48" width="984" height="334" rx="18" fill="#020817" filter="url(#shadow)"/>
+  <rect x="58" y="48" width="984" height="334" rx="18" fill="url(#screen)" stroke="url(#edge)" stroke-width="1.4"/>
+  <rect x="58" y="48" width="984" height="56" rx="18" fill="url(#bar)"/>
+  <path d="M58 104H1042" stroke="#0b2b4f" stroke-width="1"/>
+  <circle cx="84" cy="76" r="6" fill="#38bdf8"/>
+  <circle cx="106" cy="76" r="6" fill="#0087ff"/>
+  <circle cx="128" cy="76" r="6" fill="#00d7ff"/>
+  <text x="966" y="82" fill="#005f87" font-size="15" class="mono">smctl install</text>
+
+  <rect x="59" y="105" width="982" height="276" fill="url(#scanlines)" opacity="0.7"/>
+  <path d="M90 332H1010" stroke="#0b2b4f" stroke-width="1" opacity="0.85"/>
+
+  <g class="mono ascii" filter="url(#ansiGlow)">
+    <text x="92" y="158" fill="#005fff" xml:space="preserve">  ___ _ __ ___   ___| |_| |</text>
+    <text x="92" y="202" fill="#0087ff" xml:space="preserve"> / __| '_ ` _ \ / __| __| |</text>
+    <text x="92" y="246" fill="#00d7ff" xml:space="preserve"> \__ \ | | | | | (__| |_| |</text>
+    <text x="92" y="290" fill="#0087ff" xml:space="preserve"> |___/_| |_| |_|\___|\__|_|</text>
   </g>
-  <text x="68" y="270" fill="#00d7ff" font-size="22" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace">Supermemory Harness</text>
-  <text x="68" y="294" fill="#005f87" font-size="18" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace">install</text>
+
+  <text x="92" y="355" fill="#00d7ff" font-size="25" font-weight="700" class="mono">Supermemory Harness</text>
+  <text x="92" y="381" fill="#005f87" font-size="20" class="mono">install</text>
+  <rect x="180" y="366" width="12" height="22" rx="2" fill="#00d7ff" opacity="0.82"/>
 </svg>
