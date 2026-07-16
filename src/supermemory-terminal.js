@@ -19,9 +19,11 @@ export async function runSupermemoryTerminal(options = {}) {
     fetch: options.fetch ?? globalThis.fetch,
     dryRun: Boolean(options.dryRun),
     intervalMs: options.intervalMs ?? 30000,
+    startupDelayMs: options.startupDelayMs ?? 7000,
     command: options.command ?? null,
     spawn: options.spawn ?? spawn
   };
+  const launchCwd = options.launchCwd ?? context.home;
 
   const command = context.command ?? await findSupermemoryServer(context);
   if (!command) {
@@ -35,13 +37,15 @@ export async function runSupermemoryTerminal(options = {}) {
     return result("supermemory start", 0, [
       "[harness] Would start Supermemory Local with Harness terminal overlay.",
       `[harness] Command: ${command}`,
+      `[harness] Launch cwd: ${launchCwd}`,
       `[harness] Harness health interval: ${context.intervalMs}ms`
     ]);
   }
 
   process.stdout.write(`[harness] launching Supermemory Local with Harness terminal overlay: ${command}\n`);
+  process.stdout.write(`[harness] launch cwd: ${launchCwd}\n`);
   const child = context.spawn(command, [], {
-    cwd: context.cwd,
+    cwd: launchCwd,
     env: context.env,
     stdio: ["inherit", "pipe", "pipe"]
   });
@@ -54,7 +58,7 @@ export async function runSupermemoryTerminal(options = {}) {
       process.stderr.write(`[harness] ${label} failed: ${error.message}\n`);
     });
   };
-  const startupTimer = setTimeout(() => printWatchdog("startup"), 1500);
+  const startupTimer = setTimeout(() => printWatchdog("startup"), context.startupDelayMs);
   const timer = setInterval(() => printWatchdog("watchdog"), context.intervalMs);
 
   const cleanup = () => {
@@ -145,11 +149,15 @@ async function which(command, env) {
   return null;
 }
 
-function prefixLines(prefix, chunk) {
-  return String(chunk)
+export function prefixLines(prefix, chunk) {
+  return redactSecrets(String(chunk))
     .split(/(\r?\n)/)
     .map((part) => part === "\n" || part === "\r\n" || part === "" ? part : `[${prefix}] ${part}`)
     .join("");
+}
+
+function redactSecrets(text) {
+  return text.replace(/sm_[A-Za-z0-9_-]{20,}/g, "sm_[redacted]");
 }
 
 function result(command, exitCode, lines) {
