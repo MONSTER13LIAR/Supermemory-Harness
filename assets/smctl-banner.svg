@@ -49,9 +49,9 @@
   <rect x="58" y="48" width="984" height="334" rx="18" fill="url(#screen)" stroke="url(#edge)" stroke-width="1.4"/>
   <rect x="58" y="48" width="984" height="56" rx="18" fill="url(#bar)"/>
   <path d="M58 104H1042" stroke="#0b2b4f" stroke-width="1"/>
-  <circle cx="84" cy="76" r="6" fill="#38bdf8"/>
-  <circle cx="106" cy="76" r="6" fill="#0087ff"/>
-  <circle cx="128" cy="76" r="6" fill="#00d7ff"/>
+  <circle cx="84" cy="76" r="6" fill="#ff5f57"/>
+  <circle cx="106" cy="76" r="6" fill="#ffbd2e"/>
+  <circle cx="128" cy="76" r="6" fill="#28c840"/>
   <text x="966" y="82" fill="#005f87" font-size="15" class="mono">smctl install</text>
 
   <rect x="59" y="105" width="982" height="276" fill="url(#scanlines)" opacity="0.7"/>
