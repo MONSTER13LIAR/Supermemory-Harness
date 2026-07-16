@@ -4,6 +4,7 @@ import { runDoctor } from "../src/doctor.js";
 import { runDreams } from "../src/dreams.js";
 import { runAgentBridge } from "../src/agent-bridge.js";
 import { runEnhance } from "../src/enhance.js";
+import { runExecutive } from "../src/executive.js";
 import { runGuard } from "../src/guard.js";
 import { runGate } from "../src/gate.js";
 import { runHardware } from "../src/hardware.js";
@@ -37,6 +38,7 @@ function printHelp() {
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl enhance [--json] [--dry-run] [--explain] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
+  smctl executive [--json] [--base-url <url>] [--limit <n>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
   smctl workflow [--json] [--base-url <url>] [--limit <n>]
@@ -90,6 +92,7 @@ Usage:
 Commands:
   install  Install and automatically activate the full Supermemory Harness plugin.
   enhance  Automatically make Supermemory Local agent-memory ready.
+  executive Run the daily/final readiness cockpit for Supermemory operations.
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
   workflow Show the simple install-to-trust workflow and moral automation boundaries.
@@ -359,7 +362,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "executive", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -402,6 +405,17 @@ async function runCommand(args) {
       explain: args.explain,
       ollamaModel: args.ollamaModel,
       fetch: globalThis.fetch
+    });
+  }
+
+  if (args.command === "executive") {
+    return runExecutive({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 

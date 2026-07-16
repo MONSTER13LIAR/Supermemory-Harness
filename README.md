@@ -68,6 +68,7 @@ Check the full Harness state:
 
 ```bash
 smctl enhance
+smctl executive
 smctl workflow
 smctl watch
 smctl trust
@@ -84,6 +85,8 @@ smctl gate --explain
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
 
 `workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
+
+`executive` is the daily/final readiness cockpit. It runs the operational layers together, summarizes runtime, trust, Agent Autopilot, Dream Flight Recorder, Guard, and agent bridge state, then gives a prioritized action plan plus final checks before hosting or demoing.
 
 `trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, and vague memories. It is read-only by default:
 
@@ -256,6 +259,7 @@ node ./bin/smctl.js guard reject <id>
 
 - `doctor` is read-only diagnostics.
 - `enhance` is the automatic Supermemory Harness setup path: make Supermemory Local agent-memory ready, apply the native Supermemory Desktop source enhancement when available, otherwise prepare the embedded dashboard path and verify the memory loop.
+- `executive` is the daily/final readiness cockpit for runtime, trust, Agent Autopilot, dreams, Guard, bridge status, prioritized actions, and hosting checks.
 - `install` is the one-command onboarding flow for the Harness plugin.
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.

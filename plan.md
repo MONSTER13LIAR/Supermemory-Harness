@@ -384,3 +384,19 @@ Why this matters:
 - Supermemory can store memories, but coding agents still need a decision point before using them.
 - Context compaction can destroy the details that should become durable memory unless the contract is explicit.
 - Session endings are where unresolved memory failures get hidden; Harness turns them into a clear next command.
+
+## 21. Executive Readiness Cockpit (July 16)
+Product decision:
+- Add one daily/final readiness command that runs the important Harness layers together.
+- This is the command to run before serious work, before a demo, and before hosting checks.
+- Keep it read-only. It should summarize and prioritize, not mutate state.
+
+Implemented direction:
+- `smctl executive` runs the Harness Bar state, Trust Doctor, Dream Flight Recorder in dry-run mode, Agent Memory Autopilot pre-action gate, and agent bridge status.
+- It returns an executive board for runtime, trust, autopilot, dreams, Guard, and agent bridge.
+- It generates a prioritized action plan and final checks before hosting: `npm test`, `smctl executive`, `smctl workflow`, `smctl session pre-action`, and `smctl trust --probe`.
+
+Why this matters:
+- Users should not need to remember which diagnostic command proves which part of Supermemory.
+- Judges can run one command and see whether Harness is materially improving daily Supermemory operations.
+- The command makes the product story concrete: Harness turns Supermemory Local into an observable, governed, daily-ready memory runtime.
