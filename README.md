@@ -74,6 +74,10 @@ smctl status
 smctl status --explain
 smctl score
 smctl gate --explain
+smctl migrate plan
+smctl migrate cloud --dry-run
+smctl migrate cloud --apply
+smctl migrate verify
 ```
 
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
@@ -81,6 +85,19 @@ smctl gate --explain
 `workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
 
 `executive` is the daily/final readiness cockpit. It runs the operational layers together, summarizes runtime, trust, Agent Autopilot, Dream Flight Recorder, Guard, and agent bridge state, then gives a prioritized action plan plus final checks before hosting or demoing.
+
+`migrate` is the Local-to-Cloud bridge. It helps users who built useful project memory in Supermemory Local move the user-facing knowledge into Supermemory Cloud without treating Local as a dead-end sandbox:
+
+```bash
+smctl migrate plan
+smctl migrate cloud --dry-run
+SUPERMEMORY_CLOUD_API_KEY=... smctl migrate cloud --apply
+smctl migrate verify
+```
+
+Migration is safe by default. `plan` and `cloud --dry-run` read local documents, preserve project/container tags, and hold back failed writes, duplicate-looking entries, empty documents, and possible secrets. `cloud --apply` writes only migratable knowledge through the cloud document API and stores an audit receipt under `~/.config/smctl/migrations/`.
+
+Harness preserves useful context such as title, text, project tag, source URL/filepath when available, local timestamps as metadata, local IDs as metadata, and a content hash. It does not claim a byte-perfect internal database clone: original database IDs, embeddings, chunk IDs, auth/session state, and private Local-only processing state remain Supermemory internals.
 
 `trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, and vague memories. It is read-only by default:
 
@@ -276,6 +293,7 @@ node ./bin/smctl.js guard reject <id>
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
 - `memory coach` explains how to improve memory quality: clearer wording, project tags, duplicates, secrets, and recall gaps.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
+- `migrate` plans, dry-runs, applies, verifies, and receipts Local-to-Cloud knowledge transfer while holding back risky or low-quality local data.
 - `repair` diagnoses failed documents, stale queues, retry-loop log hints, write/read mismatch symptoms, and local store size risk. It plans by default and avoids destructive cleanup.
 - `repair wizard` turns repair diagnostics into a safe ordered plan.
 - `timeline` shows recent write activity by day and top containers.

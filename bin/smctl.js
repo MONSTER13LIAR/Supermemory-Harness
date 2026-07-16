@@ -10,6 +10,7 @@ import { runGate } from "../src/gate.js";
 import { runHardware } from "../src/hardware.js";
 import { localBrainDoctor } from "../src/local-brain.js";
 import { runMemory } from "../src/memory.js";
+import { runMigrate } from "../src/migrate.js";
 import { runProject } from "../src/project.js";
 import { runSetup } from "../src/setup.js";
 import { runCleanup } from "../src/cleanup.js";
@@ -63,6 +64,10 @@ Usage:
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
   smctl memory replay [--json] [--base-url <url>] [--limit <n>] [--apply]
   smctl memory coach [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl migrate plan [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>]
+  smctl migrate cloud [--json] [--dry-run] [--apply] [--base-url <url>] [--cloud-url <url>] [--cloud-api-key-env <name>] [--limit <n>]
+  smctl migrate verify [--json] [--cloud-url <url>] [--cloud-api-key-env <name>]
+  smctl migrate receipt [--json]
   smctl timeline [--json] [--base-url <url>] [--limit <n>]
   smctl cleanup [--json] [--base-url <url>] [--limit <n>]
   smctl hardware init [--json] [--name <device>] [--device <id>] [--project <name>]
@@ -113,6 +118,7 @@ Commands:
   setup    Write safe local integration config for Supermemory Local.
   smoke    Ingest and search a harmless marker to verify the memory pipeline.
   memory   Inspect memory quality, failed docs, and recall health.
+  migrate  Move useful Supermemory Local knowledge to Supermemory Cloud with review and verification.
   timeline Show recent Supermemory write activity by day and container.
   cleanup  Plan safe cleanup for duplicates, test markers, vague notes, and secrets.
   hardware Capture hardware/robot logs as local Supermemory experience memories.
@@ -157,6 +163,8 @@ function parseArgs(argv) {
     upstream: "http://localhost:6767",
     baseUrl: "http://localhost:6767",
     guardUrl: "http://localhost:6777",
+    cloudUrl: null,
+    cloudApiKeyEnv: "SUPERMEMORY_CLOUD_API_KEY",
     sourcePath: null,
     help: false,
     version: false
@@ -302,6 +310,20 @@ function parseArgs(argv) {
       }
       args.guardUrl = value;
       index += 1;
+    } else if (token === "--cloud-url") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("--cloud-url requires a value");
+      }
+      args.cloudUrl = value;
+      index += 1;
+    } else if (token === "--cloud-api-key-env") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("--cloud-api-key-env requires a value");
+      }
+      args.cloudApiKeyEnv = value;
+      index += 1;
     } else if (token === "--supermemory-source") {
       const value = argv[index + 1];
       if (!value) {
@@ -316,6 +338,8 @@ function parseArgs(argv) {
     } else if (args.command === "guard" && !args.id) {
       args.id = token;
     } else if (args.command === "memory" && !args.subcommand) {
+      args.subcommand = token;
+    } else if (args.command === "migrate" && !args.subcommand) {
       args.subcommand = token;
     } else if (args.command === "session" && !args.subcommand) {
       args.subcommand = token;
@@ -362,7 +386,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "executive", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "executive", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "migrate", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -661,6 +685,21 @@ async function runCommand(args) {
       apply: args.apply,
       explain: args.explain,
       ollamaModel: args.ollamaModel
+    });
+  }
+
+  if (args.command === "migrate") {
+    return runMigrate({
+      action: args.subcommand,
+      baseUrl: args.baseUrl,
+      cloudUrl: args.cloudUrl,
+      cloudApiKeyEnv: args.cloudApiKeyEnv,
+      home: process.env.HOME,
+      env: process.env,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      dryRun: args.dryRun,
+      apply: args.apply
     });
   }
 
