@@ -337,3 +337,31 @@ Current essential activation bundle:
 
 Follow-up local improvement:
 - When the live Supermemory server exposes OpenAPI but `/mcp` returns 404, Harness now gives the exact repair path: run `supermemory-server upgrade`, restart with `smctl supermemory start`, then re-run `smctl doctor`.
+
+## 19. Simple Moral Workflow Architecture (July 16)
+New architecture decision: Harness should feel like one simple workflow, not a bag of commands.
+
+Normal user path:
+```bash
+smctl enhance
+smctl workflow
+smctl supermemory start
+smctl gate
+```
+
+Product rule:
+- Automate safe setup, visibility, agent bridge files, project scope initialization, dashboard proxy startup, and terminal health events.
+- Do not silently persist risky memories, print secrets, delete memories, or replace the Supermemory server binary.
+- When Harness cannot trust memory, it must say so plainly and choose the next command.
+
+Real gaps this architecture targets:
+- Supermemory can be installed while the actual coding-agent memory path is unwired.
+- Server logs and dashboard presence do not prove MCP, agents, memory queue, Guard, or recall are healthy.
+- Documents can exist while useful recall is missing, stale, duplicated, contradictory, cross-project, vague, or unsafe.
+- Background dreaming/consolidation is useful but opaque unless users can inspect what changed.
+- When things break, users need an ordered repair plan instead of scattered diagnostics.
+
+Implemented direction:
+- Add `smctl workflow` as the architecture command.
+- It calls the Harness Bar state, explains the install-to-trust path, maps real pain points to Harness features, states moral automation boundaries, and recommends the next command.
+- Keep `workflow` read-only. The mutating command remains `smctl enhance`; risky persistence remains behind Guard/review or explicit probes.

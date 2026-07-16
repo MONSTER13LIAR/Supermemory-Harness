@@ -26,6 +26,7 @@ import { runTrust } from "../src/trust.js";
 import { runUi } from "../src/ui.js";
 import { runVerify } from "../src/verify.js";
 import { runWatch } from "../src/watch.js";
+import { runWorkflow } from "../src/workflow.js";
 
 const VERSION = "0.1.0";
 
@@ -37,6 +38,7 @@ Usage:
   smctl enhance [--json] [--dry-run] [--explain] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
+  smctl workflow [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
   smctl gate [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
@@ -88,6 +90,7 @@ Commands:
   enhance  Automatically make Supermemory Local agent-memory ready.
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
+  workflow Show the simple install-to-trust workflow and moral automation boundaries.
   trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
   gate     Run the pre-action memory governance gate before edits/tests.
   supermemory Start Supermemory Local with Harness health events in the same terminal.
@@ -351,7 +354,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "start", "watch", "trust", "gate", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "start", "watch", "workflow", "trust", "gate", "supermemory", "agent", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -422,6 +425,17 @@ async function runCommand(args) {
       limit: args.limit,
       explain: args.explain,
       ollamaModel: args.ollamaModel
+    });
+  }
+
+  if (args.command === "workflow") {
+    return runWorkflow({
+      baseUrl: args.baseUrl,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 

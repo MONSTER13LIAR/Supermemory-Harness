@@ -68,6 +68,7 @@ Check the full Harness state:
 
 ```bash
 smctl enhance
+smctl workflow
 smctl watch
 smctl trust
 smctl supermemory start
@@ -80,6 +81,8 @@ smctl gate --explain
 ```
 
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
+
+`workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
 
 `trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, and vague memories. It is read-only by default:
 
@@ -254,6 +257,7 @@ node ./bin/smctl.js guard reject <id>
 - `init` detects the current project and writes an active project profile for memory enrichment.
 - `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
 - `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
+- `workflow` shows the simple install-to-trust architecture, the real gaps covered, and the automation boundaries.
 - `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
 - `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
 - `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
