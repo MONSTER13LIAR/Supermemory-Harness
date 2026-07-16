@@ -7,7 +7,6 @@ import { runEnhance } from "../src/enhance.js";
 import { runGuard } from "../src/guard.js";
 import { runGate } from "../src/gate.js";
 import { runHardware } from "../src/hardware.js";
-import { runInstall } from "../src/install.js";
 import { localBrainDoctor } from "../src/local-brain.js";
 import { runMemory } from "../src/memory.js";
 import { runProject } from "../src/project.js";
@@ -85,7 +84,7 @@ Usage:
   smctl --version
 
 Commands:
-  install  Install and connect the full Supermemory Harness plugin.
+  install  Install and automatically activate the full Supermemory Harness plugin.
   enhance  Automatically make Supermemory Local agent-memory ready.
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
@@ -369,16 +368,14 @@ async function main() {
 
 async function runCommand(args) {
   if (args.command === "install") {
-    return runInstall({
+    return runEnhance({
       baseUrl: args.baseUrl,
       guardUrl: args.guardUrl,
       cwd: process.cwd(),
       env: process.env,
       home: process.env.HOME,
       dryRun: args.dryRun,
-      interactive: !args.json && !args.dryRun && process.stdin.isTTY,
-      provider: args.provider,
-      model: args.model,
+      sourcePath: args.sourcePath,
       fetch: globalThis.fetch
     });
   }

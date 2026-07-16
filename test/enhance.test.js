@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { runEnhance } from "../src/enhance.js";
@@ -27,6 +27,33 @@ test("enhance automates the agent-memory readiness path", async () => {
   assert.equal(result.actions.some((action) => action.title === "Harness plugin layer"), true);
   assert.equal(result.actions.some((action) => action.title === "Codex and Claude agent bridge"), true);
   assert.equal(result.agentBridge.summary.planned, 2);
+  assert.equal(result.activation.status, "planned");
+  assert.equal(result.activation.receipt.automatic.dashboardInjection, true);
+});
+
+test("enhance writes activation receipt and starts embedded UI automatically", async () => {
+  const home = await fakeHome();
+  let startedUi = false;
+  const result = await runEnhance({
+    home,
+    cwd: home,
+    env: { PATH: "" },
+    fetch: fakeFetch,
+    startUi: async () => {
+      startedUi = true;
+      return { status: "ready", detail: "Started test UI" };
+    }
+  });
+
+  const receipt = JSON.parse(await readFile(join(home, ".config", "smctl", "activation.json"), "utf8"));
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(startedUi, true);
+  assert.equal(result.activation.status, "ready");
+  assert.equal(receipt.automatic.agentBridge, true);
+  assert.equal(receipt.automatic.dashboardInjection, true);
+  assert.equal(receipt.next.normalServerCommand, "smctl supermemory start");
+  assert.equal(receipt.next.preActionGate, "smctl gate");
 });
 
 async function fakeHome() {
@@ -44,6 +71,9 @@ async function fakeHome() {
 }
 
 async function fakeFetch(url) {
+  if (String(url).startsWith("http://localhost:6778")) {
+    return response(404, { error: "ui not running" });
+  }
   if (url.endsWith("/v4/openapi")) {
     return response(200, {
       paths: {

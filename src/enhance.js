@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import { runAgentBridge } from "./agent-bridge.js";
 import { runDoctor } from "./doctor.js";
 import { runInstall } from "./install.js";
 import { runNativeEnhance } from "./native-enhance.js";
-import { projectDoctor } from "./project.js";
+import { projectDoctor, projectInit } from "./project.js";
 import { runSetup } from "./setup.js";
 import { runWatch } from "./watch.js";
 
@@ -55,9 +57,10 @@ export async function runEnhance(options = {}) {
     fetch: context.fetch,
     dryRun: context.dryRun
   });
-  const project = await projectDoctor({
+  const project = await ensureProjectScope({
     home: context.home,
-    cwd: context.cwd
+    cwd: context.cwd,
+    dryRun: context.dryRun
   });
   const native = await runNativeEnhance({
     cwd: context.cwd,
@@ -83,12 +86,23 @@ export async function runEnhance(options = {}) {
     actionFromResult("Local agent config", setup.exitCode === 0 ? "ready" : "needs-attention", setupSummary(setup)),
     actionFromResult("Harness plugin layer", install.exitCode === 0 ? "ready" : "needs-attention", installSummary(install)),
     actionFromResult("Codex and Claude agent bridge", agentBridgeStatus(agentBridge), agentBridgeSummary(agentBridge)),
-    actionFromResult("Project memory scope", project.exitCode === 0 ? "ready" : "needs-attention", project.profile ? `${project.profile.name} -> ${project.profile.containerTag}` : "Run smctl init from your project folder."),
+    actionFromResult("Project memory scope", projectActionStatus(project), projectSummary(project)),
     actionFromResult("Terminal-native Supermemory runtime", "ready", "Use smctl supermemory start so Harness health appears in the Supermemory log stream."),
     actionFromResult("Native Supermemory enhancement", nativeActionStatus(native), nativeSummary(native)),
     ui,
     actionFromResult("Memory loop visibility", watch ? "ready" : "needs-attention", watch ? watch.bar.join(" | ") : "Skipped until Supermemory is reachable.")
   ];
+  const activation = await writeActivationReceipt(context, {
+    doctor,
+    setup,
+    install,
+    agentBridge,
+    project,
+    native,
+    ui,
+    watch
+  });
+  actions.push(actionFromResult("Harness activation receipt", activation.status, activation.detail));
 
   const summary = summarize(actions);
   const result = {
@@ -122,6 +136,7 @@ export async function runEnhance(options = {}) {
       bar: watch.bar,
       next: watch.next
     } : null,
+    activation,
     next: nextSteps({ doctor, project, ui, watch, context }),
     summary,
     exitCode: summary["needs-attention"] > 0 ? 1 : 0
@@ -137,11 +152,93 @@ async function enhanceUi(context, doctor) {
   if (context.dryRun) {
     return actionFromResult("Embedded Supermemory dashboard", "planned", `Would start smctl ui at ${context.uiUrl}.`);
   }
+  const existing = await probeUrl(context.fetch, context.uiUrl);
+  if (existing.ok) {
+    return actionFromResult("Embedded Supermemory dashboard", "ready", `Already running at ${context.uiUrl}.`);
+  }
   const started = await context.startUi({
     cwd: context.cwd,
     uiUrl: context.uiUrl
   });
   return actionFromResult("Embedded Supermemory dashboard", started.status, started.detail);
+}
+
+async function ensureProjectScope({ home, cwd, dryRun }) {
+  const doctor = await projectDoctor({ home, cwd });
+  if (doctor.exitCode === 0) return doctor;
+  if (dryRun) {
+    return {
+      ...doctor,
+      planned: true,
+      exitCode: 0
+    };
+  }
+  const init = await projectInit({ home, cwd });
+  return {
+    ...await projectDoctor({ home, cwd }),
+    initialized: true,
+    init
+  };
+}
+
+async function writeActivationReceipt(context, parts) {
+  const receipt = {
+    product: "Supermemory Harness",
+    feature: "Harness Enhance",
+    generatedAt: new Date().toISOString(),
+    baseUrl: context.baseUrl,
+    guardUrl: context.guardUrl,
+    uiUrl: context.uiUrl,
+    dryRun: context.dryRun,
+    automatic: {
+      setup: parts.setup.exitCode === 0,
+      skills: parts.install.exitCode === 0,
+      agentBridge: parts.agentBridge.exitCode === 0,
+      dashboardInjection: ["ready", "planned"].includes(parts.ui.status),
+      terminalRuntime: true,
+      nativeEnhancement: parts.native.status === "ready",
+      projectScope: parts.project.exitCode === 0,
+      memoryVisibility: Boolean(parts.watch)
+    },
+    next: {
+      normalServerCommand: "smctl supermemory start",
+      dashboardUrl: context.uiUrl,
+      preActionGate: "smctl gate",
+      repair: parts.watch?.next ?? "smctl repair wizard"
+    }
+  };
+
+  if (context.dryRun) {
+    return {
+      status: "planned",
+      path: activationReceiptPath(context.home),
+      receipt,
+      detail: `Would write activation receipt to ${redactHome(activationReceiptPath(context.home), context.home)}.`
+    };
+  }
+
+  const path = activationReceiptPath(context.home);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600 });
+  return {
+    status: "ready",
+    path,
+    receipt,
+    detail: `Wrote activation receipt to ${redactHome(path, context.home)}.`
+  };
+}
+
+async function probeUrl(fetchFn, url) {
+  if (!fetchFn) return { ok: false };
+  try {
+    const response = await fetchFn(url, {
+      method: "GET",
+      signal: AbortSignal.timeout(750)
+    });
+    return { ok: response.ok, status: response.status };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
 }
 
 async function startUiProcess({ cwd }) {
@@ -209,6 +306,19 @@ function setupSummary(setup) {
   return `${summary.created} created, ${summary.updated} updated, ${summary.unchanged} unchanged, ${summary["would-create"]} would-create, ${summary["would-update"]} would-update, ${summary.manual} manual`;
 }
 
+function projectActionStatus(project) {
+  if (project.planned) return "planned";
+  return project.exitCode === 0 ? "ready" : "needs-attention";
+}
+
+function projectSummary(project) {
+  if (project.profile) {
+    return `${project.initialized ? "Initialized " : ""}${project.profile.name} -> ${project.profile.containerTag}`;
+  }
+  if (project.planned) return "Would initialize project memory scope from the current folder.";
+  return "Could not initialize project memory scope.";
+}
+
 function installSummary(install) {
   return `${install.summary.ok} ok, ${install.summary.warn} warn, ${install.summary.fail} fail`;
 }
@@ -263,4 +373,14 @@ function symbol(status) {
 
 function normalizeBaseUrl(url) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+function activationReceiptPath(home) {
+  return join(home, ".config", "smctl", "activation.json");
+}
+
+function redactHome(path, home) {
+  if (path === home) return "~";
+  if (path.startsWith(`${home}/`)) return `~/${path.slice(home.length + 1)}`;
+  return path;
 }

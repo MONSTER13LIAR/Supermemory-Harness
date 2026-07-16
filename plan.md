@@ -315,3 +315,22 @@ Direction going forward:
 - Do not force users to choose between "modes" during install.
 - Use deeper Supermemory source enhancement when a source checkout is available, but keep the user-facing command the same: `smctl enhance`.
 - Avoid binary patching the compiled Supermemory server. The powerful path is automatic enhancement through supported local files, runtime wrapping, dashboard proxying, and source patches when editable source exists.
+
+## 18. Install Means Activation (July 16)
+Product decision:
+- Treat install/enhance as activation, not instruction. The user should not need to manually discover `smctl ui`, `smctl init`, or `smctl agent connect` for the essential experience.
+- `smctl install` now runs the same automatic enhancement path as `smctl enhance`.
+- `smctl enhance` now auto-initializes project memory scope when no active project profile exists.
+- `smctl enhance` starts the embedded dashboard proxy automatically when Supermemory Local is reachable, or detects that it is already running.
+- `smctl enhance` writes `~/.config/smctl/activation.json` so agents and users can see what was auto-enabled and what normal commands to use next.
+
+Current essential activation bundle:
+- local setup/config,
+- memory behavior skills,
+- Codex/Claude agent bridge,
+- project scope initialization,
+- embedded dashboard proxy/injection,
+- terminal-native runtime guidance,
+- native Supermemory source enhancement when source is available,
+- memory visibility/watch snapshot,
+- activation receipt.

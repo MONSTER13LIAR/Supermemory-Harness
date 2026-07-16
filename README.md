@@ -21,7 +21,7 @@ npm install -g github:MONSTER13LIAR/Supermemory-Harness
 smctl enhance
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, connects Codex/Claude-style agents to Harness diagnostics, prepares the embedded Supermemory dashboard experience, and tells the user exactly what remains before coding-agent memory is trustworthy.
+That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, connects Codex/Claude-style agents to Harness diagnostics, initializes project memory scope when missing, starts the embedded Supermemory dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
 
 When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
 
@@ -36,7 +36,7 @@ To point Harness at a checkout explicitly:
 smctl enhance --supermemory-source /path/to/supermemory
 ```
 
-`smctl install` remains available as the lower-level install command.
+`smctl install` also runs the same automatic enhancement flow, so installer agents can use either command and still activate the essential pieces immediately.
 
 For local development from this repo:
 
@@ -50,7 +50,7 @@ After enhancement, run Supermemory through Harness when you want the normal term
 smctl supermemory start
 ```
 
-Initialize the current app/project so Harness can tag Supermemory writes with project context:
+Enhance initializes the current app/project automatically when no active profile exists. To refresh the project profile manually:
 
 ```bash
 smctl init
@@ -118,7 +118,7 @@ smctl agent status
 
 The bridge tells agents to run `smctl trust --json`, `smctl repair wizard`, and `smctl trust --probe` when the user asks what is happening with Supermemory.
 
-`ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. Keep `supermemory-server` running on `localhost:6767`, then run:
+`ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. `smctl enhance` starts it automatically when Supermemory Local is reachable; the command remains available if you want to restart it:
 
 ```bash
 smctl ui
