@@ -123,7 +123,8 @@ Harness fix:
   and explicit vetoes.
 
 Status:
-- Planned.
+- Shipped. Memory analysis now extracts durable project facts for common engineering choices
+  and flags contradictory values as conflict groups in score/coach/repair surfaces.
 
 ## Gap 8: Secret Redaction Depends Too Much On User Behavior
 

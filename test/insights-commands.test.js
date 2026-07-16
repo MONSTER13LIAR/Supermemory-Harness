@@ -30,6 +30,7 @@ test("insight commands surface memory score, cleanup, coach, timeline, project, 
   assert.equal(score.exitCode, 1);
   assert.match(score.text, /Memory Recall Score/);
   assert.match(score.text, /Failed memory writes/);
+  assert.match(score.text, /Contradictory project memories/);
 
   const cleanup = await runCleanup({ home, fetch });
   assert.equal(cleanup.exitCode, 1);
@@ -65,6 +66,8 @@ function fakeFetch() {
           { id: "doc_secret", status: "done", title: "api_key = sk-testsecret1234567890", updatedAt: old, containerTags: ["project:demo"] },
           { id: "doc_dup_1", status: "done", title: "Same decision", updatedAt: old, containerTags: ["project:demo"] },
           { id: "doc_dup_2", status: "done", title: "Same decision", updatedAt: old, containerTags: ["project:demo"] },
+          { id: "doc_fact_1", status: "done", title: "test runner is Vitest", updatedAt: old, containerTags: ["project:demo"] },
+          { id: "doc_fact_2", status: "done", title: "test runner is Jest", updatedAt: old, containerTags: ["project:demo"] },
           { id: "doc_vague", status: "done", title: "note", updatedAt: old, containerTags: ["other"] }
         ]
       });

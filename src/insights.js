@@ -45,6 +45,7 @@ export async function analyzeMemory(options = {}) {
   const risky = documents.filter(hasSecretRisk).map(documentSummary);
   const testMarkers = documents.filter(isHarnessTestMarker).map(documentSummary);
   const vague = documents.filter(isVagueMemory).map(documentSummary);
+  const contradictions = findContradictions(documents);
   const missingProject = findMissingProject(documents, profile).map(documentSummary);
   const zeroMemoryContainers = memorySamples.filter((sample) => sample.totalItems === 0);
   const timeline = buildTimeline(documents);
@@ -60,6 +61,7 @@ export async function analyzeMemory(options = {}) {
     duplicates,
     risky,
     vague,
+    contradictions,
     missingProject,
     zeroMemoryContainers,
     logs,
@@ -97,6 +99,7 @@ export async function analyzeMemory(options = {}) {
       risky,
       testMarkers,
       vague,
+      contradictions,
       missingProject,
       zeroMemoryContainers
     },
@@ -178,6 +181,9 @@ function buildIssues(input) {
   if (input.vague.length > 0) {
     issues.push(warn("Vague memories need better wording", `${input.vague.length} item(s)`, "smctl memory coach"));
   }
+  if (input.contradictions.length > 0) {
+    issues.push(warn("Contradictory project memories", `${input.contradictions.length} conflict group(s)`, "smctl memory coach"));
+  }
   if (input.profile && input.missingProject.length > 0) {
     issues.push(warn("Memories missing project context", `${input.missingProject.length} item(s) not tagged as ${input.profile.containerTag}`, "smctl start"));
   }
@@ -242,6 +248,63 @@ function findDuplicates(documents) {
     .filter(([, items]) => items.length > 1)
     .map(([key, items]) => ({ key, count: items.length, items }))
     .sort((a, b) => b.count - a.count);
+}
+
+function findContradictions(documents) {
+  const facts = new Map();
+  for (const doc of documents) {
+    if (doc.status && doc.status !== "done") continue;
+    const extracted = extractFacts(doc);
+    for (const fact of extracted) {
+      const items = facts.get(fact.subject) ?? new Map();
+      const valueItems = items.get(fact.value) ?? [];
+      valueItems.push(documentSummary(doc));
+      items.set(fact.value, valueItems);
+      facts.set(fact.subject, items);
+    }
+  }
+
+  return [...facts.entries()]
+    .filter(([, values]) => values.size > 1)
+    .map(([subject, values]) => ({
+      subject,
+      values: [...values.entries()].map(([value, items]) => ({ value, count: items.length, items: items.slice(0, 3) }))
+    }))
+    .slice(0, 8);
+}
+
+function extractFacts(doc) {
+  const text = `${doc.title ?? ""}. ${doc.content ?? doc.raw ?? ""}`;
+  const facts = [];
+  const patterns = [
+    /\b(test runner|package manager|database|runtime|framework|auth provider|deployment target)\s+(?:is|=|:)\s+([A-Za-z0-9._-]+)/gi,
+    /\b(?:use|uses|prefer|prefers|standardize on|choose|chosen)\s+([A-Za-z0-9._-]+)\s+(?:for|as)\s+(test runner|package manager|database|runtime|framework|auth provider|deployment target)\b/gi
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const first = normalizeFact(match[1]);
+      const second = normalizeFact(match[2]);
+      const subject = isFactSubject(first) ? first : second;
+      const value = isFactSubject(first) ? second : first;
+      if (subject && value && !isVagueFactValue(value)) {
+        facts.push({ subject, value });
+      }
+    }
+  }
+  return facts;
+}
+
+function normalizeFact(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function isFactSubject(value) {
+  return /^(test runner|package manager|database|runtime|framework|auth provider|deployment target)$/.test(value);
+}
+
+function isVagueFactValue(value) {
+  return /^(the|a|an|this|that|for|as)$/.test(value);
 }
 
 function findMissingProject(documents, profile) {
