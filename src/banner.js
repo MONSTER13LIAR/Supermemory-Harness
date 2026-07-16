@@ -32,8 +32,9 @@ function shouldColor(options) {
   if (options.color === true) return true;
   if (options.color === false) return false;
   if (process.env.NO_COLOR) return false;
+  if (process.env.TERM === "dumb") return false;
   if (process.env.FORCE_COLOR && process.env.FORCE_COLOR !== "0") return true;
-  return Boolean(process.stdout?.isTTY);
+  return true;
 }
 
 function colorizeBanner(lines) {

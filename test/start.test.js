@@ -41,7 +41,7 @@ test("start dry-run summarizes readiness without starting guard", async () => {
   assert.equal(result.project.name, "start-project");
   assert.equal(result.ollama.available, true);
   assert.match(result.text, /___ _ __ ___/);
-  assert.match(result.text, /Supermemory Harness\n running/);
+  assert.match(stripAnsi(result.text), /Supermemory Harness\n running/);
   assert.match(result.text, /Active project: start-project/);
   assert.match(result.text, /qwen2.5:1.5b/);
 });
@@ -77,4 +77,8 @@ function response(status, body) {
       }
     }
   };
+}
+
+function stripAnsi(value) {
+  return value.replace(/\x1b\[[0-9;]*m/g, "");
 }

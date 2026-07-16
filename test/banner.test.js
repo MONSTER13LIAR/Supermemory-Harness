@@ -19,3 +19,18 @@ test("banner can render blue Supermemory-style terminal texture", () => {
   assert.match(banner, /Supermemory Harness/);
   assert.match(banner, /install/);
 });
+
+test("banner colors by default unless disabled", () => {
+  const oldTerm = process.env.TERM;
+  const oldNoColor = process.env.NO_COLOR;
+  process.env.TERM = "xterm-256color";
+  delete process.env.NO_COLOR;
+  try {
+    assert.match(cliBanner("install"), /\x1b\[38;5;/);
+  } finally {
+    if (oldTerm === undefined) delete process.env.TERM;
+    else process.env.TERM = oldTerm;
+    if (oldNoColor === undefined) delete process.env.NO_COLOR;
+    else process.env.NO_COLOR = oldNoColor;
+  }
+});
