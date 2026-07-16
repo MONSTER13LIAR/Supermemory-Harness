@@ -52,10 +52,8 @@
   <circle cx="84" cy="76" r="6" fill="#ff5f57"/>
   <circle cx="106" cy="76" r="6" fill="#ffbd2e"/>
   <circle cx="128" cy="76" r="6" fill="#28c840"/>
-  <text x="966" y="82" fill="#005f87" font-size="15" class="mono">smctl install</text>
-
   <rect x="59" y="105" width="982" height="276" fill="url(#scanlines)" opacity="0.7"/>
-  <path d="M90 332H1010" stroke="#0b2b4f" stroke-width="1" opacity="0.85"/>
+  <path d="M90 318H1010" stroke="#0b2b4f" stroke-width="1" opacity="0.85"/>
 
   <g class="mono ascii" filter="url(#ansiGlow)">
     <text x="92" y="158" fill="#005fff" xml:space="preserve">  ___ _ __ ___   ___| |_| |</text>
@@ -64,7 +62,7 @@
     <text x="92" y="290" fill="#0087ff" xml:space="preserve"> |___/_| |_| |_|\___|\__|_|</text>
   </g>
 
-  <text x="92" y="355" fill="#00d7ff" font-size="25" font-weight="700" class="mono">Supermemory Harness</text>
-  <text x="92" y="381" fill="#005f87" font-size="20" class="mono">install</text>
-  <rect x="180" y="366" width="12" height="22" rx="2" fill="#00d7ff" opacity="0.82"/>
+  <text x="92" y="344" fill="#00d7ff" font-size="25" font-weight="700" class="mono">Supermemory Harness</text>
+  <text x="92" y="370" fill="#005f87" font-size="20" class="mono">install</text>
+  <rect x="178" y="352" width="11" height="21" rx="2" fill="#00d7ff" opacity="0.82"/>
 </svg>
