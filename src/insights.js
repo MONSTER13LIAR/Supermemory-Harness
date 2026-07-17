@@ -47,6 +47,7 @@ export async function analyzeMemory(options = {}) {
   const vague = documents.filter(isVagueMemory).map(documentSummary);
   const contradictions = findContradictions(documents);
   const missingProject = findMissingProject(documents, profile).map(documentSummary);
+  const missingAnchors = documents.filter(isMissingSourceAnchor).map(documentSummary);
   const zeroMemoryContainers = memorySamples.filter((sample) => sample.totalItems === 0);
   const timeline = buildTimeline(documents);
   const topContainers = countContainers(documents);
@@ -63,6 +64,7 @@ export async function analyzeMemory(options = {}) {
     vague,
     contradictions,
     missingProject,
+    missingAnchors,
     zeroMemoryContainers,
     logs,
     storage,
@@ -101,6 +103,7 @@ export async function analyzeMemory(options = {}) {
       vague,
       contradictions,
       missingProject,
+      missingAnchors,
       zeroMemoryContainers
     },
     memorySamples,
@@ -186,6 +189,9 @@ function buildIssues(input) {
   }
   if (input.profile && input.missingProject.length > 0) {
     issues.push(warn("Memories missing project context", `${input.missingProject.length} item(s) not tagged as ${input.profile.containerTag}`, "smctl start"));
+  }
+  if (input.missingAnchors.length > 0) {
+    issues.push(warn("Memories missing source anchors", `${input.missingAnchors.length} item(s) have no URL, filepath, source, or migration local ID`, "smctl memory coach"));
   }
   if (!input.profile) {
     issues.push(warn("No active project profile", "Run from the project folder to separate app memories", "smctl init"));
@@ -333,6 +339,20 @@ function isVagueMemory(doc) {
   if (!text) return true;
   if (text.length < 30) return true;
   return /^(remember this|note|todo|important|save this)$/i.test(title);
+}
+
+function isMissingSourceAnchor(doc) {
+  if (doc.status && doc.status !== "done") return false;
+  const metadata = doc.metadata && typeof doc.metadata === "object" ? doc.metadata : {};
+  return !(
+    doc.url
+    || doc.filepath
+    || (doc.source && doc.source !== "supermemory-local")
+    || metadata.url
+    || metadata.filepath
+    || metadata.source
+    || metadata.smctlLocalId
+  );
 }
 
 function normalizeDuplicateKey(doc) {

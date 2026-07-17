@@ -2,7 +2,7 @@
 
 # Supermemory Harness
 
-`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. It installs safe integration config, checks memory health, adds Guard review, verifies recall, and can use a local Llama brain through Ollama for plain-English explanations.
+`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. After install, Supermemory gets a status bar, a command center, project-scoped memory, Guard review for risky writes, recall proof, repair guidance, and Local-to-Cloud migration.
 
 The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. GitHub cannot render live ANSI terminal color in Markdown, so the banner above is a terminal-faithful SVG render of the same output. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
 
@@ -16,6 +16,13 @@ smctl enhance
 ```
 
 That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, connects Codex/Claude-style agents to Harness diagnostics, initializes project memory scope when missing, starts the embedded Supermemory dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
+
+The visible difference after `smctl enhance`:
+
+- The normal Supermemory dashboard can open with a Harness command center at `http://localhost:6778`.
+- The terminal server flow can show Harness trust events with `smctl supermemory start`.
+- Agents get a pre-action gate, repair path, and compaction handoff contract.
+- Users get one next action instead of guessing between logs, MCP config, failed writes, and recall issues.
 
 When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
 
@@ -119,7 +126,7 @@ SUPERMEMORY_CLOUD_API_KEY=... smctl migrate retry
 
 Harness preserves useful context such as title, text, project tag, source URL/filepath when available, local timestamps as metadata, local IDs as metadata, and a content hash. It does not claim a byte-perfect internal database clone: original database IDs, embeddings, chunk IDs, auth/session state, and private Local-only processing state remain Supermemory internals.
 
-`trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, and vague memories. It is read-only by default:
+`trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, vague memories, and memories without source anchors. It is read-only by default:
 
 ```bash
 smctl trust
@@ -170,7 +177,7 @@ Open `http://localhost:6778` to use the Supermemory dashboard with the Harness B
 The embedded panel includes an in-Supermemory command center:
 
 - Overview: the path from local server to connected coding tools to verified recall.
-- Trust: the Memory Trust Doctor plus a flight recorder for failed writes, missing project context, secrets, vague notes, duplicates, empty recall containers, and store risk.
+- Trust: the Memory Trust Doctor plus a flight recorder for failed writes, missing project context, missing source anchors, secrets, vague notes, duplicates, empty recall containers, and store risk.
 - Setup: safe local setup actions and manual coding-tool installer steps.
 - Memory: queue, dreaming, failed writes, and a verify probe.
 - Repair: the ordered repair plan from Harness diagnostics.
@@ -311,7 +318,7 @@ node ./bin/smctl.js guard reject <id>
 - `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.
 - `smoke` writes a harmless marker document, waits for processing, and searches for it.
 - `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
-- `memory coach` explains how to improve memory quality: clearer wording, project tags, duplicates, secrets, and recall gaps.
+- `memory coach` explains how to improve memory quality: clearer wording, project tags, source anchors, duplicates, secrets, and recall gaps.
 - `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
 - `migrate` plans, dry-runs, applies, verifies, and receipts Local-to-Cloud knowledge transfer while holding back risky or low-quality local data.
 - `repair` diagnoses failed documents, stale queues, retry-loop log hints, write/read mismatch symptoms, and local store size risk. It plans by default and avoids destructive cleanup.

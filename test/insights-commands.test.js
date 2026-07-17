@@ -37,6 +37,7 @@ test("insight commands surface memory score, cleanup, coach, timeline, project, 
   const cleanup = await runCleanup({ home, fetch });
   assert.equal(cleanup.exitCode, 1);
   assert.match(cleanup.text, /Possible secrets: 1/);
+  assert.match(cleanup.text, /Missing source anchors:/);
   assert.match(cleanup.text, /Mode: plan only/);
 
   const coach = await runMemoryCoach({ home, fetch });
@@ -69,7 +70,7 @@ function fakeFetch() {
           { id: "doc_dup_1", status: "done", title: "Same decision", updatedAt: old, containerTags: ["project:demo"] },
           { id: "doc_dup_2", status: "done", title: "Same decision", updatedAt: old, containerTags: ["project:demo"] },
           { id: "doc_fact_1", status: "done", title: "test runner is Vitest", updatedAt: old, containerTags: ["project:demo"] },
-          { id: "doc_fact_2", status: "done", title: "test runner is Jest", updatedAt: old, containerTags: ["project:demo"] },
+          { id: "doc_fact_2", status: "done", title: "test runner is Jest", updatedAt: old, containerTags: ["project:demo"], filepath: "package.json" },
           { id: "doc_vague", status: "done", title: "note", updatedAt: old, containerTags: ["other"] }
         ]
       });

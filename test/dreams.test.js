@@ -75,14 +75,60 @@ test("dream flight recorder counts new failed documents as failures", async () =
   assert.match(result.text, /Failed: 1/);
 });
 
+test("dream flight recorder flags content and scope changes", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-dreams-home-"));
+  await runDreams({
+    home,
+    now: "2026-07-15T00:00:00.000Z",
+    fetch: fakeFetch([
+      {
+        id: "doc_1",
+        status: "done",
+        title: "Database decision",
+        content: "database is sqlite",
+        containerTags: ["project:demo"],
+        filepath: "README.md"
+      }
+    ])
+  });
+
+  const result = await runDreams({
+    home,
+    now: "2026-07-15T00:05:00.000Z",
+    fetch: fakeFetch([
+      {
+        id: "doc_1",
+        status: "done",
+        title: "Database decision",
+        content: "database is postgres",
+        containerTags: ["project:other"]
+      }
+    ])
+  });
+
+  assert.equal(result.diff.contentChanged.length, 1);
+  assert.equal(result.diff.containerChanged.length, 1);
+  assert.equal(result.diff.anchorChanged.length, 1);
+  assert.equal(result.diff.highRisk.length, 2);
+  assert.equal(result.next, "smctl trust");
+  assert.match(result.text, /High-risk dream changes/);
+  assert.match(result.text, /Content changed: 1/);
+  assert.match(result.text, /Container changed: 1/);
+});
+
 function fakeFetch(documents) {
   return async (url) => {
     if (url.endsWith("/v3/documents/list")) {
-      return response(200, { memories: documents });
+      return response(200, { memories: documents.map(({ content, ...doc }) => doc) });
     }
     if (url.endsWith("/v3/documents/processing")) {
       const queued = documents.filter((doc) => ["queued", "processing"].includes(doc.status)).length;
       return response(200, { queued, running: 0 });
+    }
+    const match = String(url).match(/\/v3\/documents\/([^/]+)$/);
+    if (match) {
+      const doc = documents.find((item) => item.id === match[1]);
+      return doc ? response(200, doc) : response(404, { error: "missing" });
     }
     return response(404, { error: "missing" });
   };

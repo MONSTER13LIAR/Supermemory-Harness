@@ -42,6 +42,7 @@ function improvements(analysis) {
   if (analysis.quality.vague.length > 0) items.push("Rewrite vague memories with project, decision, owner, and reason.");
   if (analysis.quality.duplicates.length > 0) items.push("Merge duplicate-looking memories so recall does not return noisy context.");
   if (analysis.quality.missingProject.length > 0) items.push("Route future writes through Guard so project tags are consistent.");
+  if (analysis.quality.missingAnchors.length > 0) items.push("Add source URLs, file paths, or migration IDs to important memories so future agents can verify where facts came from.");
   if (analysis.quality.zeroMemoryContainers.length > 0) items.push("Verify recall for containers that have documents but no listed memory entries.");
   if (items.length === 0) items.push("Keep using Guard and verify recall after large imports.");
   return items;
@@ -51,6 +52,7 @@ function examples(analysis) {
   const raw = [
     ...analysis.quality.vague,
     ...analysis.quality.missingProject,
+    ...analysis.quality.missingAnchors,
     ...analysis.documents.failed
   ];
   return raw.slice(0, 5);

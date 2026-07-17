@@ -76,7 +76,7 @@ export async function runWorkflow(options = {}) {
     command: "workflow",
     generatedAt: new Date().toISOString(),
     baseUrl: context.baseUrl,
-    tagline: "Install once, run through Harness, trust only when the gate passes.",
+    tagline: "Install once, then Supermemory gets a status bar, guardrails, proof, repair, and migration paths.",
     current: summarizeCurrent(watch),
     stages,
     painPoints: PAIN_POINTS,
@@ -139,6 +139,10 @@ function formatWorkflow(result) {
   lines.push("");
   lines.push("Current:");
   lines.push(`   Local ${result.current.local}; MCP ${result.current.mcp}; agents ${result.current.agents}; queue ${result.current.queue}; failed ${result.current.failed}; guard ${result.current.guard}`);
+  lines.push("");
+  lines.push("Visible Difference After Install:");
+  lines.push("   Before: users had a Local server, raw logs, and agent memory behavior they had to trust blindly.");
+  lines.push("   After: Harness shows readiness, blocks risky writes, proves recall, explains repair, and embeds the command center into the dashboard.");
   lines.push("");
   lines.push("Simple Workflow:");
   for (const stage of result.stages) {

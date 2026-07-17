@@ -12,6 +12,7 @@ export async function runCleanup(options = {}) {
     testMarkers: analysis.quality.testMarkers.slice(0, 10),
     vague: analysis.quality.vague.slice(0, 10),
     missingProject: analysis.quality.missingProject.slice(0, 10),
+    missingAnchors: analysis.quality.missingAnchors.slice(0, 10),
     next: cleanupNext(analysis),
     exitCode: analysis.quality.risky.length > 0 ? 1 : 0
   };
@@ -26,6 +27,7 @@ function cleanupNext(analysis) {
   if (analysis.quality.testMarkers.length > 0) next.push("Delete old smoke/verify test markers from Supermemory if you no longer need them.");
   if (analysis.quality.vague.length > 0) next.push("Rewrite vague memories with who, project, decision, and date.");
   if (analysis.quality.missingProject.length > 0) next.push("Run smctl start so future writes get project context automatically.");
+  if (analysis.quality.missingAnchors.length > 0) next.push("Add source URLs, file paths, or migration IDs to important unanchored memories.");
   if (next.length === 0) next.push("No cleanup action needed in this sample.");
   return next;
 }
@@ -42,6 +44,7 @@ function formatCleanup(result) {
   section(lines, "Old Harness test markers", result.testMarkers, (item) => `${item.id}  ${item.title}`);
   section(lines, "Vague memories", result.vague, (item) => `${item.id}  ${item.title}`);
   section(lines, "Missing project context", result.missingProject, (item) => `${item.id}  ${item.title}`);
+  section(lines, "Missing source anchors", result.missingAnchors, (item) => `${item.id}  ${item.title}`);
 
   lines.push("Next:");
   for (const item of result.next) {

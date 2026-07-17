@@ -20,6 +20,9 @@ test("enhance automates the agent-memory readiness path", async () => {
   assert.match(result.text, /Supermemory Harness Enhance/);
   assert.match(result.text, /Embedded Supermemory dashboard/);
   assert.match(result.text, /Codex and Claude agent bridge/);
+  assert.match(result.text, /What changed for the user:/);
+  assert.match(result.text, /Now Supermemory feels like:/);
+  assert.match(result.text, /Primary path:/);
   assert.match(result.text, /Fast path:/);
   assert.match(result.text, /smctl supermemory start/);
   assert.match(result.text, /Open http:\/\/localhost:6778/);
@@ -31,6 +34,8 @@ test("enhance automates the agent-memory readiness path", async () => {
   assert.equal(result.agentBridge.summary.planned, 2);
   assert.equal(result.activation.status, "planned");
   assert.equal(result.activation.receipt.automatic.dashboardInjection, true);
+  assert.equal(result.activation.receipt.experience.after.some((item) => item.includes("status bar")), true);
+  assert.equal(result.experience.difference.some((item) => item.includes("project")), true);
   assert.equal(result.fastPath.some((step) => step.includes("Open http://localhost:6778")), true);
 });
 

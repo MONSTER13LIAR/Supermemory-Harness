@@ -770,6 +770,7 @@ function harnessBarAsset() {
         + card("Mode", trust.mode || "read-only")
         + card("Failed writes", docs.failed ? docs.failed.length : 0)
         + card("Missing project", quality.missingProject ? quality.missingProject.length : 0)
+        + card("Missing anchors", quality.missingAnchors ? quality.missingAnchors.length : 0)
         + card("Possible secrets", quality.risky ? quality.risky.length : 0)
         + '</div>' + command("smctl trust --probe") + '<div class="smctl-actions"><button class="smctl-action" data-action="trustProbe">Run live trust probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
         + (issues.length ? issues.map(function (item) { return row(item.title, (item.detail || "") + (item.command ? " -> " + item.command : ""), item.status); }).join("") : row("No trust issues", "The sampled memory flow looks healthy.", "done"))

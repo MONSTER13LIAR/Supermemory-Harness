@@ -138,6 +138,7 @@ export async function runEnhance(options = {}) {
       next: watch.next
     } : null,
     activation,
+    experience: postInstallExperience({ doctor, project, ui, watch, context, actions }),
     fastPath: fastPath({ doctor, project, ui, watch, context }),
     next: nextSteps({ doctor, project, ui, watch, context }),
     summary,
@@ -202,6 +203,14 @@ async function writeActivationReceipt(context, parts) {
       projectScope: parts.project.exitCode === 0,
       memoryVisibility: Boolean(parts.watch)
     },
+    experience: postInstallExperience({
+      doctor: parts.doctor,
+      project: parts.project,
+      ui: parts.ui,
+      watch: parts.watch,
+      context,
+      actions: []
+    }),
     next: {
       normalServerCommand: "smctl supermemory start",
       dashboardUrl: context.uiUrl,
@@ -277,6 +286,19 @@ function formatEnhance(result) {
     lines.push(`   ${action.detail}`);
   }
   lines.push("");
+  lines.push("What changed for the user:");
+  for (const item of result.experience.difference) {
+    lines.push(`   ${item}`);
+  }
+  lines.push("");
+  lines.push("Now Supermemory feels like:");
+  for (const item of result.experience.after) {
+    lines.push(`   ${item}`);
+  }
+  lines.push("");
+  lines.push(`Primary path: ${result.experience.primary}`);
+  lines.push(`Proof: ${result.experience.proof}`);
+  lines.push("");
   lines.push("Fast path:");
   for (const step of result.fastPath) {
     lines.push(`   ${step}`);
@@ -291,6 +313,34 @@ function formatEnhance(result) {
     ? "Result: Harness Enhance made Supermemory agent-memory ready."
     : "Result: Harness Enhance completed with issues to review.");
   return lines.join("\n");
+}
+
+function postInstallExperience({ doctor, project, ui, watch, context, actions }) {
+  const ready = actions.filter((action) => action.status === "ready").length;
+  const planned = actions.filter((action) => action.status === "planned").length;
+  const needsAttention = actions.filter((action) => action.status === "needs-attention").length;
+  const localReady = doctor.exitCode === 0;
+  const projectReady = project.exitCode === 0;
+  const dashboardReady = ui.status === "ready";
+  const proof = watch?.next ?? "smctl trust --probe";
+  return {
+    score: Math.max(0, Math.min(100, (localReady ? 30 : 0) + (projectReady ? 20 : 0) + (dashboardReady ? 25 : 0) + (watch ? 25 : 0))),
+    summary: `${ready} ready, ${planned} planned, ${needsAttention} need attention`,
+    difference: [
+      localReady ? "Local is not just running; Harness can read its API and memory activity." : "Harness found the first blocker: start Supermemory Local through the Harness runtime.",
+      projectReady ? "Memories are scoped to this project instead of drifting across unrelated work." : "Harness will initialize project scope so future memories have a home.",
+      dashboardReady ? `The normal Supermemory dashboard has a Harness command center at ${context.uiUrl}.` : "The dashboard command center is ready to launch once Local is reachable.",
+      "Agents get a memory gate, repair path, and handoff contract instead of guessing from raw memories."
+    ],
+    after: [
+      "A status bar shows Local, agents, queue, dreaming, Guard, and next action.",
+      "Risky writes go through Guard review instead of silently becoming durable memory.",
+      "Trust, repair, migration, and verification are one-command paths from the same workflow.",
+      "Receipts record what Harness activated so setup is explainable and repeatable."
+    ],
+    primary: dashboardReady ? `Open ${context.uiUrl}` : localReady ? `Run smctl ui, then open ${context.uiUrl}` : "Run smctl supermemory start, then smctl enhance",
+    proof
+  };
 }
 
 function fastPath({ doctor, project, ui, watch, context }) {

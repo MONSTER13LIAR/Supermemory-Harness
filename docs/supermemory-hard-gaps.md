@@ -62,8 +62,10 @@ Harness fix:
   inferred transformations, and flag high-risk profile changes for review.
 
 Status:
-- Shipped. `doctor` now probes `/mcp`, `watch` carries MCP readiness in the Harness Bar, and
-  the terminal overlay prints MCP readiness/failure in the Supermemory log stream.
+- Shipped. `smctl dreams` now records document status, content hash, container tags, and source
+  anchors across snapshots. It flags high-risk background changes such as content rewrites,
+  title rewrites, scope/container changes, disappeared documents, and anchor loss, then points
+  the user to `smctl trust` or `smctl repair wizard`.
 
 ## Gap 4: Contradictions Can Be Resolved Invisibly
 
@@ -76,9 +78,10 @@ Harness fix:
   source anchors; surface them in trust, repair, UI, and terminal overlay.
 
 Status:
-- Shipped for Codex/Claude bridge installs. Agent bridge instructions now include a Harness
-  Compaction Contract that preserves literal request, end state, files touched, negative
-  constraints, memory decisions, and remaining work before compaction/handoff.
+- Shipped. Memory analysis extracts durable project facts for common engineering choices, flags
+  contradictory values as conflict groups in score/coach/repair surfaces, and now also warns
+  when memories are missing source anchors that would let a future agent ground or challenge
+  the resolved fact.
 
 ## Gap 5: Retrieval Quality Is Not Proved Before The Agent Relies On It
 
@@ -153,9 +156,10 @@ Harness fix:
   connections, unreachable `/mcp`, wrong URL mode, and client config drift.
 
 Status:
-- Shipped. Added `smctl dreams`, a local Dream Flight Recorder that snapshots recent
-  Supermemory document processing state and reports new, completed, failed, disappeared, and
-  changed items on the next run.
+- Shipped. `doctor`, `watch`, and the terminal overlay check MCP readiness, while setup/agent
+  bridge commands keep local client configuration visible. Harness reports unreachable or
+  unexpected `/mcp` behavior as a concrete next action instead of leaving users to debug silent
+  client failures.
 
 ## Gap 10: Memory Needs Governance, Not Just Recall
 
