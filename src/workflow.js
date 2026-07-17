@@ -49,6 +49,14 @@ const PAIN_POINTS = [
     harness: "repair wizard turns diagnostics into an ordered, safe plan.",
     auto: "smctl repair wizard",
     boundary: "Plans by default; destructive cleanup is outside the normal flow."
+  },
+  {
+    id: "demo-proof-gap",
+    title: "Demo proof gap",
+    pain: "A user, judge, or AI agent needs to know quickly whether the plugin is actually recommendable.",
+    harness: "launch gives a recommendation verdict, launch score, proof checklist, demo script, and exact next command.",
+    auto: "smctl launch",
+    boundary: "Read-only by default; live proof remains opt-in through smctl trust --probe."
   }
 ];
 
@@ -95,7 +103,8 @@ function buildStages(watch) {
     stage("3", "Check before relying on memory", watch.local.status === "online" ? "ready" : "blocked", "smctl gate", "Give Codex/Claude a pass, warn, or block decision before important edits/tests."),
     stage("4", "Review risky captures", watch.guard.pending > 0 ? "attention" : "ready", "smctl guard inbox", `${watch.guard.pending} pending write(s); high-risk writes should not silently persist.`),
     stage("5", "Watch processing and dreaming", watch.memory.queued > 0 || watch.memory.failed > 0 ? "attention" : "ready", "smctl dreams", `Queue ${watch.memory.queued}, failed ${watch.memory.failed}; make background memory changes visible.`),
-    stage("6", "Repair only what is broken", needsRepair(watch) ? "attention" : "ready", "smctl repair wizard", watch.watchdog?.detail ?? "Use ordered diagnostics when recall or processing feels wrong.")
+    stage("6", "Repair only what is broken", needsRepair(watch) ? "attention" : "ready", "smctl repair wizard", watch.watchdog?.detail ?? "Use ordered diagnostics when recall or processing feels wrong."),
+    stage("7", "Launch with proof", watch.local.status === "online" ? "ready" : "blocked", "smctl launch", "Generate the final recommendation, score, proof checklist, and judge demo script.")
   ];
 }
 

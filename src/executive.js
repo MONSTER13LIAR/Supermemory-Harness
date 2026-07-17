@@ -100,6 +100,7 @@ function finalChecks() {
     "npm test",
     "smctl executive",
     "smctl workflow",
+    "smctl launch",
     "smctl session pre-action",
     "smctl trust --probe"
   ];
