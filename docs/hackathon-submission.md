@@ -20,6 +20,7 @@ The core product bet:
 
 ```bash
 smctl enhance
+smctl recommend
 smctl launch
 smctl workflow
 smctl trust --probe
@@ -33,26 +34,32 @@ Short version:
 npm run demo
 ```
 
+`npm run demo` runs the recommendation pack. It is intentionally read-only and explains why a senior AI engineer or Supermemory developer would recommend Harness as the operational companion for Supermemory Local.
+
 ## 90-second judge script
 
-1. Run `smctl launch`.
+1. Run `smctl recommend`.
+   Show the ten must-have feature reasons, senior AI expert view, Supermemory developer view, better user flow, and exact next command.
+
+2. Run `smctl launch`.
    Show the recommendation verdict, launch score, proof checklist, and exact next command.
 
-2. Run `smctl workflow`.
+3. Run `smctl workflow`.
    Explain the before/after: before Harness, users had raw Supermemory logs and had to trust memory blindly; after Harness, they get status, safety, proof, repair, and migration.
 
-3. Run `smctl trust --probe`.
+4. Run `smctl trust --probe`.
    Prove that memory works with a harmless marker, scoped recall, and search checks.
 
-4. Run `smctl repair wizard`.
+5. Run `smctl repair wizard`.
    Show that failure cases are part of the product, not hidden. Harness distinguishes Local runtime/server problems from replayable memory writes.
 
-5. Run `smctl migrate doctor --redact`.
+6. Run `smctl migrate doctor --redact`.
    Show the Local-to-Cloud bridge with held items, redaction, project tags, and readiness score.
 
 ## What is actually shipped
 
 - `smctl enhance`: one-command activation path.
+- `smctl recommend`: ten-feature recommendation pack for senior AI and Supermemory developer review.
 - `smctl launch`: final recommendation board for judges, users, and AI agents.
 - `smctl executive`: daily/final readiness cockpit.
 - `smctl workflow`: simple install-to-trust story and boundaries.
@@ -111,6 +118,7 @@ This is still a valid demo path. The project intentionally shows broken Local st
 ```bash
 npm test
 node ./bin/smctl.js --help
+node ./bin/smctl.js recommend --limit 5
 node ./bin/smctl.js launch --limit 5
 ```
 
@@ -118,4 +126,5 @@ Expected:
 
 - Tests pass.
 - Help lists `launch`.
+- `recommend` gives ten must-have feature reasons and the current next command.
 - `launch` gives either a recommendable board or a concrete blocker and next command.

@@ -101,7 +101,7 @@ test("memory replay apply resubmits failed documents", async () => {
 test("memory replay apply stops when Supermemory Local schema is mismatched", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
   await mkdir(join(home, ".supermemory"), { recursive: true });
-  await writeFile(join(home, ".supermemory", "server.log"), "error: column \"dreaming_status\" does not exist\n");
+  await writeFile(join(home, ".supermemory", "server.log"), "error: relation \"dreaming_job\" does not exist\n");
   const posts = [];
 
   const result = await memoryReplay({

@@ -28,9 +28,12 @@ For the final hackathon submission path:
 
 ```bash
 smctl enhance
+smctl recommend
 smctl launch
 smctl trust --probe
 ```
+
+`recommend` is the senior-AI/Supermemory-developer lens. It produces ten concrete reasons Harness should ship with Supermemory Local, a better user flow, a recommendation verdict, and the current live blocker if the local server is not ready.
 
 `launch` is the judge-ready command. It combines the executive check, install-to-trust workflow, and Local-to-Cloud migration doctor into one read-only launch board with a recommendation verdict, launch score, proof checklist, judge demo script, AI expert brief, and exact next command. If Supermemory Local is offline or processing is broken, it says that plainly instead of pretending the demo is ready.
 
@@ -81,6 +84,7 @@ Check the full Harness state:
 
 ```bash
 smctl enhance
+smctl recommend
 smctl executive
 smctl workflow
 smctl launch
@@ -110,6 +114,15 @@ smctl migrate report
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
 
 `workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
+
+`recommend` is the final must-have argument:
+
+```bash
+smctl recommend
+npm run recommend
+```
+
+It answers the question from a senior AI engineer and Supermemory developer perspective: why should this be recommended with Supermemory Local? The output lists ten feature reasons, the improved user flow, live evidence, and the safest next command.
 
 `launch` is the final readiness board for a demo, user trial, or judge review:
 

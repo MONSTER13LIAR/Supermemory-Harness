@@ -77,6 +77,16 @@ test("supermemory terminal collapses schema mismatch stack traces", () => {
   assert.equal(repeated, "");
 });
 
+test("supermemory terminal collapses missing dreaming table stack traces", () => {
+  const seen = new Set();
+  const output = filterSupermemoryLogChunk('error: relation "dreaming_job" does not exist\nFailed query: select "dreaming_job"."batch_id" from "dreaming_job"\n    at queryWithCache (/$bunfs/root/supermemory-server:19:37806)', seen);
+
+  assert.match(output, /Supermemory schema mismatch detected/);
+  assert.match(output, /dreaming_job/);
+  assert.match(output, /supermemory-server upgrade/);
+  assert.doesNotMatch(output, /queryWithCache/);
+});
+
 test("supermemory terminal collapses repeated auth warning noise", () => {
   const filter = createSupermemoryLogFilter();
   const warning = "[better-auth/magic-link] `allowedAttempts` is ignored: tokens are consumed atomically";

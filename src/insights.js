@@ -415,6 +415,7 @@ async function inspectLogs(home) {
 
 function isSchemaMismatchLine(line) {
   return /column "(dreaming_status|profile_buckets)" does not exist/.test(line)
+    || /relation "dreaming_job" does not exist/.test(line)
     || (/Failed query:/.test(line) && /"(dreaming_status|profile_buckets)"/.test(line));
 }
 

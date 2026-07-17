@@ -14,7 +14,8 @@
   "scripts": {
     "doctor": "node ./bin/smctl.js doctor",
     "launch": "node ./bin/smctl.js launch",
-    "demo": "node ./bin/smctl.js launch",
+    "recommend": "node ./bin/smctl.js recommend",
+    "demo": "node ./bin/smctl.js recommend",
     "test": "node --test"
   },
   "engines": {

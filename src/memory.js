@@ -395,7 +395,7 @@ async function recentFailureHints(home) {
     return content
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter((line) => /memory agent failed|0 memories|Permanently failed|dreaming_status|profile_buckets|Failed query:/i.test(line))
+      .filter((line) => /memory agent failed|0 memories|Permanently failed|dreaming_status|profile_buckets|dreaming_job|Failed query:/i.test(line))
       .slice(-10);
   } catch {
     return [];
@@ -404,6 +404,7 @@ async function recentFailureHints(home) {
 
 function isSchemaMismatchLine(line) {
   return /column "(dreaming_status|profile_buckets)" does not exist/.test(line)
+    || /relation "dreaming_job" does not exist/.test(line)
     || (/Failed query:/.test(line) && /"(dreaming_status|profile_buckets)"/.test(line));
 }
 

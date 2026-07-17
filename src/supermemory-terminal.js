@@ -169,12 +169,13 @@ export function filterSupermemoryLogChunk(chunk, seen = new Set()) {
     return once(seen, "better-auth-allowed-attempts", "[harness] collapsed repeated Supermemory auth warning: better-auth allowedAttempts is ignored.\n");
   }
   if (isSchemaMismatch(text)) {
-    const columns = [];
-    if (/dreaming_status/.test(text)) columns.push("dreaming_status");
-    if (/profile_buckets/.test(text)) columns.push("profile_buckets");
-    const columnText = columns.length > 0 ? columns.join(", ") : "expected columns";
-    return once(seen, `schema-mismatch:${columnText}`, [
-      `[harness] Supermemory schema mismatch detected: missing ${columnText}.`,
+    const objects = [];
+    if (/dreaming_status/.test(text)) objects.push("dreaming_status");
+    if (/profile_buckets/.test(text)) objects.push("profile_buckets");
+    if (/dreaming_job/.test(text)) objects.push("dreaming_job");
+    const objectText = objects.length > 0 ? objects.join(", ") : "expected schema objects";
+    return once(seen, `schema-mismatch:${objectText}`, [
+      `[harness] Supermemory schema mismatch detected: missing ${objectText}.`,
       "[harness] Fix: stop this process, run `supermemory-server upgrade`, then restart with `smctl supermemory start`."
     ].join("\n") + "\n");
   }
@@ -196,6 +197,7 @@ function isAuthNoise(text) {
 
 function isSchemaMismatch(text) {
   return /column "(dreaming_status|profile_buckets)" does not exist/.test(text)
+    || /relation "dreaming_job" does not exist/.test(text)
     || (/Failed query:/.test(text) && /"(dreaming_status|profile_buckets)"/.test(text));
 }
 
