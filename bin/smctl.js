@@ -3,6 +3,7 @@
 import { runDoctor } from "../src/doctor.js";
 import { runDreams } from "../src/dreams.js";
 import { runAgentBridge } from "../src/agent-bridge.js";
+import { runAudit } from "../src/audit.js";
 import { runBackup } from "../src/backup.js";
 import { runEnhance } from "../src/enhance.js";
 import { runExecutive } from "../src/executive.js";
@@ -47,6 +48,7 @@ Usage:
   smctl workflow [--json] [--base-url <url>] [--limit <n>]
   smctl support [--json] [--dry-run] [--base-url <url>] [--limit <n>]
   smctl backup [--json] [--dry-run]
+  smctl audit [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
   smctl gate [--json] [--explain] [--base-url <url>] [--limit <n>]
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
@@ -111,6 +113,7 @@ Commands:
   workflow Show the simple install-to-trust workflow and moral automation boundaries.
   support  Create a redacted support bundle for debugging Supermemory Local issues.
   backup   Create a data-only local backup of Supermemory Local state without secrets.
+  audit    Check duplicate prevention, scope, grounding, processing, and retrieval readiness.
   trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
   gate     Run the pre-action memory governance gate before edits/tests.
   supermemory Start Supermemory Local with Harness health events in the same terminal.
@@ -399,7 +402,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "executive", "start", "watch", "workflow", "support", "backup", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "migrate", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "executive", "start", "watch", "workflow", "support", "backup", "audit", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "migrate", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -511,6 +514,15 @@ async function runCommand(args) {
     return runBackup({
       home: process.env.HOME,
       dryRun: args.dryRun
+    });
+  }
+
+  if (args.command === "audit") {
+    return runAudit({
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit
     });
   }
 

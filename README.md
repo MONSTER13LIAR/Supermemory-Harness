@@ -73,6 +73,7 @@ smctl executive
 smctl workflow
 smctl support
 smctl backup --dry-run
+smctl audit
 smctl watch
 smctl trust
 smctl supermemory start
@@ -109,6 +110,12 @@ smctl support --dry-run
 ```bash
 smctl backup --dry-run
 smctl backup
+```
+
+`audit` is a read-only memory hygiene audit. It checks five real Local failure modes before agents rely on memory: stable `customId`/import identity, active project scope, source grounding, processing queue health, and retrieval route readiness.
+
+```bash
+smctl audit
 ```
 
 `executive` is the daily/final readiness cockpit. It runs the operational layers together, summarizes runtime, trust, Agent Autopilot, Dream Flight Recorder, Guard, and agent bridge state, then gives a prioritized action plan plus final checks before hosting or demoing.
@@ -321,6 +328,7 @@ node ./bin/smctl.js guard reject <id>
 - `workflow` shows the simple install-to-trust architecture, the real gaps covered, and the automation boundaries.
 - `support` writes a redacted shareable report for debugging Local, MCP, memory, dreaming, migration, and Guard problems.
 - `backup` writes a local data-only Supermemory backup while excluding API keys and auth/provider secrets.
+- `audit` checks duplicate prevention, project scope, source grounding, processing queue health, and retrieval readiness in one read-only pass.
 - `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
 - `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
 - `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
