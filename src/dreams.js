@@ -60,6 +60,7 @@ async function collectDreamState(context) {
   return {
     generatedAt: context.now,
     ok: list.ok,
+    limit: context.limit,
     listDetail: responseDetail(list),
     processing: processing.ok ? processing.body : null,
     processingDetail: responseDetail(processing),
@@ -124,7 +125,7 @@ function diffSnapshots(previous, current) {
       if (doc.status === "done") completed.push(change);
       if (["failed", "error"].includes(doc.status)) failed.push(change);
     }
-    if (old.contentHash !== doc.contentHash) {
+    if (old.contentHash && doc.contentHash && old.contentHash !== doc.contentHash) {
       const change = { id: doc.id, title: doc.title, from: old.contentHash, to: doc.contentHash, containerTags: doc.containerTags };
       contentChanged.push(change);
       changed.push({ ...change, kind: "content" });
@@ -146,8 +147,11 @@ function diffSnapshots(previous, current) {
     }
   }
 
-  for (const doc of previous.documents) {
-    if (!after.has(doc.id)) disappeared.push(doc);
+  const comparableWindow = current.documents.length >= previous.documents.length || previous.limit === current.limit;
+  if (comparableWindow) {
+    for (const doc of previous.documents) {
+      if (!after.has(doc.id)) disappeared.push(doc);
+    }
   }
 
   return {

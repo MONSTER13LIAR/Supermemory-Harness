@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { runDreams } from "../src/dreams.js";
@@ -114,6 +114,32 @@ test("dream flight recorder flags content and scope changes", async () => {
   assert.match(result.text, /High-risk dream changes/);
   assert.match(result.text, /Content changed: 1/);
   assert.match(result.text, /Container changed: 1/);
+});
+
+test("dream flight recorder does not over-report old snapshots or smaller samples", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-dreams-home-"));
+  await mkdir(join(home, ".config", "smctl"), { recursive: true });
+  await writeFile(join(home, ".config", "smctl", "dream-flight.json"), JSON.stringify({
+    generatedAt: "2026-07-15T00:00:00.000Z",
+    documents: [
+      { id: "doc_1", status: "done", title: "Existing memory", containerTags: ["project:demo"] },
+      { id: "doc_2", status: "done", title: "Outside smaller sample", containerTags: ["project:demo"] }
+    ]
+  }));
+
+  const result = await runDreams({
+    home,
+    now: "2026-07-15T00:05:00.000Z",
+    limit: 1,
+    dryRun: true,
+    fetch: fakeFetch([
+      { id: "doc_1", status: "done", title: "Existing memory", content: "same", containerTags: ["project:demo"] }
+    ])
+  });
+
+  assert.equal(result.diff.contentChanged.length, 0);
+  assert.equal(result.diff.disappeared.length, 0);
+  assert.equal(result.diff.highRisk.length, 0);
 });
 
 function fakeFetch(documents) {
