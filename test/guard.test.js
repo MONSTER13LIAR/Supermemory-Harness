@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { guardContext, quarantineWrite, runGuard } from "../src/guard.js";
@@ -132,6 +132,40 @@ test("guard applies active skillset metadata", async () => {
   assert.equal(item.skillset.name, "developer");
   assert.equal(item.request.body.metadata.smctlSkillset, "developer");
   assert.equal(item.request.body.metadata.smctlMemoryType, "architecture_decision");
+});
+
+test("guard applies active Memory Genome policy metadata and review findings", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-guard-home-"));
+  await mkdir(join(home, ".config", "smctl", "genome"), { recursive: true });
+  await writeFile(join(home, ".config", "smctl", "genome", "policy.json"), JSON.stringify({
+    version: 1,
+    mode: "developer",
+    title: "Developer memory",
+    confidence: 0.9,
+    defaultContainerTag: "project:harness",
+    remember: ["architecture decision", "bug fix"],
+    ignore: ["npm install output", "stack trace without fix"],
+    askBeforeSaving: ["api key", "password", "secret"],
+    recallFirst: ["project_decisions", "bug_fixes"]
+  }));
+  const context = guardContext({ home });
+
+  const item = await quarantineWrite(context, {
+    method: "POST",
+    path: "/v3/documents",
+    query: "",
+    headers: { "content-type": "application/json" },
+    body: {
+      content: "Architecture decision plus npm install output should be reviewed."
+    },
+    rawBody: "{}"
+  });
+
+  assert.equal(item.genome.mode, "developer");
+  assert.equal(item.request.body.containerTag, "project:harness");
+  assert.equal(item.request.body.metadata.smctlGenomeMode, "developer");
+  assert.equal(item.request.body.metadata.smctlGenomeType, "architecture_decision");
+  assert.equal(item.risk.findings.some((finding) => finding.type === "genome-ignore"), true);
 });
 
 test("guard applies active project profile metadata", async () => {

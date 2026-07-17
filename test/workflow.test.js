@@ -20,8 +20,14 @@ test("workflow explains simple architecture and moral boundaries", async () => {
   assert.equal(result.current.guard, 1);
   assert.equal(result.next, "smctl guard inbox");
   assert.equal(result.painPoints.length >= 6, true);
+  assert.equal(result.architecture.some((item) => item.name === "Codex / Claude Code path"), true);
+  assert.equal(result.architecture.some((item) => item.name === "Local Llama path"), true);
+  assert.equal(result.hurdles.some((item) => item.command === "smctl brain doctor"), true);
   assert.match(result.text, /Install once, then Supermemory gets/);
   assert.match(result.text, /Visible Difference After Install:/);
+  assert.match(result.text, /Architecture Paths:/);
+  assert.match(result.text, /Hurdles And Fixes:/);
+  assert.match(result.text, /Local Llama Usage:/);
   assert.match(result.text, /Real Gaps Covered:/);
   assert.match(result.text, /Moral Boundaries:/);
   assert.match(result.text, /High-risk writes require review|risky memory writes/i);

@@ -19,7 +19,9 @@ test("recommend produces ten must-have reasons for a healthy local setup", async
   assert.equal(result.recommendation.status, "recommend");
   assert.equal(result.features.length, 10);
   assert.equal(result.features.some((item) => item.id === "cloud-migration"), true);
+  assert.equal(result.features.some((item) => item.id === "memory-genome"), true);
   assert.equal(result.userFlow[0].command, "smctl enhance");
+  assert.equal(result.userFlow.some((item) => item.command === "smctl evidence"), true);
   assert.match(result.text, /Ten Features That Make This A Must/);
   assert.match(result.text, /Senior AI Expert View:/);
   assert.match(result.text, /Supermemory Developer View:/);

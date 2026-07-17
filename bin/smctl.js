@@ -3,12 +3,16 @@
 import { runDoctor } from "../src/doctor.js";
 import { runDreams } from "../src/dreams.js";
 import { runAgentBridge } from "../src/agent-bridge.js";
+import { runAdvisor } from "../src/advisor.js";
 import { runAudit } from "../src/audit.js";
 import { runBackup } from "../src/backup.js";
+import { cliBanner } from "../src/banner.js";
 import { runEnhance } from "../src/enhance.js";
+import { runEvidence } from "../src/evidence.js";
 import { runExecutive } from "../src/executive.js";
 import { runGuard } from "../src/guard.js";
 import { runGate } from "../src/gate.js";
+import { runGenome } from "../src/genome.js";
 import { runHardware } from "../src/hardware.js";
 import { runLaunch } from "../src/launch.js";
 import { localBrainDoctor } from "../src/local-brain.js";
@@ -44,6 +48,8 @@ function printHelp() {
 Usage:
   smctl install [--json] [--dry-run] [--base-url <url>] [--guard-url <url>] [--provider <openai|gemini|anthropic>] [--model <model>]
   smctl enhance [--json] [--dry-run] [--explain] [--base-url <url>] [--guard-url <url>] [--supermemory-source <path>]
+  smctl advisor [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>] [--ollama-model <model>]
+  smctl evidence [--json] [--dry-run] [--base-url <url>] [--cloud-url <url>] [--limit <n>]
   smctl executive [--json] [--base-url <url>] [--limit <n>]
   smctl start [--json] [--dry-run] [--base-url <url>] [--port <port>] [--upstream <url>]
   smctl watch [--json] [--base-url <url>] [--limit <n>]
@@ -55,6 +61,7 @@ Usage:
   smctl audit [--json] [--base-url <url>] [--limit <n>]
   smctl trust [--json] [--base-url <url>] [--limit <n>] [--probe] [--timeout-ms <ms>]
   smctl gate [--json] [--explain] [--base-url <url>] [--limit <n>]
+  smctl genome [apply] [--json] [--base-url <url>] [--limit <n>]
   smctl supermemory start [--json] [--dry-run] [--base-url <url>] [--interval-ms <ms>]
   smctl agent connect [codex|claude|all] [--json] [--dry-run] [--base-url <url>]
   smctl agent status [--json]
@@ -111,6 +118,8 @@ Usage:
 Commands:
   install  Install and automatically activate the full Supermemory Harness plugin.
   enhance  Automatically make Supermemory Local agent-memory ready.
+  advisor  Show the one-command operating plan for users, agents, and Supermemory developers.
+  evidence Create a redacted judge-ready proof pack with architecture, blockers, and demo commands.
   executive Run the daily/final readiness cockpit for Supermemory operations.
   start    Run the project-aware Guard/enrichment layer.
   watch    Show a compact activity bar for Local, agents, memory flow, and Guard.
@@ -122,6 +131,7 @@ Commands:
   audit    Check duplicate prevention, scope, grounding, processing, and retrieval readiness.
   trust    Decide whether Supermemory memory is scoped, healthy, and safe to rely on.
   gate     Run the pre-action memory governance gate before edits/tests.
+  genome   Classify stored memory types and install a local personalization policy.
   supermemory Start Supermemory Local with Harness health events in the same terminal.
   agent    Connect Codex/Claude-style agents to Harness diagnostics.
   session  Hookable coding-agent lifecycle gates for pre-action, compaction, and stop.
@@ -365,6 +375,8 @@ function parseArgs(argv) {
       args.subcommand = token;
     } else if (args.command === "session" && !args.subcommand) {
       args.subcommand = token;
+    } else if (args.command === "genome" && !args.subcommand) {
+      args.subcommand = token;
     } else if (args.command === "hardware" && !args.subcommand) {
       args.subcommand = token;
     } else if (args.command === "repair" && !args.subcommand) {
@@ -408,7 +420,7 @@ async function main() {
     return;
   }
 
-  if (!["install", "enhance", "executive", "start", "watch", "workflow", "launch", "recommend", "support", "backup", "audit", "trust", "gate", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "migrate", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
+  if (!["install", "enhance", "advisor", "evidence", "executive", "start", "watch", "workflow", "launch", "recommend", "support", "backup", "audit", "trust", "gate", "genome", "supermemory", "agent", "session", "ui", "status", "score", "verify", "repair", "doctor", "dreams", "init", "project", "setup", "smoke", "memory", "migrate", "timeline", "cleanup", "hardware", "skillset", "skills", "smart", "brain", "guard"].includes(args.command)) {
     throw new Error(`Unknown command: ${args.command}`);
   }
 
@@ -417,10 +429,17 @@ async function main() {
   if (args.json) {
     console.log(JSON.stringify(result, null, 2));
   } else {
-    console.log(result.text);
+    console.log(formatCliText(args, result));
   }
 
   process.exitCode = result.exitCode;
+}
+
+function formatCliText(args, result) {
+  if (["install", "enhance"].includes(args.command)) {
+    return `${cliBanner("install")}\n\n${result.text}`;
+  }
+  return result.text;
 }
 
 async function runCommand(args) {
@@ -462,6 +481,34 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit
+    });
+  }
+
+  if (args.command === "advisor") {
+    return runAdvisor({
+      baseUrl: args.baseUrl,
+      cloudUrl: args.cloudUrl,
+      cloudApiKeyEnv: args.cloudApiKeyEnv,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      ollamaModel: args.ollamaModel
+    });
+  }
+
+  if (args.command === "evidence") {
+    return runEvidence({
+      baseUrl: args.baseUrl,
+      cloudUrl: args.cloudUrl,
+      cloudApiKeyEnv: args.cloudApiKeyEnv,
+      cwd: process.cwd(),
+      env: process.env,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      dryRun: args.dryRun
     });
   }
 
@@ -579,6 +626,21 @@ async function runCommand(args) {
       home: process.env.HOME,
       fetch: globalThis.fetch,
       limit: args.limit
+    });
+  }
+
+  if (args.command === "genome") {
+    if (args.subcommand && args.subcommand !== "apply") {
+      throw new Error("Unknown genome action. Use: smctl genome or smctl genome apply");
+    }
+    return runGenome({
+      action: args.subcommand === "apply" ? "apply" : "show",
+      baseUrl: args.baseUrl,
+      home: process.env.HOME,
+      fetch: globalThis.fetch,
+      limit: args.limit,
+      explain: args.explain,
+      ollamaModel: args.ollamaModel
     });
   }
 

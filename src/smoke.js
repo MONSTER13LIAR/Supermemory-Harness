@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { responseDetail, searchIncludes, searchLocalMemory } from "./search.js";
 
 const TERMINAL_STATUSES = new Set(["done", "failed", "error"]);
 
@@ -58,15 +59,15 @@ export async function runSmoke(options = {}) {
 
   let search = null;
   if (document?.status === "done") {
-    search = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+    search = await searchLocalMemory(context, {
       q: marker,
       containerTag: context.containerTag,
       limit: 5,
       includeFullDocs: true
     });
-    const found = search.ok && JSON.stringify(search.body).includes(marker);
+    const found = searchIncludes(search, marker);
     checks.push(found
-      ? ok("Search recalled the marker", `${search.body?.total ?? 0} result(s)`)
+      ? ok("Search recalled the marker", `${search.body?.total ?? search.body?.results?.length ?? 0} result(s) via ${search.route}`)
       : fail("Search did not recall the marker", responseDetail(search)));
   }
 
@@ -190,12 +191,6 @@ function formatSmoke(result) {
     lines.push("Result: Supermemory ingest/recall pipeline works end to end.");
   }
   return lines.join("\n");
-}
-
-function responseDetail(response) {
-  if (response.error) return response.error;
-  if (response.status) return `HTTP ${response.status}: ${JSON.stringify(response.body)}`;
-  return "No response";
 }
 
 function summarize(checks) {

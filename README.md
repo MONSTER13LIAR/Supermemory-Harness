@@ -2,77 +2,137 @@
 
 # Supermemory Harness
 
-`smctl` is the Supermemory Harness CLI: a local companion plugin for Supermemory Local. After install, Supermemory gets a status bar, a command center, project-scoped memory, Guard review for risky writes, recall proof, repair guidance, and Local-to-Cloud migration.
+Supermemory Harness (`smctl`) is a local command center for Supermemory Local. It keeps the privacy and local-first shape of Supermemory, then adds the operational layer users and AI agents need: onboarding, health, project scope, risky-write review, recall proof, repair guidance, personalization, and reviewed Local-to-Cloud migration.
 
-The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. GitHub cannot render live ANSI terminal color in Markdown, so the banner above is a terminal-faithful SVG render of the same output. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
+It does not replace Supermemory Local. It wraps the local server so users, Codex/Claude-style agents, and Supermemory developers can answer one question quickly: **is this memory safe and useful to rely on right now?**
 
-## Run
+## What Changes After Install
 
-Install and connect Harness:
+- The normal Supermemory dashboard can run through a local Harness command center at `http://localhost:6778`.
+- `smctl supermemory start` shows Harness trust events beside the normal Supermemory server logs.
+- Codex and Claude-style agents get bridge instructions, pre-action gates, repair paths, and compaction handoff rules.
+- Guard can review risky memory writes before they become durable Supermemory memories.
+- Memory Genome shows what kinds of memories the user stores and can install a local policy for future writes.
+- Users get exact next commands instead of guessing from logs, MCP config, failed writes, or stale recall.
+
+## Quick Start
+
+Install globally from GitHub:
 
 ```bash
 npm install -g github:MONSTER13LIAR/Supermemory-Harness
 smctl enhance
 ```
 
-That same command works on macOS, Linux, and Windows PowerShell when Node.js 22+ and npm are installed. `smctl enhance` is the normal user flow: it checks Supermemory Local, applies safe Harness setup, installs memory behavior skills, connects Codex/Claude-style agents to Harness diagnostics, initializes project memory scope when missing, starts the embedded Supermemory dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
+Requirements:
 
-The visible difference after `smctl enhance`:
+- Node.js 22+
+- npm
+- Supermemory Local, normally reachable at `http://localhost:6767`
+- Optional: Ollama on `http://localhost:11434` for local plain-English explanations
 
-- The normal Supermemory dashboard can open with a Harness command center at `http://localhost:6778`.
-- The terminal server flow can show Harness trust events with `smctl supermemory start`.
-- Agents get a pre-action gate, repair path, and compaction handoff contract.
-- Users get one next action instead of guessing between logs, MCP config, failed writes, and recall issues.
+`smctl enhance` is the normal entrypoint. It checks Supermemory Local, applies Harness-owned setup, installs memory behavior skills, connects coding-agent bridge files, initializes project memory scope when missing, starts the dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
 
-For the final hackathon submission path:
-
-```bash
-smctl enhance
-smctl recommend
-smctl launch
-smctl trust --probe
-```
-
-`recommend` is the senior-AI/Supermemory-developer lens. It produces ten concrete reasons Harness should ship with Supermemory Local, a better user flow, a recommendation verdict, and the current live blocker if the local server is not ready.
-
-`launch` is the judge-ready command. It combines the executive check, install-to-trust workflow, and Local-to-Cloud migration doctor into one read-only launch board with a recommendation verdict, launch score, proof checklist, judge demo script, AI expert brief, and exact next command. If Supermemory Local is offline or processing is broken, it says that plainly instead of pretending the demo is ready.
-
-The submission runbook lives at [`docs/hackathon-submission.md`](docs/hackathon-submission.md).
-
-When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
-
-- Agent Memory readiness panel on the Supermemory Desktop home screen.
-- Local-first coding-agent MCP setup: `http://localhost:6767/mcp`, with `SUPERMEMORY_MCP_URL` as an override.
-- Project Scope Lock for MCP graph/data reads, so graph/list views do not accidentally read across every project when the user expects the active/default project.
-- Fail-open OpenAI middleware, so a temporary Supermemory retrieval failure does not crash the user's OpenAI chat request unless strict mode is explicitly enabled.
-
-To point Harness at a checkout explicitly:
-
-```bash
-smctl enhance --supermemory-source /path/to/supermemory
-```
-
-`smctl install` also runs the same automatic enhancement flow, so installer agents can use either command and still activate the essential pieces immediately.
+The install/enhance flow opens with the same blue terminal banner shown above, so the first run feels like a product rather than a raw diagnostics script.
 
 For local development from this repo:
 
 ```bash
 node ./bin/smctl.js install
+npm test
 ```
 
-After enhancement, run Supermemory through Harness when you want the normal terminal server view plus Harness trust events in the same stream:
+## Screenshots
+
+The final screenshot set lives in [docs/assets/screenshots](docs/assets/screenshots). Use the video as the main launch hook; these screenshots are the GitHub and social proof layer for install polish, live verification, repair, terminal flow, and the dashboard.
+
+<table>
+  <tr>
+    <td><img src="docs/assets/screenshots/2026-07-17-211521.png" alt="Supermemory dashboard with Harness command center" width="420"><br><sub>Dashboard command center inside the Supermemory Local flow.</sub></td>
+    <td><img src="docs/assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner" width="420"><br><sub>Install opens with a product-grade terminal banner.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/2026-07-17-215159.png" alt="smctl verify recall proof" width="420"><br><sub>Recall verification proves write, search, scope, and language recall.</sub></td>
+    <td><img src="docs/assets/screenshots/2026-07-17-221013.png" alt="smctl trust probe" width="420"><br><sub>Trust probe checks live Supermemory Local health and memory quality.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/2026-07-17-221148.png" alt="smctl repair wizard" width="420"><br><sub>Repair wizard turns broken memory state into ordered safe actions.</sub></td>
+    <td><img src="docs/assets/screenshots/2026-07-17-215451.png" alt="smctl genome memory personalization" width="420"><br><sub>Memory Genome classifies what the user stores and generates policy.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/2026-07-17-221312.png" alt="smctl evidence pack" width="420"><br><sub>Evidence pack gives judges and maintainers a redacted proof summary.</sub></td>
+    <td><img src="docs/assets/screenshots/2026-07-17-215554.png" alt="smctl trust doctor" width="420"><br><sub>Trust doctor exposes drift, scope, queue, processing, and duplicate signals.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/2026-07-17-215523.png" alt="smctl repair wizard no changes needed" width="420"><br><sub>Repair can also prove there is nothing unsafe to replay.</sub></td>
+    <td><img src="docs/assets/screenshots/2026-07-17-223133.png" alt="smctl supermemory start already running handling" width="420"><br><sub>Duplicate startup is handled cleanly when Local is already running.</sub></td>
+  </tr>
+</table>
+
+## Final Demo Path
+
+Use this sequence for a judge, maintainer, or serious first-time user:
 
 ```bash
-smctl supermemory start
+smctl enhance
+smctl evidence
+smctl advisor
+smctl recommend
+smctl launch
+smctl genome
+smctl trust --probe
 ```
 
-Enhance initializes the current app/project automatically when no active profile exists. To refresh the project profile manually:
+What each command proves:
 
-```bash
-smctl init
-```
+- `smctl evidence` writes a redacted proof pack with verdict, architecture, blockers, demo commands, Memory Genome state, launch score, and exact next command.
+- `smctl advisor` gives the operating plan for users, agents, Supermemory paths, local Llama usage, blockers, and next action.
+- `smctl recommend` explains why a senior AI engineer or Supermemory developer would recommend Harness as the operational companion for Local.
+- `smctl launch` shows the live launch board: recommendation, score, proof checklist, demo script, expert brief, and next command.
+- `smctl genome` classifies the user's memory mix and generates a local personalization policy for Guard.
+- `smctl trust --probe` performs the opt-in live proof: harmless write, processing, search, and scoped recall.
 
-The commands below are optional diagnostics and advanced controls.
+If Local is offline or broken, the demo still works: Harness reports the blocker plainly and points to the next command instead of pretending the system is ready.
+
+The hackathon runbook is in [docs/hackathon-submission.md](docs/hackathon-submission.md).
+
+## Product Argument
+
+Many memory demos show one app that uses memory. Harness improves the Supermemory Local experience itself.
+
+| Problem in local memory products | Harness answer |
+| --- | --- |
+| Users cannot tell whether Local, MCP, processing, and recall are healthy. | `watch`, `status`, `score`, `launch`, and the dashboard proxy make state visible. |
+| AI agents can rely on stale, cross-project, vague, or failed memories. | `session`, `gate`, `trust`, and agent bridge instructions enforce memory checks before important work. |
+| Risky or noisy captures can become permanent memory. | Guard reviews risky writes and applies project, skillset, and Genome metadata before forwarding. |
+| Background processing feels opaque. | Dream Flight Recorder snapshots queued, completed, failed, disappeared, and changed documents. |
+| Broken memory leaves users guessing. | `repair wizard` turns symptoms into an ordered safe plan. |
+| Local memories can become a dead end. | `migrate` reviews what can safely move to Supermemory Cloud and stores receipts. |
+| Personalization is invisible. | Memory Genome shows what the user stores and installs a local policy for future memory behavior. |
+
+## Architecture
+
+Harness stays local and wraps Supermemory instead of replacing it.
+
+- Self-install path: `smctl enhance` configures Harness-owned files, skills, agent bridge instructions, project scope, and the dashboard proxy.
+- Codex / Claude Code path: agents read bridge instructions and run `smctl advisor`, `smctl session pre-action`, `smctl trust`, `smctl genome`, and `smctl repair wizard` before relying on memory.
+- Write path: apps and agents can write through Guard at `localhost:6777`; Guard reviews risk, applies metadata, then forwards approved writes to Supermemory Local at `localhost:6767`.
+- Dashboard path: `smctl ui` serves a local proxy at `localhost:6778`, forwards the real Supermemory dashboard, and injects the Harness command center.
+- Terminal path: `smctl supermemory start` starts `supermemory-server` from the home store and streams Harness trust snapshots beside normal server logs.
+- Local Llama path: `--explain` and `smctl brain doctor` use Ollama only for short explanations. Deterministic Harness checks remain the source of truth.
+
+Common hurdles are expected and handled by commands:
+
+- Local offline or wrong launch folder: `smctl supermemory start`
+- Port `6767` already in use: `smctl supermemory start` now detects an active Local server and exits cleanly; stop the old terminal first only when you want fresh startup logs.
+- MCP missing or misconfigured: `smctl doctor`
+- Agent bridge missing: `smctl agent connect all`
+- Failed writes, schema issues, or runtime errors: `smctl repair wizard`
+- Noisy or secret-like captures: `smctl guard inbox`
+- Weak personalization: `smctl genome`
+- Missing local Llama: `smctl brain doctor`
+
+## Core Commands
 
 Show every command:
 
@@ -80,10 +140,35 @@ Show every command:
 smctl help
 ```
 
-Check the full Harness state:
+Recommended command map:
+
+| Command | Purpose |
+| --- | --- |
+| `smctl enhance` | One-command activation for setup, skills, bridge files, project scope, and dashboard proxy. |
+| `smctl evidence` | Redacted proof pack for judges, users, agents, and Supermemory maintainers. |
+| `smctl advisor` | One-command operating plan across user flow, agents, Supermemory paths, Llama, blockers, and next action. |
+| `smctl recommend` | Ten-feature product recommendation from senior AI and Supermemory developer perspectives. |
+| `smctl launch` | Final readiness board with score, proof checklist, demo script, expert brief, and next command. |
+| `smctl workflow` | Install-to-trust architecture, real pain points, and automation boundaries. |
+| `smctl watch` | Compact activity bar for Local, agents, memory flow, queue, dreams, Guard, and next action. |
+| `smctl trust` | Memory Trust Doctor for scope, health, recall, recovery, and safety. |
+| `smctl trust --probe` | Opt-in live recall proof using a harmless marker. |
+| `smctl genome` | Classify stored memory types and generate a local personalization policy. |
+| `smctl genome apply` | Install the generated policy for Guard when memory quality allows it. |
+| `smctl gate` | Pre-action memory governance gate for agents. |
+| `smctl guard inbox` | Review pending risky writes before they are committed to Local. |
+| `smctl repair wizard` | Ordered repair plan for failed writes, stale queues, retry loops, and recall mismatch. |
+| `smctl migrate doctor --redact` | Reviewed Local-to-Cloud migration readiness without leaking secrets. |
+| `smctl support` | Redacted support bundle for debugging Local, MCP, memory, dreams, migration, and Guard. |
+| `smctl backup --dry-run` | Data-only backup preview that excludes API keys and auth/provider secrets. |
+| `smctl brain doctor` | Check local Ollama/Llama readiness for no-cloud explanations. |
+
+Full state sweep:
 
 ```bash
 smctl enhance
+smctl evidence
+smctl advisor
 smctl recommend
 smctl executive
 smctl workflow
@@ -101,6 +186,8 @@ smctl status
 smctl status --explain
 smctl score
 smctl gate --explain
+smctl genome
+smctl genome apply
 smctl migrate doctor
 smctl migrate plan
 smctl migrate review
@@ -111,51 +198,63 @@ smctl migrate verify
 smctl migrate report
 ```
 
-`watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
+## Dashboard Command Center
 
-`workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
-
-`recommend` is the final must-have argument:
+Run:
 
 ```bash
-smctl recommend
-npm run recommend
+smctl ui
 ```
 
-It answers the question from a senior AI engineer and Supermemory developer perspective: why should this be recommended with Supermemory Local? The output lists ten feature reasons, the improved user flow, live evidence, and the safest next command.
+Open `http://localhost:6778` to use the Supermemory dashboard with the Harness Bar at the top.
 
-`launch` is the final readiness board for a demo, user trial, or judge review:
+The embedded panel includes:
+
+- Overview: local server, coding tools, and verified recall path.
+- Trust: Memory Trust Doctor plus failed writes, missing project context, source anchors, secrets, vague notes, duplicates, empty recall containers, and store risk.
+- Genome: memory-type classification, profile facts, personalization gaps, and local Guard policy install.
+- Setup: safe local setup actions and manual coding-tool installer steps.
+- Memory: queue, dreaming, failed writes, and verify probe.
+- Repair: ordered repair plan.
+- Guard: pending risky writes.
+- Events: recent Supermemory write activity.
+
+## Agent Workflow
+
+`smctl enhance` connects supported coding agents automatically. You can refresh the bridge directly:
 
 ```bash
-smctl launch
-npm run launch
+smctl agent connect codex
+smctl agent connect claude
+smctl agent status
 ```
 
-It answers the question a judge or AI expert would ask before recommending the plugin: does this visibly improve Supermemory Local for real agent memory, can the user prove recall, is risky capture controlled, is there a safe recovery path, and is the cloud migration story ready?
+The bridge tells agents to run:
 
-`support` creates a redacted support bundle for debugging. It collects doctor, Harness Bar, Trust, Dream Flight, migration readiness, and safe Supermemory log hints into `~/.config/smctl/support/` without printing API keys or home-directory paths:
+- `smctl session pre-action --json` before risky edits, tests, migrations, or dependency changes.
+- `smctl session pre-compact --json` before context compaction.
+- `smctl session stop --json` before ending or handing off a session.
+- `smctl advisor --json` when the user asks what to do next.
+- `smctl evidence --json` when the user wants a shareable proof pack.
+- `smctl trust --json`, `smctl genome --json`, and `smctl repair wizard --json` when memory state matters.
+
+Agents should treat Harness pass/warn/fail checks as authoritative. Local Llama explanations are summaries, not health decisions.
+
+## Memory Genome
+
+Memory Genome classifies sampled Local memories into categories such as preferences, project decisions, bug fixes, loose ends, source material, coding conventions, repeated failures, hardware experience, and customer context.
 
 ```bash
-smctl support
-smctl support --dry-run
+smctl genome
+smctl genome apply
+npm run genome
 ```
 
-`backup` creates a data-only local backup before repair, migration, demos, or bulk ingest. It copies Supermemory Local data/runtime/log state into `~/.config/smctl/backups/` and intentionally excludes `api-key`, `auth-secret`, and `env.enc`:
+The generated policy tells Guard what to remember, ignore, review before saving, and recall first. `genome apply` refuses to install when blocking memory quality issues make personalization unsafe.
 
-```bash
-smctl backup --dry-run
-smctl backup
-```
+## Local-To-Cloud Migration
 
-`audit` is a read-only memory hygiene audit. It checks five real Local failure modes before agents rely on memory: stable `customId`/import identity, active project scope, source grounding, processing queue health, and retrieval route readiness.
-
-```bash
-smctl audit
-```
-
-`executive` is the daily/final readiness cockpit. It runs the operational layers together, summarizes runtime, trust, Agent Autopilot, Dream Flight Recorder, Guard, and agent bridge state, then gives a prioritized action plan plus final checks before hosting or demoing.
-
-`migrate` is the Local-to-Cloud bridge. It helps users who built useful project memory in Supermemory Local move the user-facing knowledge into Supermemory Cloud without treating Local as a dead-end sandbox:
+Harness helps users move useful Local knowledge toward Supermemory Cloud without treating Local as a dead-end sandbox.
 
 ```bash
 smctl migrate doctor
@@ -167,138 +266,44 @@ smctl migrate verify
 smctl migrate report
 ```
 
-Migration is safe by default. `doctor` gives a readiness score, `plan` and `cloud --dry-run` read local documents, preserve project/container tags, and hold back failed writes, duplicate-looking entries, empty documents, and possible secrets. `review` explains why held items are blocked and what to do next. `cloud --apply` writes only migratable knowledge through the cloud document API and stores an audit receipt under `~/.config/smctl/migrations/`.
+Migration is safe by default:
 
-If a memory contains a replaceable secret but the surrounding note is still useful, preview or apply with redaction:
+- `doctor` gives a readiness score.
+- `plan` and `cloud --dry-run` preserve useful title, content, project/container tags, source anchors, local IDs, timestamps, and content hashes.
+- Failed, duplicate-looking, empty, or risky memories are held for review.
+- `--redact` replaces detected secret material with `[REDACTED]`.
+- `cloud --apply` stores an audit receipt under `~/.config/smctl/migrations/`.
 
-```bash
-smctl migrate cloud --dry-run --redact
-SUPERMEMORY_CLOUD_API_KEY=... smctl migrate cloud --apply --redact
-```
+Harness does not claim a byte-perfect clone of Supermemory internals. Original database IDs, embeddings, chunk IDs, auth/session state, and Local-only processing state remain Supermemory internals.
 
-Redacted uploads replace detected secret material with `[REDACTED]` and mark the cloud document metadata with `smctlRedacted`. `retry` resumes after a partial migration by skipping content hashes already migrated in the latest receipt and uploading only new/retryable items:
+## Native Supermemory Enhancements
 
-```bash
-SUPERMEMORY_CLOUD_API_KEY=... smctl migrate retry
-```
+When a Supermemory source checkout is present, `smctl enhance` can also apply native source enhancements:
 
-Harness preserves useful context such as title, text, project tag, source URL/filepath when available, local timestamps as metadata, local IDs as metadata, and a content hash. It does not claim a byte-perfect internal database clone: original database IDs, embeddings, chunk IDs, auth/session state, and private Local-only processing state remain Supermemory internals.
+- Agent Memory readiness panel on the Supermemory Desktop home screen.
+- Local-first coding-agent MCP setup at `http://localhost:6767/mcp`, with `SUPERMEMORY_MCP_URL` as an override.
+- Project Scope Lock for MCP graph/data reads.
+- Fail-open OpenAI middleware so temporary retrieval failure does not crash chat requests unless strict mode is enabled.
 
-`trust` is the Memory Trust Doctor: it answers whether Supermemory is safe to rely on right now. It checks Local reachability, active project scope, profile health, write pipeline symptoms, recall/container risks, local retry-loop logs, store growth, possible secrets, duplicates, vague memories, and memories without source anchors. It is read-only by default:
-
-```bash
-smctl trust
-```
-
-For a live proof, run:
+Point Harness at a checkout explicitly:
 
 ```bash
-smctl trust --probe
+smctl enhance --supermemory-source /path/to/supermemory
 ```
 
-Probe mode writes a harmless marker and verifies ingest, processing, search, and container-scoped recall.
+## Safety And Privacy
 
-`supermemory start` is the terminal-native mode. It starts `supermemory-server`, streams Supermemory's own output, and injects Harness health events into the same terminal stream:
+- Core diagnostics are local and read-only unless a command explicitly says it writes.
+- Risky writes, live proof writes, migration apply, and future destructive cleanup require explicit user intent.
+- Output redacts obvious API keys, tokens, private keys, and home-directory paths in support/evidence flows.
+- `backup` excludes `api-key`, `auth-secret`, and `env.enc`.
+- Local Llama is optional and used only for plain-English summaries.
+- Harness does not claim localhost checks validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
+- Harness does not silently run Claude Code, Codex, or OpenCode plugin installers; it writes bridge files and prints exact next commands.
 
-```bash
-smctl supermemory start
-```
+## Hardware And Experience Capture
 
-Example stream:
-
-```text
-[supermemory] server listening on :6767
-[harness] startup Trust 82/100 (Usable); 0 fail, 2 warn
-[harness] Local: online | Agents: 2/4 | Writes: 12 | Queue: 0
-```
-
-`agent connect` installs a local bridge for Codex and Claude Code-style agents so they know how to query Harness before relying on Supermemory. `smctl enhance` already runs this automatically; the command remains available when you want to refresh or inspect the bridge directly:
-
-```bash
-smctl agent connect codex
-smctl agent connect claude
-smctl agent status
-```
-
-The bridge tells agents to run `smctl session pre-action`, `smctl session pre-compact`, `smctl session stop`, `smctl trust --json`, `smctl repair wizard`, and `smctl trust --probe` when the user asks what is happening with Supermemory or when the agent reaches a lifecycle boundary.
-
-`session` is Agent Memory Autopilot. It exposes hookable lifecycle gates for coding tools: `pre-action` blocks or warns before risky edits when memory is not trustworthy, `pre-compact` prints the exact handoff contract to preserve before context compaction, and `stop` checks whether the session can hand off with usable Supermemory state.
-
-`ui` embeds that same Harness Bar into the Supermemory dashboard through a local proxy. `smctl enhance` starts it automatically when Supermemory Local is reachable; the command remains available if you want to restart it:
-
-```bash
-smctl ui
-```
-
-Open `http://localhost:6778` to use the Supermemory dashboard with the Harness Bar at the top.
-
-The embedded panel includes an in-Supermemory command center:
-
-- Overview: the path from local server to connected coding tools to verified recall.
-- Trust: the Memory Trust Doctor plus a flight recorder for failed writes, missing project context, missing source anchors, secrets, vague notes, duplicates, empty recall containers, and store risk.
-- Setup: safe local setup actions and manual coding-tool installer steps.
-- Memory: queue, dreaming, failed writes, and a verify probe.
-- Repair: the ordered repair plan from Harness diagnostics.
-- Guard: pending risky writes.
-- Events: recent Supermemory write activity.
-
-When something is wrong, use the guided path instead of guessing commands:
-
-```bash
-smctl repair wizard
-smctl cleanup
-smctl memory coach
-```
-
-```bash
-npm run doctor
-```
-
-or:
-
-```bash
-node ./bin/smctl.js doctor
-```
-
-JSON output is available for automation:
-
-```bash
-node ./bin/smctl.js doctor --json
-```
-
-Set up local integration files:
-
-```bash
-node ./bin/smctl.js setup --dry-run
-node ./bin/smctl.js setup
-```
-
-Verify the ingest and recall pipeline:
-
-```bash
-node ./bin/smctl.js verify
-node ./bin/smctl.js smoke
-```
-
-`verify` is the full user-facing proof: it writes a harmless marker, confirms project-scoped recall, checks for container mismatch symptoms, and runs a multilingual recall probe. `smoke` is the smaller raw ingest/search check.
-
-Inspect memory quality and failed ingests:
-
-```bash
-node ./bin/smctl.js memory doctor
-node ./bin/smctl.js memory coach
-node ./bin/smctl.js memory replay
-node ./bin/smctl.js memory replay --apply
-node ./bin/smctl.js repair
-node ./bin/smctl.js repair wizard
-node ./bin/smctl.js repair --explain
-node ./bin/smctl.js score
-node ./bin/smctl.js timeline
-node ./bin/smctl.js cleanup
-node ./bin/smctl.js project
-```
-
-Capture hardware or robotics experience:
+Harness can capture robotics/device logs as tagged Supermemory experience memories:
 
 ```bash
 smctl hardware init --name "robot-arm-v1"
@@ -308,91 +313,51 @@ smctl hardware coach
 smctl hardware replay
 ```
 
-Hardware support is an adapter layer. The board or robot does not run Supermemory directly; its software bridge emits logs/events, and Harness compresses them into tagged Supermemory memories.
+The board or robot does not run Supermemory directly. Its software bridge emits logs/events, and Harness compresses them into tagged memories.
 
-Check the local Llama brain:
+## Development
 
-```bash
-smctl brain doctor
-```
-
-Install an app-specific local memory policy:
+Run tests:
 
 ```bash
-node ./bin/smctl.js skillset list
-node ./bin/smctl.js skillset install developer
-node ./bin/smctl.js skillset doctor
+npm test
 ```
 
-Inspect the markdown skills installed for agents:
+Useful local scripts:
 
 ```bash
-smctl skills list
-smctl skills doctor
+npm run advisor
+npm run evidence
+npm run recommend
+npm run launch
+npm run genome
+npm run doctor
 ```
 
-Cloud Smart Assist is optional and not needed for the local-brain flow:
+JSON output is available for automation:
 
 ```bash
-smctl smart enable --prompt
-smctl smart enable --api-key-env LLM_API_KEY --yes
-smctl smart doctor
-smctl smart ping
+smctl evidence --json
+smctl advisor --json
+smctl trust --json
+smctl repair wizard --json
 ```
 
-`smart enable` can use `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `ANTHROPIC_API_KEY` directly. For custom env names, pass `--api-key-env`; Harness infers OpenAI, Gemini, or Anthropic from the key shape. In the guided prompt, it prints the detected provider and rejects unknown key shapes so users do not accidentally save the wrong key. To paste a key directly into the terminal without putting it in shell history, run `smctl smart enable --prompt`; the input is hidden and stored in a local `0600` Harness secret file.
-
-Review memory writes before commit:
-
-```bash
-node ./bin/smctl.js guard start
-node ./bin/smctl.js guard inbox
-node ./bin/smctl.js guard approve <id>
-node ./bin/smctl.js guard reject <id>
-```
+The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. GitHub cannot render live ANSI terminal color in Markdown, so the banner above is a terminal-faithful SVG render. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
 
 ## Current Scope
 
-- `doctor` is read-only diagnostics.
-- `enhance` is the automatic Supermemory Harness setup path: make Supermemory Local agent-memory ready, apply the native Supermemory Desktop source enhancement when available, otherwise prepare the embedded dashboard path and verify the memory loop.
-- `executive` is the daily/final readiness cockpit for runtime, trust, Agent Autopilot, dreams, Guard, bridge status, prioritized actions, and hosting checks.
-- `install` is the one-command onboarding flow for the Harness plugin.
-- `init` detects the current project and writes an active project profile for memory enrichment.
-- `start` checks Supermemory, project profile, skills, optional Ollama/Smart state, then starts Guard.
-- `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
-- `workflow` shows the simple install-to-trust architecture, the real gaps covered, and the automation boundaries.
-- `support` writes a redacted shareable report for debugging Local, MCP, memory, dreaming, migration, and Guard problems.
-- `backup` writes a local data-only Supermemory backup while excluding API keys and auth/provider secrets.
-- `audit` checks duplicate prevention, project scope, source grounding, processing queue health, and retrieval readiness in one read-only pass.
-- `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
-- `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
-- `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
-- `session` provides hookable coding-agent lifecycle gates for pre-action memory governance, pre-compaction handoff, and stop/handoff trust checks.
-- `ui` serves the Supermemory dashboard through a local proxy and injects the Harness Bar into the page.
-- `ui` also exposes embedded Harness routes such as `/__smctl/panel`, `/__smctl/flight`, `/__smctl/setup/apply`, and `/__smctl/verify` so the Supermemory tab can guide setup, trust, repair, and verification without sending the user to a separate app.
-- `status` gives one-screen health for Supermemory, memory quality, repair watchdog, and Guard.
-- `score` gives one confidence number for whether Supermemory memory/retrieval looks trustworthy.
-- `score`, `gate`, `dreams`, and `enhance` add Smart Sections automatically so the output names the decision, confidence, risks, activation state, and next command.
-- `status --explain`, `score --explain`, `gate --explain`, `dreams --explain`, `enhance --explain`, `repair --explain`, `verify --explain`, and `start --dry-run --explain` use local Ollama/Llama when available to explain diagnostics in plain English.
-- `project` shows the active app profile, project container, sampled project memories, and writes missing project context.
-- `setup` writes `~/.config/smctl/supermemory.env` and merges Cursor MCP config at `~/.cursor/mcp.json`.
-- `verify` proves that Supermemory can write, process, search, recall inside the active project container, and handle multilingual recall probes.
-- `smoke` writes a harmless marker document, waits for processing, and searches for it.
-- `memory doctor` checks failed documents, queued backlog, duplicate titles, memory-agent failures, and sampled memory entries.
-- `memory coach` explains how to improve memory quality: clearer wording, project tags, source anchors, duplicates, secrets, and recall gaps.
-- `memory replay` safely resubmits failed text documents after provider/config issues are fixed.
-- `migrate` plans, dry-runs, applies, verifies, and receipts Local-to-Cloud knowledge transfer while holding back risky or low-quality local data.
-- `repair` diagnoses failed documents, stale queues, retry-loop log hints, write/read mismatch symptoms, and local store size risk. It plans by default and avoids destructive cleanup.
-- `repair wizard` turns repair diagnostics into a safe ordered plan.
-- `timeline` shows recent write activity by day and top containers.
-- `cleanup` plans safe cleanup for possible secrets, duplicates, old test markers, vague notes, and missing project context; it does not delete memories.
-- `hardware` captures robotics/device logs as local experience memories through file or stdin bridges, with device/session tags.
-- `skillset` installs local app-specific memory policies used by Guard.
-- `skills` installs markdown memory behavior skills: write hygiene, query patterns, context injection format, health triage, project personalization, and conflict resolution.
-- `smart` can use a provider env var or a hidden terminal prompt; prompted keys are stored in a local `0600` Harness secret file.
-- `brain` checks local Ollama/Llama readiness for no-cloud explanations.
-- `guard` runs a local review proxy for `POST /v3/documents`, adds active project/skillset metadata, flags risky memory writes, and requires approval before forwarding.
-- Smart Assist is optional; Harness core skills and Guard enrichment work without provider API access.
-- Never prints the Supermemory API key or auth secret.
-- Does not claim localhost requests validate API-key correctness, because Supermemory Local can auto-apply localhost auth.
-- Does not auto-run Claude Code, Codex, or OpenCode plugin installers yet; it prints the exact next commands instead.
+Harness currently ships:
+
+- Onboarding: `enhance`, `install`, `setup`, `init`, `project`
+- Readiness: `doctor`, `watch`, `status`, `score`, `audit`, `executive`, `workflow`, `launch`, `recommend`, `advisor`, `evidence`
+- Trust and proof: `trust`, `trust --probe`, `verify`, `smoke`, `gate`, `session`
+- Memory quality: `memory doctor`, `memory coach`, `memory replay`, `dreams`, `timeline`, `cleanup`
+- Personalization: `genome`, `genome apply`, `skillset`, `skills`
+- Recovery: `repair`, `repair wizard`, `support`, `backup`
+- Migration: `migrate doctor`, `plan`, `review`, `cloud`, `retry`, `verify`, `receipt`, `report`
+- Runtime surfaces: `supermemory start`, `ui`, `guard`
+- Optional intelligence: `brain`, `smart`
+- Experience capture: `hardware`
+
+The project is intentionally conservative: it makes Local state observable, gives exact next commands, and keeps high-risk actions explicit.

@@ -1,6 +1,7 @@
 import { runDoctor } from "./doctor.js";
 import { runGuard } from "./guard.js";
 import { cliBanner } from "./banner.js";
+import { readGenomePolicy } from "./genome.js";
 import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { projectDoctor } from "./project.js";
 import { repairWatchdog } from "./repair.js";
@@ -28,6 +29,7 @@ export async function runStart(options = {}) {
   });
   const project = await projectDoctor({ home: context.home, cwd: context.cwd });
   const skills = await skillsInstall({ home: context.home, dryRun: context.dryRun });
+  const genomePolicy = await readGenomePolicy(context.home);
   const smart = await runSmart({ action: "doctor", home: context.home, env: context.env });
   const ollama = await checkOllama(context);
   const watchdog = doctor.exitCode === 0
@@ -49,6 +51,9 @@ export async function runStart(options = {}) {
     skills.exitCode === 0
       ? ok("Agent memory skills", skillsSummary(skills))
       : fail("Agent memory skills", "Could not install skills"),
+    genomePolicy
+      ? ok("Memory Genome policy", `${genomePolicy.title ?? genomePolicy.mode} (${Math.round((genomePolicy.confidence ?? 0) * 100)}% confidence)`)
+      : warn("Memory Genome policy", "Run smctl genome apply after Local memory is readable"),
     smart.exitCode === 0
       ? ok("Smart Assist", "enabled")
       : warn("Smart Assist", "optional; deterministic mode is available"),
@@ -70,6 +75,12 @@ export async function runStart(options = {}) {
     doctor: { exitCode: doctor.exitCode, summary: doctor.summary },
     project: project.profile ?? null,
     skills: { exitCode: skills.exitCode, summary: skills.summary },
+    genome: genomePolicy ? {
+      mode: genomePolicy.mode,
+      title: genomePolicy.title,
+      confidence: genomePolicy.confidence,
+      defaultContainerTag: genomePolicy.defaultContainerTag
+    } : null,
     smart: { exitCode: smart.exitCode, enabled: smart.enabled },
     watchdog: watchdog ? { status: watchdog.status, detail: watchdog.detail } : null,
     ollama,
@@ -143,7 +154,7 @@ function formatStart(result) {
   } else if (result.dryRun) {
     lines.push("Result: ready to start Guard. Run smctl start to begin.");
   } else {
-    lines.push("Future Supermemory writes through Guard will receive project and skill metadata.");
+    lines.push("Future Supermemory writes through Guard will receive project, skill, and Genome metadata when available.");
   }
   return lines.join("\n");
 }

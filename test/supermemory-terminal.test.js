@@ -27,6 +27,62 @@ test("supermemory terminal dry-run shows combined terminal plan", async () => {
   assert.match(result.text, new RegExp(`Launch cwd: ${escapeRegExp(home)}`));
 });
 
+test("supermemory terminal exits cleanly when Local is already running", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-supermemory-home-"));
+  await mkdir(join(home, ".supermemory", "bin"), { recursive: true });
+  const binary = join(home, ".supermemory", "bin", "supermemory-server");
+  await writeFile(binary, "");
+  let spawnCalled = false;
+
+  const result = await runSupermemoryTerminal({
+    action: "start",
+    home,
+    cwd: home,
+    env: { PATH: "" },
+    detectExisting: true,
+    fetch: async (url) => {
+      if (url === "http://localhost:6767/v4/openapi") return response(200, {});
+      return response(200, {});
+    },
+    spawn: () => {
+      spawnCalled = true;
+      throw new Error("should not spawn duplicate server");
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(spawnCalled, false);
+  assert.match(result.text, /already running/);
+  assert.match(result.text, /No duplicate server started/);
+  assert.match(result.text, /smctl trust --probe/);
+});
+
+test("supermemory terminal blocks when port responds but is not Local", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-supermemory-home-"));
+  await mkdir(join(home, ".supermemory", "bin"), { recursive: true });
+  const binary = join(home, ".supermemory", "bin", "supermemory-server");
+  await writeFile(binary, "");
+
+  const result = await runSupermemoryTerminal({
+    action: "start",
+    home,
+    cwd: home,
+    env: { PATH: "" },
+    detectExisting: true,
+    fetch: async (url) => {
+      if (url === "http://localhost:6767/v4/openapi") return response(404, {});
+      return response(200, "<html>not supermemory</html>");
+    },
+    spawn: () => {
+      throw new Error("should not spawn onto occupied port");
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.text, /does not look like Supermemory Local/);
+  assert.match(result.text, /Stop the process using port 6767/);
+});
+
 test("supermemory terminal launches from home store by default", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-supermemory-home-"));
   const repo = await mkdtemp(join(tmpdir(), "smctl-supermemory-repo-"));
@@ -141,4 +197,18 @@ test("terminal overlay snapshot shows actionable memory diagnosis", () => {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function response(status, body) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    async json() {
+      if (typeof body === "string") throw new Error("not json");
+      return body;
+    },
+    async text() {
+      return typeof body === "string" ? body : JSON.stringify(body);
+    }
+  };
 }

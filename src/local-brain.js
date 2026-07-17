@@ -109,7 +109,7 @@ function buildPrompt(result) {
     "Needs attention: ...",
     "Next: ...",
     "If exitCode is non-zero or any fail exists, Needs attention must mention the failure.",
-    "Use only these commands: smctl repair wizard, smctl repair, smctl verify, smctl score, smctl cleanup, smctl memory coach, smctl memory doctor, smctl memory replay.",
+    "Use only these commands: smctl enhance, smctl evidence, smctl advisor, smctl recommend, smctl workflow, smctl supermemory start, smctl doctor, smctl trust, smctl trust --probe, smctl gate, smctl genome, smctl genome apply, smctl launch, smctl ui, smctl repair wizard, smctl repair, smctl verify, smctl score, smctl cleanup, smctl memory coach, smctl memory doctor, smctl memory replay, smctl brain doctor.",
     "Treat any status/title/detail rows as Smart Sections.",
     compactToLines(compact)
   ].join("\n");
@@ -255,11 +255,12 @@ function fallbackExplanation(result) {
     .filter((item) => item.status !== "ok")
     .map((item) => item.detail ? `${item.title} (${item.detail})` : item.title)
     .slice(0, 3);
-  const next = result.next?.includes("smctl repair wizard")
+  const nextCommands = normalizeNext(result.next);
+  const next = nextCommands.includes("smctl repair wizard")
     ? "smctl repair wizard"
-    : result.next?.includes("smctl repair")
+    : nextCommands.includes("smctl repair")
       ? "smctl repair"
-      : result.next?.[0] ?? nextCommandFor(result);
+      : nextCommands[0] ?? nextCommandFor(result);
 
   return [
     `Works: ${works.length > 0 ? works.join(", ") : "Harness could read the result."}`,
@@ -282,7 +283,16 @@ function nextCommandFor(result) {
   if (result.command === "repair wizard") return "smctl memory replay";
   if (result.command === "repair") return "smctl memory doctor";
   if (result.command === "verify") return "smctl repair";
+  if (result.command === "genome") return "smctl genome apply";
+  if (result.command === "enhance") return "smctl supermemory start";
+  if (result.command === "gate") return "smctl trust";
   return "smctl status";
+}
+
+function normalizeNext(next) {
+  if (Array.isArray(next)) return next.filter(Boolean);
+  if (typeof next === "string" && next.trim()) return [next.trim()];
+  return [];
 }
 
 function ok(title, detail) {

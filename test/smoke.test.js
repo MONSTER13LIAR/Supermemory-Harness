@@ -27,6 +27,36 @@ test("smoke succeeds when document reaches done and search returns marker", asyn
   assert(calls.some((call) => call.url.endsWith("/v3/search")));
 });
 
+test("smoke falls back to v4 search when v3 returns no results", async () => {
+  const calls = [];
+  const result = await runSmoke({
+    marker: "smctl_v4_marker",
+    sleep: async () => {},
+    fetch: async (url, init) => {
+      calls.push({ url, init });
+      if (url.endsWith("/v3/documents") && init.method === "POST") {
+        return response(200, { id: "doc_v4", status: "queued" });
+      }
+      if (url.endsWith("/v3/documents/doc_v4")) {
+        return response(200, { id: "doc_v4", status: "done" });
+      }
+      if (url.endsWith("/v3/search")) {
+        return response(200, { total: 0, results: [] });
+      }
+      if (url.endsWith("/v4/search")) {
+        return response(200, { total: 1, results: [{ memory: "smctl_v4_marker" }] });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.searchTotal, 1);
+  assert(calls.some((call) => call.url.endsWith("/v3/search")));
+  assert(calls.some((call) => call.url.endsWith("/v4/search")));
+  assert.match(result.text, /via \/v4\/search/);
+});
+
 test("smoke fails when document processing fails", async () => {
   const result = await runSmoke({
     marker: "smctl_failed_marker",

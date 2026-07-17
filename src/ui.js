@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { homedir } from "node:os";
+import { runGenome } from "./genome.js";
 import { analyzeMemory } from "./insights.js";
 import { runProject } from "./project.js";
 import { runRepair } from "./repair.js";
@@ -82,6 +83,27 @@ async function handleRequest(context, request, response) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/__smctl/genome") {
+    sendJson(response, 200, await safeResult(() => runGenome({
+      baseUrl: context.upstream,
+      home: context.home,
+      fetch: context.fetch,
+      limit: 75
+    })));
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/__smctl/genome/apply") {
+    sendJson(response, 200, await safeResult(() => runGenome({
+      action: "apply",
+      baseUrl: context.upstream,
+      home: context.home,
+      fetch: context.fetch,
+      limit: 75
+    })));
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/__smctl/trust/probe") {
     sendJson(response, 200, await safeResult(() => runTrust({
       baseUrl: context.upstream,
@@ -144,7 +166,7 @@ async function embeddedSummary(context) {
 }
 
 async function embeddedPanel(context) {
-  const [summary, setup, repair, project, analysis, trust] = await Promise.all([
+  const [summary, setup, repair, project, analysis, trust, genome] = await Promise.all([
     embeddedSummary(context),
     safeResult(() => runSetup({
       baseUrl: context.upstream,
@@ -178,6 +200,12 @@ async function embeddedPanel(context) {
       cwd: context.cwd,
       fetch: context.fetch,
       limit: 50
+    })),
+    safeResult(() => runGenome({
+      baseUrl: context.upstream,
+      home: context.home,
+      fetch: context.fetch,
+      limit: 75
     }))
   ]);
 
@@ -189,6 +217,7 @@ async function embeddedPanel(context) {
     project,
     analysis,
     trust,
+    genome,
     journeys: journeySteps({ summary, setup, repair, project, analysis, trust }),
     readiness: readinessModel({ summary, setup, repair, project, analysis, trust })
   };
@@ -655,7 +684,7 @@ function harnessBarAsset() {
   const close = panel && panel.querySelector(".smctl-close");
   const tabsEl = panel && panel.querySelector(".smctl-tabs");
   const body = panel && panel.querySelector(".smctl-panel-body");
-  const tabs = ["Overview", "Trust", "Setup", "Memory", "Repair", "Guard", "Events"];
+  const tabs = ["Overview", "Trust", "Genome", "Setup", "Memory", "Repair", "Guard", "Events"];
   let panelData = null;
   let activeTab = "Overview";
 
@@ -743,6 +772,7 @@ function harnessBarAsset() {
     const project = panelData.project || {};
     const analysis = panelData.analysis || {};
     const trust = panelData.trust || {};
+    const genome = panelData.genome || {};
     const readiness = panelData.readiness || {};
     if (activeTab === "Overview") {
       body.innerHTML = hero(readiness) + '<div class="smctl-grid">'
@@ -775,6 +805,30 @@ function harnessBarAsset() {
         + '</div>' + command("smctl trust --probe") + '<div class="smctl-actions"><button class="smctl-action" data-action="trustProbe">Run live trust probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
         + (issues.length ? issues.map(function (item) { return row(item.title, (item.detail || "") + (item.command ? " -> " + item.command : ""), item.status); }).join("") : row("No trust issues", "The sampled memory flow looks healthy.", "done"))
         + '</div>';
+      wireActions();
+      wireCopy();
+      return;
+    }
+    if (activeTab === "Genome") {
+      const mode = genome.mode || {};
+      const score = genome.score || {};
+      const policy = genome.policy || {};
+      const categories = genome.categories || [];
+      const gaps = genome.gaps || [];
+      body.innerHTML = '<div class="smctl-grid">'
+        + card("Genome score", score.value == null ? "unknown" : score.value + "/100")
+        + card("Mode", mode.title || "unknown")
+        + card("Confidence", mode.confidence == null ? "unknown" : Math.round(Number(mode.confidence) * 100) + "%")
+        + card("Policy", genome.policyState || "unknown")
+        + card("Profile facts", genome.supermemoryProfile && genome.supermemoryProfile.stats ? genome.supermemoryProfile.stats.total : "unknown")
+        + card("Default container", policy.defaultContainerTag || "none")
+        + '</div>' + command("smctl genome") + command("smctl genome apply")
+        + '<div class="smctl-actions"><button class="smctl-action" data-action="genomeApply">Apply personalization policy</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div>'
+        + '<div class="smctl-list" style="margin-top:12px">'
+        + row("Memory Genome", score.detail || "Classifies the stored memory mix and turns it into Guard policy.", score.value >= 65 ? "done" : "attention")
+        + (categories.filter(function (item) { return item.count > 0; }).slice(0, 6).map(function (item) { return row(item.title, item.count + " memory item(s), " + item.percent + "% of sample", "ok"); }).join(""))
+        + (gaps.length ? gaps.slice(0, 6).map(function (item) { return row(item.title, (item.detail || "") + (item.command ? " -> " + item.command : ""), item.status); }).join("") : row("No genome gaps", "Personalization looks ready.", "done"))
+        + '</div><pre>' + escapeHtml(JSON.stringify({ remember: policy.remember || [], ignore: policy.ignore || [], askBeforeSaving: policy.askBeforeSaving || [], recallFirst: policy.recallFirst || [] }, null, 2)) + '</pre>';
       wireActions();
       wireCopy();
       return;
@@ -847,7 +901,7 @@ function harnessBarAsset() {
         }
         button.disabled = true;
         button.textContent = action === "setup" ? "Applying..." : "Running...";
-        const url = action === "setup" ? "/__smctl/setup/apply" : action === "trustProbe" ? "/__smctl/trust/probe" : "/__smctl/verify";
+        const url = action === "setup" ? "/__smctl/setup/apply" : action === "trustProbe" ? "/__smctl/trust/probe" : action === "genomeApply" ? "/__smctl/genome/apply" : "/__smctl/verify";
         fetch(url, { method: "POST", cache: "no-store" })
           .then(function (response) { return response.json(); })
           .then(function (result) {

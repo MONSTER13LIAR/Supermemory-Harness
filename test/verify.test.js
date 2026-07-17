@@ -34,6 +34,9 @@ test("verify proves project scoped write, recall, and language probe", async () 
         return response(200, documents.get(docMatch[1]) ?? { id: docMatch[1], status: "failed" });
       }
       if (url.endsWith("/v3/search")) {
+        return response(200, { total: 0, results: [] });
+      }
+      if (url.endsWith("/v4/search")) {
         const body = JSON.parse(init.body);
         const terms = String(body.q).toLowerCase().split(/\s+/).filter(Boolean);
         const found = [...documents.values()].filter((doc) => {

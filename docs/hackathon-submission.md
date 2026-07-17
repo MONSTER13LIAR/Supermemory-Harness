@@ -20,8 +20,11 @@ The core product bet:
 
 ```bash
 smctl enhance
+smctl evidence
+smctl advisor
 smctl recommend
 smctl launch
+smctl genome
 smctl workflow
 smctl trust --probe
 smctl repair wizard
@@ -34,37 +37,59 @@ Short version:
 npm run demo
 ```
 
-`npm run demo` runs the recommendation pack. It is intentionally read-only and explains why a senior AI engineer or Supermemory developer would recommend Harness as the operational companion for Supermemory Local.
+`npm run demo` runs the recommendation pack. `npm run evidence` writes the full redacted proof pack for judges, users, agents, or maintainers.
+
+## Media package
+
+Screenshots are stored in [docs/assets/screenshots](assets/screenshots) and rendered in the main README. Use them as the proof layer after the video:
+
+- Main video: the first Discord/X/LinkedIn artifact once editing is done.
+- GitHub README: screenshot gallery, quick start, architecture, and proof commands.
+- Discord: one polished submission message with the video, repo link, and 2-4 strongest screenshots.
+- X: video-first thread, then screenshots and proof commands as replies.
+- LinkedIn: one video post with the product argument, then screenshots in comments or a follow-up carousel.
 
 ## 90-second judge script
 
-1. Run `smctl recommend`.
+1. Run `smctl evidence`.
+   Show the single redacted proof pack: verdict, architecture, blockers, demo commands, Memory Genome state, and recommended next command.
+
+2. Run `smctl advisor`.
+   Show the one-command operating plan: weak points, entry paths, Supermemory communication paths, local Llama usage, and next command.
+
+3. Run `smctl recommend`.
    Show the ten must-have feature reasons, senior AI expert view, Supermemory developer view, better user flow, and exact next command.
 
-2. Run `smctl launch`.
+4. Run `smctl launch`.
    Show the recommendation verdict, launch score, proof checklist, and exact next command.
 
-3. Run `smctl workflow`.
+5. Run `smctl genome`.
+   Show Memory Genome: what kinds of memories the user stores, personalization gaps, and the generated Guard policy.
+
+6. Run `smctl workflow`.
    Explain the before/after: before Harness, users had raw Supermemory logs and had to trust memory blindly; after Harness, they get status, safety, proof, repair, and migration.
 
-4. Run `smctl trust --probe`.
+7. Run `smctl trust --probe`.
    Prove that memory works with a harmless marker, scoped recall, and search checks.
 
-5. Run `smctl repair wizard`.
+8. Run `smctl repair wizard`.
    Show that failure cases are part of the product, not hidden. Harness distinguishes Local runtime/server problems from replayable memory writes.
 
-6. Run `smctl migrate doctor --redact`.
+9. Run `smctl migrate doctor --redact`.
    Show the Local-to-Cloud bridge with held items, redaction, project tags, and readiness score.
 
 ## What is actually shipped
 
 - `smctl enhance`: one-command activation path.
+- `smctl evidence`: redacted judge-ready proof pack.
+- `smctl advisor`: one-command operating plan for users, agents, Supermemory paths, local Llama, blockers, and next action.
 - `smctl recommend`: ten-feature recommendation pack for senior AI and Supermemory developer review.
 - `smctl launch`: final recommendation board for judges, users, and AI agents.
 - `smctl executive`: daily/final readiness cockpit.
 - `smctl workflow`: simple install-to-trust story and boundaries.
 - `smctl watch`: compact Local/agent/memory/Guard activity bar.
 - `smctl trust`: Memory Trust Doctor and optional live recall probe.
+- `smctl genome`: Memory Genome classifier and local personalization policy for Guard.
 - `smctl gate`: pre-action governance gate for agents.
 - `smctl guard`: risky memory write review.
 - `smctl dreams`: Dream Flight Recorder for background memory changes.
@@ -99,7 +124,18 @@ Migration preserves title, content, project/container tags, source anchors, loca
 
 ### Demo clarity
 
-`smctl launch` packages the story into a recommendation verdict, launch score, proof checklist, demo script, AI expert brief, and next command.
+`smctl evidence` packages the full submission proof into one redacted local report. `smctl launch` then shows the live recommendation verdict, launch score, proof checklist, demo script, AI expert brief, and next command.
+
+### Architecture clarity
+
+`smctl workflow` explains every path a real user or agent takes:
+
+- Self-install: `smctl enhance` sets up Harness-owned files, skills, agent bridge, project scope, and dashboard proxy.
+- Codex/Claude: bridge instructions tell agents to run trust, session, Genome, repair, and local-brain checks before relying on memory.
+- Writes: Guard at `localhost:6777` reviews and enriches writes before forwarding approved requests to Supermemory Local at `localhost:6767`.
+- Dashboard: `smctl ui` proxies the real dashboard at `localhost:6778` and injects the Harness command center.
+- Terminal: `smctl supermemory start` runs the server from the home store and adds Harness health events to the log stream.
+- Local Llama: Ollama explanations are optional and summary-only; deterministic Harness checks remain the source of truth.
 
 ## If Supermemory Local is broken during judging
 
@@ -118,6 +154,8 @@ This is still a valid demo path. The project intentionally shows broken Local st
 ```bash
 npm test
 node ./bin/smctl.js --help
+node ./bin/smctl.js evidence --dry-run --limit 5
+node ./bin/smctl.js advisor --limit 5
 node ./bin/smctl.js recommend --limit 5
 node ./bin/smctl.js launch --limit 5
 ```
@@ -125,6 +163,8 @@ node ./bin/smctl.js launch --limit 5
 Expected:
 
 - Tests pass.
-- Help lists `launch`.
+- Help lists `evidence`, `advisor`, `launch`, and `genome`.
+- `evidence` gives a redacted proof pack and the current next command.
+- `advisor` gives the operating plan and current next command.
 - `recommend` gives ten must-have feature reasons and the current next command.
 - `launch` gives either a recommendable board or a concrete blocker and next command.

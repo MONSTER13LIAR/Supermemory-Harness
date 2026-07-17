@@ -20,6 +20,7 @@ export async function runSupermemoryTerminal(options = {}) {
     dryRun: Boolean(options.dryRun),
     intervalMs: options.intervalMs ?? 30000,
     startupDelayMs: options.startupDelayMs ?? 7000,
+    detectExisting: options.detectExisting ?? !options.spawn,
     command: options.command ?? null,
     spawn: options.spawn ?? spawn
   };
@@ -40,6 +41,25 @@ export async function runSupermemoryTerminal(options = {}) {
       `[harness] Launch cwd: ${launchCwd}`,
       `[harness] Harness health interval: ${context.intervalMs}ms`
     ]);
+  }
+
+  if (context.detectExisting) {
+    const existing = await detectExistingServer(context);
+    if (existing.status === "supermemory") {
+      return result("supermemory start", 0, [
+        `[harness] Supermemory Local is already running at ${context.baseUrl}.`,
+        "[harness] No duplicate server started; port 6767 is already in use by the active Local runtime.",
+        "[harness] For a fresh startup-log screenshot, stop the existing Supermemory terminal with Ctrl+C, then run smctl supermemory start again.",
+        "[harness] Next: smctl trust --probe | smctl verify | smctl ui"
+      ]);
+    }
+    if (existing.status === "occupied") {
+      return result("supermemory start", 1, [
+        `[harness] ${context.baseUrl} is already responding, but it does not look like Supermemory Local.`,
+        `[harness] ${existing.detail}`,
+        "[harness] Stop the process using port 6767 or choose a different Supermemory base URL."
+      ]);
+    }
   }
 
   process.stdout.write(`[harness] launching Supermemory Local with Harness terminal overlay: ${command}\n`);
@@ -81,6 +101,41 @@ export async function runSupermemoryTerminal(options = {}) {
       ]));
     });
   });
+}
+
+async function detectExistingServer(context) {
+  if (!context.fetch) return { status: "offline" };
+  const openapi = await fetchStatus(context.fetch, `${context.baseUrl}/v4/openapi`);
+  if (openapi.ok) return { status: "supermemory" };
+
+  const root = await fetchStatus(context.fetch, context.baseUrl);
+  if (!root.reachable) return { status: "offline" };
+
+  return {
+    status: "occupied",
+    detail: `/v4/openapi returned ${openapi.detail}; root returned ${root.detail}.`
+  };
+}
+
+async function fetchStatus(fetchImpl, url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1200);
+  try {
+    const response = await fetchImpl(url, { signal: controller.signal });
+    return {
+      reachable: true,
+      ok: response.ok,
+      detail: `HTTP ${response.status}`
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      ok: false,
+      detail: error.cause?.code ?? error.name ?? error.message
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function printHarnessSnapshot(context, label) {

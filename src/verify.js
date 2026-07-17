@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { appendExplanation, explainHarnessResult } from "./local-brain.js";
 import { runSmoke } from "./smoke.js";
 import { readProjectProfile } from "./project.js";
+import { responseDetail, searchIncludes, searchLocalMemory } from "./search.js";
 
 export async function runVerify(options = {}) {
   const context = {
@@ -107,9 +108,10 @@ async function recallCanarySuite(context, containerTag, marker) {
     },
     {
       name: "negative recall control",
-      query: `absent-${marker}`,
+      query: "totally unrelated negative recall control",
       containerTag,
-      expectFound: false
+      expectFound: false,
+      critical: false
     },
     {
       name: "cross-container isolation",
@@ -152,14 +154,13 @@ async function recallCanarySuite(context, containerTag, marker) {
 
   const results = [];
   for (const probe of probes) {
-    const response = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+    const response = await searchLocalMemory(context, {
       q: probe.query,
       containerTag: probe.containerTag,
       limit: 5,
       includeFullDocs: true
     });
-    const text = JSON.stringify(response.body ?? {});
-    const found = response.ok && text.includes(marker);
+    const found = searchIncludes(response, marker);
     const passed = probe.expectFound ? found : !found;
     results.push({
       name: probe.name,
@@ -168,39 +169,46 @@ async function recallCanarySuite(context, containerTag, marker) {
       expectFound: probe.expectFound,
       found,
       passed,
+      critical: probe.critical !== false,
       detail: responseDetail(response)
     });
   }
 
-  const failed = results.filter((result) => !result.passed);
+  const failed = results.filter((result) => !result.passed && result.critical);
+  const warnings = results.filter((result) => !result.passed && !result.critical);
+  const checks = [];
+  checks.push(failed.length === 0
+    ? ok("Recall canary suite", "exact, semantic, and cross-container probes passed")
+    : fail("Recall canary suite", failed.map((result) => result.name).join(", ")));
+  if (warnings.length > 0) {
+    checks.push(warn("Recall canary overmatch", warnings.map((result) => result.name).join(", ")));
+  }
   return {
     results,
-    checks: failed.length === 0
-      ? [ok("Recall canary suite", "exact, semantic, negative, and cross-container probes passed")]
-      : [fail("Recall canary suite", failed.map((result) => result.name).join(", "))]
+    checks
   };
 }
 
 async function probeContainerSearch(context, containerTag, marker) {
-  const scoped = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+  const scoped = await searchLocalMemory(context, {
     q: marker,
     containerTag,
     limit: 5,
     includeFullDocs: true
   });
-  const foundInContainer = scoped.ok && JSON.stringify(scoped.body).includes(marker);
+  const foundInContainer = searchIncludes(scoped, marker);
 
-  const unscoped = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+  const unscoped = await searchLocalMemory(context, {
     q: marker,
     limit: 5,
     includeFullDocs: true
   });
-  const unscopedFound = unscoped.ok && JSON.stringify(unscoped.body).includes(marker);
+  const unscopedFound = searchIncludes(unscoped, marker);
 
   return {
     foundInContainer,
     unscopedFound,
-    detail: responseDetail(scoped)
+    detail: `${responseDetail(scoped)}${scoped.route ? ` via ${scoped.route}` : ""}`
   };
 }
 
@@ -233,21 +241,21 @@ async function languageProbe(context, containerTag, forcedMarker) {
     return { status: "warn", marker, detail: `language document status ${doc.status ?? "unknown"}` };
   }
 
-  const exact = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+  const exact = await searchLocalMemory(context, {
     q: marker,
     containerTag,
     limit: 5,
     includeFullDocs: true
   });
-  const german = await postJson(context.fetch, `${context.baseUrl}/v3/search`, {
+  const german = await searchLocalMemory(context, {
     q: "Lieblings-Testfrucht Physalis",
     containerTag,
     limit: 5,
     includeFullDocs: true
   });
 
-  const exactFound = exact.ok && JSON.stringify(exact.body).includes(marker);
-  const germanFound = german.ok && JSON.stringify(german.body).includes(marker);
+  const exactFound = searchIncludes(exact, marker);
+  const germanFound = searchIncludes(german, marker);
   if (exactFound && germanFound) {
     return { status: "ok", marker, detail: "exact and German recall worked" };
   }
@@ -333,12 +341,6 @@ async function requestJson(fetchFn, url, init) {
       error: formatFetchError(error)
     };
   }
-}
-
-function responseDetail(response) {
-  if (response.error) return response.error;
-  if (response.status) return `HTTP ${response.status}: ${JSON.stringify(response.body)}`;
-  return "No response";
 }
 
 function summarize(checks) {

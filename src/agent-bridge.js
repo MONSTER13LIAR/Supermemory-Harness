@@ -125,10 +125,15 @@ This file teaches ${agent} how to communicate with Supermemory Harness.
 - Before compacting context, run: smctl session pre-compact
 - Before ending or handing off a session, run: smctl session stop
 - If the user asks whether Supermemory is healthy, run: smctl trust
+- If the user asks what to do next, whether the plugin is useful, or how the whole system fits together, run: smctl advisor
+- If the user wants a shareable judge/user/maintainer proof pack, run: smctl evidence
 - If memory feels wrong, run: smctl repair wizard
 - If the user wants a live proof, run: smctl trust --probe
+- If the user asks what kind of memories they store or how to personalize future memory writes, run: smctl genome
+- If the user wants plain-English diagnostics, run the relevant command with --explain or run: smctl brain doctor
 - Use project-scoped Supermemory memory whenever an active project profile exists.
 - Do not ask the user to inspect Supermemory logs first; run Harness diagnostics and summarize the result.
+- Treat Harness pass/warn/fail checks as authoritative. Local Llama explanations are only summaries, not the source of truth.
 - Before compacting, summarizing, or handing off a long coding session, preserve the Harness compaction contract below and store the result as project-scoped memory when possible.
 
 ## Harness Compaction Contract
@@ -149,8 +154,12 @@ If any of those fields are unknown, write "unknown" instead of inventing it.
 - Pre-action gate: smctl session pre-action --json
 - Pre-compact contract: smctl session pre-compact --json
 - Stop/handoff check: smctl session stop --json
+- Operating advisor: smctl advisor --json
+- Evidence pack: smctl evidence --json
 - Manual trust doctor: smctl trust --json
+- Memory Genome: smctl genome --json
 - Repair plan: smctl repair wizard --json
+- Local Llama readiness: smctl brain doctor --json
 
 ## Current Supermemory Target
 

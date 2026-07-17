@@ -27,6 +27,14 @@ const PAIN_POINTS = [
     boundary: "Blocks risky reliance; live proof only writes a harmless canary when the user asks for a probe."
   },
   {
+    id: "personalization-gap",
+    title: "Memory shape is invisible",
+    pain: "Users may store coding decisions, personal notes, hardware logs, support context, and source material, but the product does not explain what kind of memory base they are building.",
+    harness: "genome classifies stored memory types, checks profile-learning signals, generates a local personalization policy, and lets Guard apply it to future writes.",
+    auto: "smctl genome",
+    boundary: "It installs policy only after readable memory analysis; blocking memory quality issues stop apply."
+  },
+  {
     id: "unsafe-capture",
     title: "Unsafe automatic capture",
     pain: "Agent memory can persist secrets, noisy notes, or unreviewed context that should not become durable memory.",
@@ -60,11 +68,51 @@ const PAIN_POINTS = [
   }
 ];
 
+const ARCHITECTURE_PATHS = [
+  {
+    name: "Self install path",
+    flow: "User -> npm install / smctl enhance -> setup files, skills, bridge, project scope, dashboard proxy",
+    command: "smctl enhance",
+    risk: "Local server may be offline, running from the wrong folder, or missing provider/model config."
+  },
+  {
+    name: "Codex / Claude Code path",
+    flow: "Agent -> bridge instructions -> smctl session/gate/trust/genome -> Supermemory Local HTTP checks",
+    command: "smctl agent connect all",
+    risk: "Agents can forget to ask memory tools or rely on stale memory unless the bridge tells them the lifecycle commands."
+  },
+  {
+    name: "Memory write path",
+    flow: "App or agent -> Guard proxy :6777 -> review/risk/project/Genome metadata -> Supermemory Local :6767",
+    command: "smctl start",
+    risk: "Direct writes to :6767 bypass Guard review; use Guard for risky or agent-generated writes."
+  },
+  {
+    name: "Dashboard path",
+    flow: "Browser -> Harness UI proxy :6778 -> Supermemory dashboard :6767 plus /__smctl command-center routes",
+    command: "smctl ui",
+    risk: "The proxy is local-only and depends on Supermemory Local being reachable."
+  },
+  {
+    name: "Terminal runtime path",
+    flow: "smctl supermemory start -> starts supermemory-server from $HOME -> streams logs with Harness trust snapshots",
+    command: "smctl supermemory start",
+    risk: "Starting the server from a repo folder can create or use a project-local .supermemory store."
+  },
+  {
+    name: "Local Llama path",
+    flow: "smctl --explain / brain doctor -> Ollama :11434 -> short plain-English explanation with deterministic fallback",
+    command: "smctl brain doctor",
+    risk: "The model must explain diagnostics only; deterministic Harness checks remain the source of truth."
+  }
+];
+
 const MORAL_BOUNDARIES = [
   "Simple install is allowed to configure Harness-owned files and safe agent instructions.",
   "Risky memory writes, live proof writes, and any future destructive cleanup need explicit user intent.",
   "Secrets are redacted from output and are never printed as part of diagnostics.",
   "Harness should sit inside the Supermemory workflow, not pretend to be Supermemory or silently replace it.",
+  "Local Llama can explain Harness results, but it must not invent health state or override deterministic pass/warn/fail checks.",
   "When memory cannot be trusted, the product must say that plainly and give the next command."
 ];
 
@@ -86,7 +134,9 @@ export async function runWorkflow(options = {}) {
     baseUrl: context.baseUrl,
     tagline: "Install once, then Supermemory gets a status bar, guardrails, proof, repair, and migration paths.",
     current: summarizeCurrent(watch),
+    architecture: ARCHITECTURE_PATHS,
     stages,
+    hurdles: buildHurdles(watch),
     painPoints: PAIN_POINTS,
     moralBoundaries: MORAL_BOUNDARIES,
     next: chooseNext(stages, watch),
@@ -101,10 +151,11 @@ function buildStages(watch) {
     stage("1", "Install and activate", stageStatus(watch.local.status === "online" || watch.agents.configured > 0), "smctl enhance", "Make the common path automatic: setup, skills, bridge, project scope, UI proxy."),
     stage("2", "Run where users already look", watch.local.status === "online" ? "ready" : "blocked", "smctl supermemory start", "Put Harness health in the same terminal stream as Supermemory logs."),
     stage("3", "Check before relying on memory", watch.local.status === "online" ? "ready" : "blocked", "smctl gate", "Give Codex/Claude a pass, warn, or block decision before important edits/tests."),
-    stage("4", "Review risky captures", watch.guard.pending > 0 ? "attention" : "ready", "smctl guard inbox", `${watch.guard.pending} pending write(s); high-risk writes should not silently persist.`),
-    stage("5", "Watch processing and dreaming", watch.memory.queued > 0 || watch.memory.failed > 0 ? "attention" : "ready", "smctl dreams", `Queue ${watch.memory.queued}, failed ${watch.memory.failed}; make background memory changes visible.`),
-    stage("6", "Repair only what is broken", needsRepair(watch) ? "attention" : "ready", "smctl repair wizard", watch.watchdog?.detail ?? "Use ordered diagnostics when recall or processing feels wrong."),
-    stage("7", "Launch with proof", watch.local.status === "online" ? "ready" : "blocked", "smctl launch", "Generate the final recommendation, score, proof checklist, and judge demo script.")
+    stage("4", "Personalize memory behavior", watch.local.status === "online" ? "ready" : "blocked", "smctl genome", "Classify stored memories and apply a local policy so Guard knows what this user should remember or ignore."),
+    stage("5", "Review risky captures", watch.guard.pending > 0 ? "attention" : "ready", "smctl guard inbox", `${watch.guard.pending} pending write(s); high-risk writes should not silently persist.`),
+    stage("6", "Watch processing and dreaming", watch.memory.queued > 0 || watch.memory.failed > 0 ? "attention" : "ready", "smctl dreams", `Queue ${watch.memory.queued}, failed ${watch.memory.failed}; make background memory changes visible.`),
+    stage("7", "Repair only what is broken", needsRepair(watch) ? "attention" : "ready", "smctl repair wizard", watch.watchdog?.detail ?? "Use ordered diagnostics when recall or processing feels wrong."),
+    stage("8", "Launch with proof", watch.local.status === "online" ? "ready" : "blocked", "smctl launch", "Generate the final recommendation, score, proof checklist, and judge demo script.")
   ];
 }
 
@@ -128,8 +179,39 @@ function chooseNext(stages, watch) {
   return watch.next ?? "smctl verify";
 }
 
+function buildHurdles(watch) {
+  const hurdles = [];
+  if (watch.local.status !== "online") {
+    hurdles.push(hurdle("Local is offline", "Supermemory Local is not reachable on localhost:6767.", "smctl supermemory start"));
+  }
+  if (watch.local.mcp.label !== "ready") {
+    hurdles.push(hurdle("MCP is not ready", watch.local.mcp.detail, "smctl doctor"));
+  }
+  if (watch.agents.configured === 0) {
+    hurdles.push(hurdle("No coding agent bridge configured", "Codex/Claude may not know to run Harness lifecycle checks.", "smctl agent connect all"));
+  }
+  if (watch.memory.failed > 0) {
+    hurdles.push(hurdle("Failed memory writes", `${watch.memory.failed} sampled write(s) failed or errored.`, "smctl repair wizard"));
+  }
+  if (watch.memory.queued > 0) {
+    hurdles.push(hurdle("Processing is still catching up", `${watch.memory.queued} queued or processing write(s).`, "smctl watch"));
+  }
+  if (watch.guard.risk.high > 0) {
+    hurdles.push(hurdle("High-risk guarded write", `${watch.guard.risk.high} high-risk write(s) are waiting for review.`, "smctl guard inbox"));
+  }
+  if (watch.watchdog && watch.watchdog.status !== "ok") {
+    hurdles.push(hurdle("Repair watchdog warning", watch.watchdog.detail, "smctl repair wizard"));
+  }
+  hurdles.push(hurdle("Local Llama may be missing", "Llama is optional and should explain Harness results only; deterministic checks still decide pass/warn/fail.", "smctl brain doctor"));
+  return hurdles.slice(0, 8);
+}
+
 function needsRepair(watch) {
   return watch.memory.failed > 0 || (watch.watchdog && watch.watchdog.status !== "ok");
+}
+
+function hurdle(title, detail, command) {
+  return { title, detail, command };
 }
 
 function stage(id, title, status, command, detail) {
@@ -159,6 +241,25 @@ function formatWorkflow(result) {
     lines.push(`   ${stage.detail}`);
     lines.push(`   Command: ${stage.command}`);
   }
+  lines.push("");
+  lines.push("Architecture Paths:");
+  for (const path of result.architecture) {
+    lines.push(`- ${path.name}`);
+    lines.push(`   Flow: ${path.flow}`);
+    lines.push(`   Command: ${path.command}`);
+    lines.push(`   Hurdle: ${path.risk}`);
+  }
+  lines.push("");
+  lines.push("Hurdles And Fixes:");
+  for (const hurdle of result.hurdles) {
+    lines.push(`- ${hurdle.title}: ${hurdle.detail}`);
+    lines.push(`   Fix: ${hurdle.command}`);
+  }
+  lines.push("");
+  lines.push("Local Llama Usage:");
+  lines.push("   Use it for short plain-English explanations after deterministic Harness checks.");
+  lines.push("   Do not use it to decide whether Supermemory is healthy, to approve writes, or to invent memory state.");
+  lines.push("   If Ollama/model is missing, Harness falls back to deterministic explanations.");
   lines.push("");
   lines.push("Real Gaps Covered:");
   for (const pain of result.painPoints) {

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { runAudit } from "./audit.js";
 import { runBackup } from "./backup.js";
+import { runGenome } from "./genome.js";
 import { runLaunch } from "./launch.js";
 
 export async function runRecommend(options = {}) {
@@ -17,7 +18,7 @@ export async function runRecommend(options = {}) {
     limit: options.limit ?? 25
   };
 
-  const [launch, audit, backup, repo] = await Promise.all([
+  const [launch, audit, backup, genome, repo] = await Promise.all([
     safeResult(() => runLaunch(context)),
     safeResult(() => runAudit({
       baseUrl: context.baseUrl,
@@ -29,14 +30,20 @@ export async function runRecommend(options = {}) {
       home: context.home,
       dryRun: true
     })),
+    safeResult(() => runGenome({
+      baseUrl: context.baseUrl,
+      home: context.home,
+      fetch: context.fetch,
+      limit: context.limit
+    })),
     inspectRepoEvidence(context.cwd)
   ]);
 
-  const features = buildMustHaveFeatures({ launch, audit, backup, repo });
+  const features = buildMustHaveFeatures({ launch, audit, backup, genome, repo });
   const userFlow = buildUserFlow({ launch });
-  const expertView = buildExpertView({ launch, audit, backup, repo, features });
-  const developerView = buildDeveloperView({ launch, audit, backup, repo, features });
-  const score = scoreRecommendation({ launch, audit, backup, repo, features });
+  const expertView = buildExpertView({ launch, audit, backup, genome, repo, features });
+  const developerView = buildDeveloperView({ launch, genome, features });
+  const score = scoreRecommendation({ launch, audit, backup, genome, repo, features });
   const recommendation = recommendationFor(score, features);
   const next = chooseNext({ launch, audit, features });
 
@@ -55,6 +62,7 @@ export async function runRecommend(options = {}) {
       launch: compactSource(launch),
       audit: compactSource(audit),
       backup: compactSource(backup),
+      genome: compactSource(genome),
       repo
     },
     exitCode: recommendation.status === "block" ? 1 : 0
@@ -63,7 +71,7 @@ export async function runRecommend(options = {}) {
   return result;
 }
 
-function buildMustHaveFeatures({ launch, audit, backup, repo }) {
+function buildMustHaveFeatures({ launch, audit, backup, genome, repo }) {
   const feature = (id, title, status, command, whyUsersCare, whySupermemoryCare, proof) => ({
     id,
     title,
@@ -79,13 +87,13 @@ function buildMustHaveFeatures({ launch, audit, backup, repo }) {
     : launch.recommendation?.status === "conditional" ? "warn" : "block";
   const auditStatus = audit.exitCode === 0 ? "ready" : audit.exitCode === 1 ? "warn" : "block";
   const backupStatus = backup.exitCode === 0 ? "ready" : "warn";
-  const ciStatus = repo.ci ? "ready" : "warn";
   const docsStatus = repo.submissionRunbook && repo.readme ? "ready" : "warn";
   const safety = findBoardStatus(launch, "safety", "ready");
   const recovery = findBoardStatus(launch, "recovery", "warn");
   const cloud = findBoardStatus(launch, "cloud", "warn");
   const trust = findBoardStatus(launch, "trust", "block");
   const runtime = findBoardStatus(launch, "first-minute", "block");
+  const genomeStatus = genome.exitCode === 0 ? "ready" : genome.reachable === false ? "block" : "warn";
 
   return [
     feature(
@@ -161,6 +169,15 @@ function buildMustHaveFeatures({ launch, audit, backup, repo }) {
       boardDetail(launch, "cloud")
     ),
     feature(
+      "memory-genome",
+      "Memory Genome personalization",
+      genomeStatus,
+      "smctl genome && smctl genome apply",
+      "Users see what kinds of memories they actually store and get a local policy that personalizes future writes.",
+      "It turns richer Local profiles into an actionable control plane for Guard, agents, and dashboard UX.",
+      genome.score ? `${genome.mode?.title ?? "Memory"} at ${genome.score.value}/100; policy ${genome.policyState ?? "unknown"}.` : genome.error ?? "Genome unavailable."
+    ),
+    feature(
       "privacy-support",
       "Privacy-safe support and backup",
       backupStatus,
@@ -168,15 +185,6 @@ function buildMustHaveFeatures({ launch, audit, backup, repo }) {
       "Users can collect debug context and backups without exposing API keys or auth secrets.",
       "It makes support safer for maintainers and users.",
       backup.exitCode === 0 ? "Backup dry-run completed." : backup.error ?? "Backup dry-run needs attention."
-    ),
-    feature(
-      "submission-evidence",
-      "Submission-grade evidence",
-      ciStatus,
-      "npm test",
-      "The project has tests, CI, and a judge runbook instead of only claims.",
-      "It gives Supermemory maintainers confidence this can be recommended responsibly.",
-      repo.ci ? "GitHub Actions workflow exists." : "CI workflow missing."
     )
   ];
 }
@@ -184,31 +192,36 @@ function buildMustHaveFeatures({ launch, audit, backup, repo }) {
 function buildUserFlow({ launch }) {
   return [
     flowStep("1", "Install and activate", "smctl enhance", "Sets up the visible Supermemory Local companion path."),
-    flowStep("2", "Open the verdict", "smctl recommend", "Shows the must-have reasons, blockers, and recommended next command."),
-    flowStep("3", "Run the launch board", "smctl launch", "Gives a judge-ready score, proof checklist, and demo script."),
-    flowStep("4", "Use agents safely", "smctl gate", "Checks whether memory is trustworthy before important edits/tests."),
-    flowStep("5", "Prove memory live", "smctl trust --probe", "Writes and recalls a harmless marker when the user wants proof."),
-    flowStep("6", "Fix only what is broken", launch.next ?? "smctl repair wizard", "Uses the current diagnostics to choose the safest repair or start command."),
-    flowStep("7", "Move useful memory forward", "smctl migrate doctor --redact", "Reviews Local-to-Cloud readiness without leaking secrets.")
+    flowStep("2", "Generate the proof pack", "smctl evidence", "Writes a redacted judge/user/agent report with verdict, architecture, blockers, and demo commands."),
+    flowStep("3", "Ask the local advisor", "smctl advisor", "Shows the operating plan for users, agents, Supermemory paths, Llama, blockers, and next command."),
+    flowStep("4", "Open the verdict", "smctl recommend", "Shows the must-have reasons, blockers, and recommended next command."),
+    flowStep("5", "Run the launch board", "smctl launch", "Gives a judge-ready score, proof checklist, and demo script."),
+    flowStep("6", "Personalize memory behavior", "smctl genome", "Shows what the user stores and the policy Harness can apply to future writes."),
+    flowStep("7", "Use agents safely", "smctl gate", "Checks whether memory is trustworthy before important edits/tests."),
+    flowStep("8", "Prove memory live", "smctl trust --probe", "Writes and recalls a harmless marker when the user wants proof."),
+    flowStep("9", "Fix only what is broken", launch.next ?? "smctl repair wizard", "Uses the current diagnostics to choose the safest repair or start command."),
+    flowStep("10", "Move useful memory forward", "smctl migrate doctor --redact", "Reviews Local-to-Cloud readiness without leaking secrets.")
   ];
 }
 
-function buildExpertView({ launch, audit, backup, repo, features }) {
+function buildExpertView({ launch, audit, backup, genome, repo, features }) {
   const blockers = features.filter((item) => item.status === "block").length;
   return [
     `Recommendation signal: ${launch.recommendation?.label ?? "unknown"}; ${blockers} blocking feature area(s).`,
     "As a senior AI engineer, I would recommend this when the live recall proof and gate pass because it treats memory as an operational dependency, not a passive vector store.",
-    "The strongest technical argument is retrieval governance: project scope, source grounding, failed-write visibility, repair ordering, and opt-in canary proof.",
+    "The strongest technical argument is retrieval governance plus personalization: project scope, source grounding, failed-write visibility, repair ordering, Memory Genome policy, and opt-in canary proof.",
+    `Genome state: ${genome.score ? `${genome.mode?.title ?? "Memory"} ${genome.score.value}/100` : "unavailable"}.`,
     `Audit state: ${audit.exitCode === 0 ? "usable" : "needs attention"}. Backup dry-run: ${backup.exitCode === 0 ? "available" : "needs attention"}.`,
     `Evidence state: CI ${repo.ci ? "present" : "missing"}, submission runbook ${repo.submissionRunbook ? "present" : "missing"}.`
   ];
 }
 
-function buildDeveloperView({ launch, features }) {
+function buildDeveloperView({ launch, genome, features }) {
   const ready = features.filter((item) => item.status === "ready").length;
   return [
     `For Supermemory developers, Harness is complementary: it wraps Local with diagnostics and user flow instead of replacing the server.`,
     "It lowers support load by converting MCP, processing, schema, failed-write, queue, and migration problems into exact user-facing next commands.",
+    `It makes Local personalization visible: ${genome.policy ? `Genome can apply a ${genome.policy.title} policy to Guard.` : "Genome reports when inventory is unavailable."}`,
     "It respects product boundaries: setup and diagnostics are automatic, while risky writes, live proof writes, and destructive cleanup remain explicit.",
     "It creates an adoption loop: better Local trust creates better memories, and reviewed migration moves durable memories toward Cloud.",
     `${ready}/10 must-have feature areas are currently ready in this environment; the rest are visible blockers rather than hidden failures.`,
@@ -216,7 +229,7 @@ function buildDeveloperView({ launch, features }) {
   ];
 }
 
-function scoreRecommendation({ launch, audit, backup, repo, features }) {
+function scoreRecommendation({ launch, audit, backup, genome, repo, features }) {
   let value = launch.score?.value ?? 60;
   for (const item of features) {
     if (item.status === "ready") value += 3;
@@ -226,6 +239,7 @@ function scoreRecommendation({ launch, audit, backup, repo, features }) {
   if (audit.exitCode === 0) value += 4;
   else value -= 4;
   if (backup.exitCode === 0) value += 3;
+  if (genome.exitCode === 0) value += 4;
   if (repo.ci) value += 4;
   if (repo.submissionRunbook) value += 4;
   value = Math.max(0, Math.min(100, value));

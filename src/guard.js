@@ -3,6 +3,7 @@ import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { applyGenomePolicyToRequest, readGenomePolicy } from "./genome.js";
 import { applyProjectToRequest, readProjectProfile } from "./project.js";
 import { applySkillsetToRequest, readActiveSkillset } from "./skillset.js";
 
@@ -179,12 +180,14 @@ export async function quarantineWrite(context, request) {
   const pending = await readPending(context);
   const project = await readProjectProfile(context.home);
   const skillset = await readActiveSkillset(context.home);
+  const genomePolicy = await readGenomePolicy(context.home);
   const skillsetResult = applySkillsetToRequest(skillset, request);
+  const genomeResult = applyGenomePolicyToRequest(genomePolicy, request);
   const projectResult = applyProjectToRequest(project, request);
   const baseRisk = scanRisk(request);
   const scopeFindings = scanScopeRisk(project, request);
   const redactedBody = redactSecretsFromValue(request.body);
-  const body = applyContextMetadata(redactedBody, skillsetResult, projectResult);
+  const body = applyContextMetadata(redactedBody, skillsetResult, genomeResult, projectResult);
   const item = {
     id: `guard_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     status: "pending",
@@ -202,26 +205,35 @@ export async function quarantineWrite(context, request) {
       metadata: skillsetResult.metadata,
       containerTag: skillsetResult.containerTag
     } : null,
+    genome: genomePolicy ? {
+      mode: genomePolicy.mode,
+      title: genomePolicy.title,
+      confidence: genomePolicy.confidence,
+      metadata: genomeResult.metadata,
+      containerTag: genomeResult.containerTag,
+      matchedType: genomeResult.matchedType
+    } : null,
     project: project ? {
       name: project.name,
       root: project.root,
       containerTag: project.containerTag,
       metadata: projectResult.metadata
     } : null,
-    risk: mergeRisk(baseRisk, [...skillsetResult.findings, ...scopeFindings])
+    risk: mergeRisk(baseRisk, [...skillsetResult.findings, ...genomeResult.findings, ...scopeFindings])
   };
   pending.push(item);
   await writePending(context, pending);
   return item;
 }
 
-function applyContextMetadata(body, skillsetResult, projectResult) {
+function applyContextMetadata(body, skillsetResult, genomeResult, projectResult) {
   return {
     ...body,
-    ...(projectResult.containerTag || skillsetResult.containerTag ? { containerTag: projectResult.containerTag ?? skillsetResult.containerTag } : {}),
+    ...(projectResult.containerTag || skillsetResult.containerTag || genomeResult.containerTag ? { containerTag: projectResult.containerTag ?? skillsetResult.containerTag ?? genomeResult.containerTag } : {}),
     metadata: {
       ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
       ...(projectResult.metadata ?? {}),
+      ...(genomeResult.metadata ?? {}),
       ...(skillsetResult.metadata ?? {})
     }
   };
@@ -422,6 +434,9 @@ function formatInbox(result) {
       }
       if (item.skillset) {
         lines.push(`   skillset: ${item.skillset.name}`);
+      }
+      if (item.genome) {
+        lines.push(`   genome: ${item.genome.mode}${item.genome.matchedType ? ` (${item.genome.matchedType})` : ""}`);
       }
       if (item.project) {
         lines.push(`   project: ${item.project.name}`);

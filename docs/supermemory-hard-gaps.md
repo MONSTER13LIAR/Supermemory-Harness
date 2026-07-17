@@ -177,3 +177,24 @@ Status:
 - Shipped. Added `smctl gate`, a pre-action memory governance gate for coding agents. It
   blocks when project memory is unscoped or memory health has failures, warns on contradictions
   and quality risks, and tells the agent the next repair/proceed command.
+
+## Gap 11: Users Cannot See Or Tune Their Memory Shape
+
+Evidence:
+- Supermemory Local now returns richer profile structures, ranks saved memories above inferred
+  ones, and supports time-aware local search. That makes the memory corpus more powerful, but
+  users still need to understand what they are actually storing.
+- Supermemory's value depends on the right memories being extracted, recalled, and governed.
+  A user with mostly coding decisions should not use the same memory policy as a support bot,
+  research assistant, personal assistant, or hardware logger.
+
+Harness fix:
+- Add Memory Genome: classify sampled memories by type, detect personalization gaps, inspect
+  profile-learning signals, generate a local policy, and let Guard use that policy to tag or
+  review future writes.
+
+Status:
+- Shipped. `smctl genome` reports the user's memory mix, profile fact count, gaps, generated
+  policy, and next command. `smctl genome apply` installs the local policy under
+  `~/.config/smctl/genome/policy.json`; Guard then adds Genome metadata, default container
+  routing, and review findings to future quarantined writes.

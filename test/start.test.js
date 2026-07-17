@@ -43,6 +43,7 @@ test("start dry-run summarizes readiness without starting guard", async () => {
   assert.match(result.text, /___ _ __ ___/);
   assert.match(stripAnsi(result.text), /Supermemory Harness\n running/);
   assert.match(result.text, /Active project: start-project/);
+  assert.match(result.text, /Memory Genome policy/);
   assert.match(result.text, /qwen2.5:1.5b/);
 });
 

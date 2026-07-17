@@ -13,12 +13,15 @@ test("injectHarnessBar adds the Harness Bar before the dashboard body closes", (
   assert.match(injected, /fetch\("\/__smctl\/bar"/);
   assert.match(injected, /fetch\("\/__smctl\/panel"/);
   assert.match(injected, /Trust/);
+  assert.match(injected, /Genome/);
+  assert.match(injected, /Memory Genome/);
   assert.match(injected, /Trust score/);
   assert.match(injected, /Readiness/);
   assert.match(injected, /smctl-meter/);
   assert.match(injected, /data-copy/);
   assert.match(injected, /smctl trust --probe/);
   assert.match(injected, /\/__smctl\/setup\/apply/);
+  assert.match(injected, /\/__smctl\/genome\/apply/);
   assert.match(injected, /\/__smctl\/verify/);
   assert.ok(injected.indexOf("smctl-harness-bar") < injected.indexOf("</body>"));
 });
