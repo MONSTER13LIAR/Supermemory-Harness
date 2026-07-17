@@ -74,10 +74,14 @@ smctl status
 smctl status --explain
 smctl score
 smctl gate --explain
+smctl migrate doctor
 smctl migrate plan
+smctl migrate review
 smctl migrate cloud --dry-run
 smctl migrate cloud --apply
+smctl migrate retry
 smctl migrate verify
+smctl migrate report
 ```
 
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
@@ -89,13 +93,29 @@ smctl migrate verify
 `migrate` is the Local-to-Cloud bridge. It helps users who built useful project memory in Supermemory Local move the user-facing knowledge into Supermemory Cloud without treating Local as a dead-end sandbox:
 
 ```bash
+smctl migrate doctor
 smctl migrate plan
+smctl migrate review
 smctl migrate cloud --dry-run
 SUPERMEMORY_CLOUD_API_KEY=... smctl migrate cloud --apply
 smctl migrate verify
+smctl migrate report
 ```
 
-Migration is safe by default. `plan` and `cloud --dry-run` read local documents, preserve project/container tags, and hold back failed writes, duplicate-looking entries, empty documents, and possible secrets. `cloud --apply` writes only migratable knowledge through the cloud document API and stores an audit receipt under `~/.config/smctl/migrations/`.
+Migration is safe by default. `doctor` gives a readiness score, `plan` and `cloud --dry-run` read local documents, preserve project/container tags, and hold back failed writes, duplicate-looking entries, empty documents, and possible secrets. `review` explains why held items are blocked and what to do next. `cloud --apply` writes only migratable knowledge through the cloud document API and stores an audit receipt under `~/.config/smctl/migrations/`.
+
+If a memory contains a replaceable secret but the surrounding note is still useful, preview or apply with redaction:
+
+```bash
+smctl migrate cloud --dry-run --redact
+SUPERMEMORY_CLOUD_API_KEY=... smctl migrate cloud --apply --redact
+```
+
+Redacted uploads replace detected secret material with `[REDACTED]` and mark the cloud document metadata with `smctlRedacted`. `retry` resumes after a partial migration by skipping content hashes already migrated in the latest receipt and uploading only new/retryable items:
+
+```bash
+SUPERMEMORY_CLOUD_API_KEY=... smctl migrate retry
+```
 
 Harness preserves useful context such as title, text, project tag, source URL/filepath when available, local timestamps as metadata, local IDs as metadata, and a content hash. It does not claim a byte-perfect internal database clone: original database IDs, embeddings, chunk IDs, auth/session state, and private Local-only processing state remain Supermemory internals.
 

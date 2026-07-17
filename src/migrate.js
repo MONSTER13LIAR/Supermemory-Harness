@@ -16,43 +16,91 @@ const SECRET_PATTERNS = [
 export async function runMigrate(options = {}) {
   const action = options.action ?? "plan";
   if (action === "plan") return migratePlan(options);
+  if (action === "doctor") return migrateDoctor(options);
+  if (action === "review") return migrateReview(options);
   if (action === "cloud") return migrateCloud(options);
+  if (action === "retry") return migrateRetry(options);
   if (action === "verify") return migrateVerify(options);
   if (action === "receipt") return migrateReceipt(options);
-  throw new Error("Unknown migrate action. Use: smctl migrate plan|cloud|verify|receipt");
+  if (action === "report") return migrateReport(options);
+  throw new Error("Unknown migrate action. Use: smctl migrate doctor|plan|review|cloud|retry|verify|receipt|report");
 }
 
 export async function migratePlan(options = {}) {
   const context = migrationContext(options);
   const inventory = await collectLocalInventory(context);
-  const plan = buildMigrationPlan(inventory);
+  const plan = buildMigrationPlan(inventory, { redact: context.redact });
   const result = {
     command: "migrate plan",
     generatedAt: new Date().toISOString(),
     localUrl: context.baseUrl,
     cloudUrl: context.cloudUrl,
+    mode: context.redact ? "redact-preview" : "plan",
     plan,
+    readiness: plan.readiness,
     exitCode: plan.blockers.length > 0 ? 1 : 0
   };
   result.text = formatMigrationPlan(result);
   return result;
 }
 
+export async function migrateDoctor(options = {}) {
+  const context = migrationContext(options);
+  const inventory = await collectLocalInventory(context);
+  const plan = buildMigrationPlan(inventory, { redact: context.redact });
+  const result = {
+    command: "migrate doctor",
+    generatedAt: new Date().toISOString(),
+    localUrl: context.baseUrl,
+    cloudUrl: context.cloudUrl,
+    mode: context.redact ? "redact-preview" : "read-only",
+    readiness: plan.readiness,
+    plan,
+    exitCode: plan.blockers.length > 0 || plan.readiness.score < 70 ? 1 : 0
+  };
+  result.text = formatMigrationDoctor(result);
+  return result;
+}
+
+export async function migrateReview(options = {}) {
+  const context = migrationContext(options);
+  const inventory = await collectLocalInventory(context);
+  const plan = buildMigrationPlan(inventory, { redact: context.redact });
+  const result = {
+    command: "migrate review",
+    generatedAt: new Date().toISOString(),
+    localUrl: context.baseUrl,
+    cloudUrl: context.cloudUrl,
+    mode: context.redact ? "redact-preview" : "read-only",
+    plan,
+    exitCode: plan.held.length > 0 ? 1 : 0
+  };
+  result.text = formatMigrationReview(result);
+  return result;
+}
+
 export async function migrateCloud(options = {}) {
   const context = migrationContext(options);
   const inventory = await collectLocalInventory(context);
-  const plan = buildMigrationPlan(inventory);
+  const plan = buildMigrationPlan(inventory, { redact: context.redact });
   const apply = Boolean(options.apply) && !options.dryRun;
+  const retry = Boolean(options.retry);
+  const previousReceipt = retry ? await readLatestReceipt(context.home) : null;
+  const alreadyMigrated = new Set((previousReceipt?.actions ?? [])
+    .filter((action) => action.status === "migrated")
+    .map((action) => action.contentHash)
+    .filter(Boolean));
   const actions = [];
 
   if (!apply) {
     const result = {
       command: "migrate cloud",
       generatedAt: new Date().toISOString(),
-      mode: "dry-run",
+      mode: retry ? "retry-dry-run" : "dry-run",
       localUrl: context.baseUrl,
       cloudUrl: context.cloudUrl,
       plan,
+      readiness: plan.readiness,
       actions,
       receiptPath: null,
       exitCode: plan.blockers.length > 0 ? 1 : 0
@@ -65,10 +113,11 @@ export async function migrateCloud(options = {}) {
     const result = {
       command: "migrate cloud",
       generatedAt: new Date().toISOString(),
-      mode: "apply",
+      mode: retry ? "retry" : "apply",
       localUrl: context.baseUrl,
       cloudUrl: context.cloudUrl,
       plan,
+      readiness: plan.readiness,
       actions: [],
       receiptPath: null,
       exitCode: 1
@@ -85,11 +134,22 @@ export async function migrateCloud(options = {}) {
   }
 
   for (const item of plan.items) {
+    if (retry && alreadyMigrated.has(item.contentHash)) {
+      actions.push({
+        status: "skipped",
+        localId: item.localId,
+        title: item.title,
+        contentHash: item.contentHash,
+        reason: "Already migrated in latest receipt"
+      });
+      continue;
+    }
     if (item.decision !== "migrate") {
       actions.push({
         status: "skipped",
         localId: item.localId,
         title: item.title,
+        contentHash: item.contentHash,
         reason: item.reason
       });
       continue;
@@ -104,6 +164,8 @@ export async function migrateCloud(options = {}) {
       cloudId: response.body?.id,
       title: item.title,
       containerTag: item.containerTag,
+      contentHash: item.contentHash,
+      redacted: item.redacted,
       reason: response.ok ? "Uploaded to cloud" : responseDetail(response)
     });
   }
@@ -116,18 +178,23 @@ export async function migrateCloud(options = {}) {
     cloudUrl: context.cloudUrl,
     sourceFingerprint: inventory.fingerprint,
     plan: plan.summary,
+    readiness: plan.readiness,
     summary,
     actions
   };
   const receiptPath = await writeReceipt(context.home, receipt);
   const result = {
     ...receipt,
-    mode: "apply",
+    mode: retry ? "retry" : "apply",
     receiptPath,
     exitCode: summary.failed > 0 ? 1 : 0
   };
   result.text = formatMigrationCloud(result);
   return result;
+}
+
+export async function migrateRetry(options = {}) {
+  return migrateCloud({ ...options, action: "cloud", apply: true, retry: true });
 }
 
 export async function migrateVerify(options = {}) {
@@ -158,10 +225,18 @@ export async function migrateVerify(options = {}) {
       ...(item.containerTag ? { containerTags: [item.containerTag] } : {})
     }, context.cloudApiKey ? { authorization: `Bearer ${context.cloudApiKey}` } : {});
     const bodyText = JSON.stringify(response.body ?? {});
+    const matched = bodyText.includes(item.cloudId ?? "")
+      || bodyText.includes(item.title ?? "")
+      || bodyText.includes(item.localId ?? "")
+      || bodyText.includes(item.contentHash ?? "");
     checks.push({
-      status: response.ok && bodyText.includes(item.cloudId ?? item.title) ? "ok" : "warn",
+      status: response.ok && matched ? "ok" : "warn",
       title: `Recall check: ${item.title}`,
-      detail: response.ok ? "Cloud search responded; inspect results if recall is weak." : responseDetail(response)
+      detail: response.ok && matched
+        ? "Cloud search returned a migrated identifier/title signal."
+        : response.ok
+          ? "Cloud search responded but did not clearly match the migration receipt."
+          : responseDetail(response)
     });
   }
 
@@ -192,6 +267,21 @@ export async function migrateReceipt(options = {}) {
   return result;
 }
 
+export async function migrateReport(options = {}) {
+  const context = migrationContext(options);
+  const receipt = await readLatestReceipt(context.home);
+  const result = {
+    command: "migrate report",
+    generatedAt: new Date().toISOString(),
+    receipt,
+    exitCode: receipt ? Number(receipt.summary?.failed ?? 0) > 0 ? 1 : 0 : 1
+  };
+  result.text = receipt
+    ? formatMigrationReport(receipt)
+    : "Supermemory Harness migration report\n[fail] No migration receipt found";
+  return result;
+}
+
 function migrationContext(options) {
   const env = options.env ?? process.env;
   const cloudApiKeyEnv = options.cloudApiKeyEnv ?? "SUPERMEMORY_CLOUD_API_KEY";
@@ -202,7 +292,8 @@ function migrationContext(options) {
     cloudApiKey: env[cloudApiKeyEnv] ?? null,
     home: options.home ?? homedir(),
     fetch: options.fetch ?? globalThis.fetch,
-    limit: options.limit ?? 100
+    limit: options.limit ?? 100,
+    redact: Boolean(options.redact)
   };
   if (!context.fetch) throw new Error("Fetch API unavailable; Node 22+ is required");
   return context;
@@ -235,7 +326,7 @@ async function collectLocalInventory(context) {
   };
 }
 
-export function buildMigrationPlan(inventory) {
+export function buildMigrationPlan(inventory, options = {}) {
   const blockers = [];
   if (!inventory.ok) {
     blockers.push({
@@ -247,17 +338,23 @@ export function buildMigrationPlan(inventory) {
   const seen = new Set();
   const items = [];
   for (const doc of inventory.documents ?? []) {
-    const content = extractContent(doc);
+    const originalContent = extractContent(doc);
+    const redaction = options.redact ? redactSecrets(originalContent) : { text: originalContent, count: 0, changed: false };
+    const content = redaction.text;
     const title = doc.title ?? doc.customId ?? "(untitled)";
     const containerTag = firstContainerTag(doc);
     const hash = hashText(`${title}\n${content}`);
     const duplicate = seen.has(hash);
     seen.add(hash);
     const risky = hasSecretRisk(doc);
+    const stillRisky = hasSecretRisk({ ...doc, content });
     const failed = ["failed", "error"].includes(doc.status);
     const empty = !content;
-    const decision = risky || failed || empty || duplicate ? "hold" : "migrate";
-    const reason = risky
+    const redactedSafe = risky && options.redact && redaction.changed && !stillRisky;
+    const decision = (risky && !redactedSafe) || failed || empty || duplicate ? "hold" : "migrate";
+    const reason = risky && redactedSafe
+      ? `Ready after ${redaction.count} redaction(s)`
+      : risky
       ? "Possible secret or credential"
       : failed
         ? `Local status is ${doc.status}`
@@ -280,6 +377,8 @@ export function buildMigrationPlan(inventory) {
       createdAt: doc.createdAt ?? doc.created_at,
       updatedAt: doc.updatedAt ?? doc.updated_at,
       metadata: doc.metadata && typeof doc.metadata === "object" ? doc.metadata : {},
+      redacted: redaction.changed,
+      redactionCount: redaction.count,
       decision,
       reason
     });
@@ -291,17 +390,21 @@ export function buildMigrationPlan(inventory) {
     held: items.filter((item) => item.decision === "hold").length,
     failedLocal: items.filter((item) => ["failed", "error"].includes(item.status)).length,
     risky: items.filter((item) => item.reason.includes("secret")).length,
+    redacted: items.filter((item) => item.redacted).length,
     duplicates: items.filter((item) => item.reason.includes("Duplicate")).length,
+    missingProject: items.filter((item) => item.containerTags.length === 0).length,
     projects: unique(items.flatMap((item) => item.containerTags)).length
   };
 
-  return {
+  const plan = {
     summary,
     blockers,
     items,
     held: items.filter((item) => item.decision === "hold"),
     migratable: items.filter((item) => item.decision === "migrate")
   };
+  plan.readiness = migrationReadiness(plan);
+  return plan;
 }
 
 function migrationPayload(item) {
@@ -319,10 +422,44 @@ function migrationPayload(item) {
       smctlLocalStatus: item.status,
       smctlContentHash: item.contentHash,
       smctlMigratedAt: new Date().toISOString(),
+      ...(item.redacted ? { smctlRedacted: true, smctlRedactionCount: item.redactionCount } : {}),
       ...(item.createdAt ? { smctlLocalCreatedAt: item.createdAt } : {}),
       ...(item.updatedAt ? { smctlLocalUpdatedAt: item.updatedAt } : {})
     }
   };
+}
+
+function migrationReadiness(plan) {
+  let score = plan.blockers.length > 0 ? 35 : 100;
+  score -= Math.min(30, plan.summary.risky * 12);
+  score -= Math.min(20, plan.summary.failedLocal * 6);
+  score -= Math.min(16, plan.summary.duplicates * 4);
+  score -= Math.min(12, plan.summary.missingProject * 3);
+  if (plan.summary.sampled === 0) score = Math.min(score, 55);
+  score = Math.max(0, Math.min(100, score));
+  const blockers = [];
+  if (plan.blockers.length > 0) blockers.push("Local inventory is unavailable.");
+  if (plan.summary.risky > 0) blockers.push(`${plan.summary.risky} possible secret item(s) need review or --redact.`);
+  if (plan.summary.failedLocal > 0) blockers.push(`${plan.summary.failedLocal} failed local ingest(s) are held back.`);
+  if (plan.summary.duplicates > 0) blockers.push(`${plan.summary.duplicates} duplicate-looking item(s) are held back.`);
+  if (plan.summary.missingProject > 0) blockers.push(`${plan.summary.missingProject} item(s) have no project/container tag.`);
+  return {
+    score,
+    label: score >= 90 ? "Cloud-ready" : score >= 70 ? "Mostly ready" : score >= 45 ? "Needs review" : "Blocked",
+    blockers,
+    next: migrationNext(plan)
+  };
+}
+
+function migrationNext(plan) {
+  const next = [];
+  if (plan.blockers.length > 0) next.push("smctl doctor");
+  if (plan.summary.risky > 0) next.push("smctl migrate review");
+  if (plan.summary.risky > 0) next.push("smctl migrate cloud --dry-run --redact");
+  if (plan.summary.failedLocal > 0 || plan.summary.duplicates > 0) next.push("smctl repair wizard");
+  if (plan.summary.migratable > 0) next.push("smctl migrate cloud --dry-run");
+  if (next.length === 0) next.push("No migration action needed yet.");
+  return [...new Set(next)].slice(0, 5);
 }
 
 async function writeReceipt(home, receipt) {
@@ -351,8 +488,10 @@ function formatMigrationPlan(result) {
   lines.push("Supermemory Harness migration plan");
   lines.push(`Local: ${result.localUrl}`);
   lines.push(`Cloud: ${result.cloudUrl}`);
+  lines.push(`Mode: ${result.mode}`);
+  lines.push(`Readiness: ${result.readiness.score}/100 (${result.readiness.label})`);
   lines.push(`Sample: ${result.plan.summary.sampled} local documents`);
-  lines.push(`Ready: ${result.plan.summary.migratable}; held: ${result.plan.summary.held}; projects: ${result.plan.summary.projects}`);
+  lines.push(`Ready: ${result.plan.summary.migratable}; held: ${result.plan.summary.held}; redacted: ${result.plan.summary.redacted}; projects: ${result.plan.summary.projects}`);
   lines.push("");
   if (result.plan.blockers.length > 0) {
     for (const blocker of result.plan.blockers) {
@@ -370,7 +509,55 @@ function formatMigrationPlan(result) {
     }
   }
   lines.push("");
-  lines.push("Next: smctl migrate cloud --dry-run, then smctl migrate cloud --apply after review.");
+  lines.push("Next:");
+  for (const item of result.readiness.next) lines.push(`   ${item}`);
+  lines.push("Apply after review: smctl migrate cloud --apply");
+  return lines.join("\n");
+}
+
+function formatMigrationDoctor(result) {
+  const lines = [];
+  lines.push("Supermemory Harness migration doctor");
+  lines.push(`Local: ${result.localUrl}`);
+  lines.push(`Cloud: ${result.cloudUrl}`);
+  lines.push(`Mode: ${result.mode}`);
+  lines.push(`Readiness: ${result.readiness.score}/100 (${result.readiness.label})`);
+  lines.push("");
+  lines.push(`Sampled: ${result.plan.summary.sampled}`);
+  lines.push(`Migratable: ${result.plan.summary.migratable}`);
+  lines.push(`Held: ${result.plan.summary.held}`);
+  lines.push(`Possible secrets: ${result.plan.summary.risky}`);
+  lines.push(`Failed local ingests: ${result.plan.summary.failedLocal}`);
+  lines.push(`Duplicates: ${result.plan.summary.duplicates}`);
+  lines.push(`Missing project tags: ${result.plan.summary.missingProject}`);
+  lines.push("");
+  if (result.readiness.blockers.length > 0) {
+    lines.push("Review before upload:");
+    for (const blocker of result.readiness.blockers) lines.push(`   ${blocker}`);
+    lines.push("");
+  }
+  lines.push("Next:");
+  for (const item of result.readiness.next) lines.push(`   ${item}`);
+  return lines.join("\n");
+}
+
+function formatMigrationReview(result) {
+  const lines = [];
+  lines.push("Supermemory Harness migration review");
+  lines.push(`Mode: ${result.mode}`);
+  lines.push(`Held: ${result.plan.held.length}`);
+  lines.push("");
+  if (result.plan.held.length === 0) {
+    lines.push("[ok] Nothing is held back in this sample.");
+  } else {
+    for (const item of result.plan.held.slice(0, 12)) {
+      lines.push(`[hold] ${item.localId}  ${item.title}`);
+      lines.push(`   Reason: ${item.reason}`);
+      lines.push(`   Action: ${reviewAction(item)}`);
+    }
+  }
+  lines.push("");
+  lines.push("Safe upload preview with redaction: smctl migrate cloud --dry-run --redact");
   return lines.join("\n");
 }
 
@@ -380,7 +567,7 @@ function formatMigrationCloud(result) {
   lines.push(`Mode: ${result.mode}`);
   lines.push(`Local: ${result.localUrl}`);
   lines.push(`Cloud: ${result.cloudUrl}`);
-  lines.push(`Ready: ${result.plan?.summary?.migratable ?? result.summary?.migrated ?? 0}; held: ${result.plan?.summary?.held ?? 0}`);
+  lines.push(`Ready: ${result.plan?.summary?.migratable ?? result.summary?.migrated ?? 0}; held: ${result.plan?.summary?.held ?? 0}; redacted: ${result.plan?.summary?.redacted ?? 0}`);
   lines.push("");
   if (result.mode === "dry-run") {
     lines.push("No cloud writes were made.");
@@ -392,6 +579,7 @@ function formatMigrationCloud(result) {
     }
     lines.push("");
     lines.push("Apply: smctl migrate cloud --apply");
+    if ((result.plan?.summary?.risky ?? 0) > 0) lines.push("Redacted apply: smctl migrate cloud --apply --redact");
     return lines.join("\n");
   }
 
@@ -404,6 +592,7 @@ function formatMigrationCloud(result) {
     lines.push("");
     lines.push(`Receipt: ${result.receiptPath}`);
     lines.push("Verify: smctl migrate verify");
+    if (result.summary.failed > 0) lines.push("Retry failed/new items: smctl migrate retry");
   }
   return lines.join("\n");
 }
@@ -429,6 +618,24 @@ function formatReceipt(receipt) {
   return lines.join("\n");
 }
 
+function formatMigrationReport(receipt) {
+  const lines = [];
+  lines.push("Supermemory Harness migration report");
+  lines.push(`Generated: ${receipt.generatedAt}`);
+  lines.push(`Local: ${receipt.localUrl}`);
+  lines.push(`Cloud: ${receipt.cloudUrl}`);
+  if (receipt.readiness) lines.push(`Readiness at upload: ${receipt.readiness.score}/100 (${receipt.readiness.label})`);
+  lines.push(`Summary: ${receipt.summary.migrated} migrated, ${receipt.summary.skipped} skipped, ${receipt.summary.failed} failed`);
+  const redacted = (receipt.actions ?? []).filter((action) => action.redacted).length;
+  lines.push(`Redacted uploads: ${redacted}`);
+  lines.push("");
+  lines.push("Next:");
+  lines.push("   smctl migrate verify");
+  if (receipt.summary.failed > 0) lines.push("   smctl migrate retry");
+  lines.push("   smctl migrate review");
+  return lines.join("\n");
+}
+
 function summarizeActions(actions) {
   return {
     migrated: actions.filter((action) => action.status === "migrated").length,
@@ -449,6 +656,30 @@ function firstContainerTag(doc) {
 function hasSecretRisk(doc) {
   const text = `${doc.title ?? ""}\n${doc.content ?? ""}\n${doc.raw ?? ""}\n${doc.memory ?? ""}`;
   return SECRET_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function redactSecrets(text) {
+  let output = String(text ?? "");
+  let count = 0;
+  for (const pattern of SECRET_PATTERNS) {
+    output = output.replace(new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`), () => {
+      count += 1;
+      return "[REDACTED]";
+    });
+  }
+  return {
+    text: output.trim(),
+    count,
+    changed: count > 0
+  };
+}
+
+function reviewAction(item) {
+  if (item.reason.includes("secret")) return "Run with --redact, or edit the memory in Supermemory before migration.";
+  if (item.reason.includes("Duplicate")) return "Keep held unless this duplicate has unique context.";
+  if (item.reason.includes("status")) return "Run smctl repair wizard, then retry migration.";
+  if (item.reason.includes("No exportable")) return "Ignore or rewrite the local memory with useful text.";
+  return "Review manually before upload.";
 }
 
 function fingerprintDocuments(documents) {

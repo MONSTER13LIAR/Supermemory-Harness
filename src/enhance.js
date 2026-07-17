@@ -138,6 +138,7 @@ export async function runEnhance(options = {}) {
       next: watch.next
     } : null,
     activation,
+    fastPath: fastPath({ doctor, project, ui, watch, context }),
     next: nextSteps({ doctor, project, ui, watch, context }),
     summary,
     exitCode: summary["needs-attention"] > 0 ? 1 : 0
@@ -276,6 +277,11 @@ function formatEnhance(result) {
     lines.push(`   ${action.detail}`);
   }
   lines.push("");
+  lines.push("Fast path:");
+  for (const step of result.fastPath) {
+    lines.push(`   ${step}`);
+  }
+  lines.push("");
   lines.push("Next:");
   for (const step of result.next) {
     lines.push(`   ${step}`);
@@ -285,6 +291,27 @@ function formatEnhance(result) {
     ? "Result: Harness Enhance made Supermemory agent-memory ready."
     : "Result: Harness Enhance completed with issues to review.");
   return lines.join("\n");
+}
+
+function fastPath({ doctor, project, ui, watch, context }) {
+  const steps = [];
+  if (doctor.exitCode !== 0) {
+    steps.push("smctl supermemory start");
+    steps.push("smctl enhance");
+  } else {
+    steps.push("Keep Supermemory Local running");
+  }
+  if (project.exitCode !== 0) {
+    steps.push("smctl init");
+  }
+  if (ui.status === "ready") {
+    steps.push(`Open ${context.uiUrl}`);
+  } else {
+    steps.push("smctl ui");
+    steps.push(`Open ${context.uiUrl}`);
+  }
+  steps.push(`Demo proof: ${watch?.next ?? "smctl trust --probe"}`);
+  return [...new Set(steps)].slice(0, 6).map((step, index) => `${index + 1}. ${step}`);
 }
 
 function nextSteps({ doctor, project, ui, watch, context }) {

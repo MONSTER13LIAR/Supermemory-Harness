@@ -64,10 +64,14 @@ Usage:
   smctl memory doctor [--json] [--base-url <url>] [--limit <n>]
   smctl memory replay [--json] [--base-url <url>] [--limit <n>] [--apply]
   smctl memory coach [--json] [--explain] [--base-url <url>] [--limit <n>]
-  smctl migrate plan [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>]
-  smctl migrate cloud [--json] [--dry-run] [--apply] [--base-url <url>] [--cloud-url <url>] [--cloud-api-key-env <name>] [--limit <n>]
+  smctl migrate doctor [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>] [--redact]
+  smctl migrate plan [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>] [--redact]
+  smctl migrate review [--json] [--base-url <url>] [--cloud-url <url>] [--limit <n>] [--redact]
+  smctl migrate cloud [--json] [--dry-run] [--apply] [--redact] [--base-url <url>] [--cloud-url <url>] [--cloud-api-key-env <name>] [--limit <n>]
+  smctl migrate retry [--json] [--redact] [--base-url <url>] [--cloud-url <url>] [--cloud-api-key-env <name>] [--limit <n>]
   smctl migrate verify [--json] [--cloud-url <url>] [--cloud-api-key-env <name>]
   smctl migrate receipt [--json]
+  smctl migrate report [--json]
   smctl timeline [--json] [--base-url <url>] [--limit <n>]
   smctl cleanup [--json] [--base-url <url>] [--limit <n>]
   smctl hardware init [--json] [--name <device>] [--device <id>] [--project <name>]
@@ -138,6 +142,7 @@ function parseArgs(argv) {
     json: false,
     dryRun: false,
     apply: false,
+    redact: false,
     yes: false,
     prompt: false,
     probe: false,
@@ -182,6 +187,8 @@ function parseArgs(argv) {
       args.dryRun = true;
     } else if (token === "--apply") {
       args.apply = true;
+    } else if (token === "--redact") {
+      args.redact = true;
     } else if (token === "--yes") {
       args.yes = true;
     } else if (token === "--prompt") {
@@ -699,7 +706,8 @@ async function runCommand(args) {
       fetch: globalThis.fetch,
       limit: args.limit,
       dryRun: args.dryRun,
-      apply: args.apply
+      apply: args.apply,
+      redact: args.redact
     });
   }
 

@@ -189,7 +189,8 @@ async function embeddedPanel(context) {
     project,
     analysis,
     trust,
-    journeys: journeySteps({ summary, setup, repair, project, analysis, trust })
+    journeys: journeySteps({ summary, setup, repair, project, analysis, trust }),
+    readiness: readinessModel({ summary, setup, repair, project, analysis, trust })
   };
 }
 
@@ -210,7 +211,8 @@ function journeySteps({ summary, setup, repair, project, analysis, trust }) {
     id: "local",
     title: "Keep Supermemory Local online",
     status: summary.local.status === "online" ? "done" : "blocked",
-    detail: summary.local.status === "online" ? "Dashboard and OpenAPI are reachable." : "Start supermemory-server first."
+    detail: summary.local.status === "online" ? "Dashboard and OpenAPI are reachable." : "Start supermemory-server first.",
+    command: "smctl supermemory start"
   });
 
   steps.push({
@@ -219,14 +221,16 @@ function journeySteps({ summary, setup, repair, project, analysis, trust }) {
     status: summary.agents.configured > 0 ? "done" : "todo",
     detail: summary.agents.configured > 0
       ? `${summary.agents.configured} integration config(s) detected.`
-      : "Apply local setup, then run the listed installer commands for Codex/Claude/OpenCode."
+      : "Apply local setup, then run the listed installer commands for Codex/Claude/OpenCode.",
+    command: "smctl enhance"
   });
 
   steps.push({
     id: "project",
     title: "Scope memories to the active project",
     status: project?.profile ? "done" : "todo",
-    detail: project?.profile ? `${project.profile.name} writes use ${project.profile.containerTag}.` : "Run smctl init from your code project to prevent cross-project memory mixing."
+    detail: project?.profile ? `${project.profile.name} writes use ${project.profile.containerTag}.` : "Run smctl init from your code project to prevent cross-project memory mixing.",
+    command: "smctl init"
   });
 
   steps.push({
@@ -239,17 +243,54 @@ function journeySteps({ summary, setup, repair, project, analysis, trust }) {
         ? `Trust Doctor: ${trust.score.value}/100 (${trust.score.label}).`
       : analysis?.score
         ? `Trust score ${analysis.score.value}/100 (${analysis.score.label}).`
-        : "Run Trust Doctor from this panel to prove scope, health, and resilience."
+        : "Run Trust Doctor from this panel to prove scope, health, and resilience.",
+    command: "smctl trust --probe"
   });
 
   steps.push({
     id: "guard",
     title: "Review risky writes",
     status: summary.guard.pending > 0 ? "attention" : "done",
-    detail: summary.guard.pending > 0 ? `${summary.guard.pending} write(s) waiting in Guard.` : "No pending guarded writes."
+    detail: summary.guard.pending > 0 ? `${summary.guard.pending} write(s) waiting in Guard.` : "No pending guarded writes.",
+    command: "smctl guard inbox"
   });
 
   return steps;
+}
+
+function readinessModel({ summary, setup, repair, project, analysis, trust }) {
+  const journeys = journeySteps({ summary, setup, repair, project, analysis, trust });
+  const weights = { local: 25, setup: 20, project: 15, memory: 30, guard: 10 };
+  const score = journeys.reduce((total, step) => {
+    const weight = weights[step.id] ?? 10;
+    if (step.status === "done") return total + weight;
+    if (step.status === "attention") return total + Math.floor(weight * 0.45);
+    if (step.status === "todo") return total + Math.floor(weight * 0.2);
+    return total;
+  }, 0);
+  const firstOpen = journeys.find((step) => step.status !== "done") ?? journeys[journeys.length - 1];
+  const setupCreated = setup?.summary?.created ?? 0;
+  const setupPlanned = setup?.summary?.["would-create"] ?? 0;
+  const repairFail = repair?.summary?.fail ?? 0;
+  const repairWarn = repair?.summary?.warn ?? 0;
+  const trustScore = trust?.score?.value ?? analysis?.score?.value ?? null;
+  return {
+    score,
+    label: score >= 90 ? "Demo-ready" : score >= 70 ? "Usable" : score >= 40 ? "Needs setup" : "Blocked",
+    primary: firstOpen ? {
+      title: firstOpen.status === "done" ? "Open the Supermemory dashboard" : firstOpen.title,
+      detail: firstOpen.status === "done" ? "Harness is ready enough for a demo. Keep this dashboard open while the agent works." : firstOpen.detail,
+      command: firstOpen.status === "done" ? "smctl ui" : firstOpen.command,
+      status: firstOpen.status
+    } : null,
+    stats: {
+      setupCreated,
+      setupPlanned,
+      repairFail,
+      repairWarn,
+      trustScore
+    }
+  };
 }
 
 async function proxySupermemory(context, request, response, url) {
@@ -429,6 +470,70 @@ function harnessBarAsset() {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
 }
+#smctl-harness-panel .smctl-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  border: 1px solid rgba(205, 244, 255, 0.32);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(205, 244, 255, 0.12), rgba(255, 255, 255, 0.04));
+  padding: 14px;
+  margin-bottom: 12px;
+}
+#smctl-harness-panel .smctl-hero-score {
+  min-width: 118px;
+  text-align: right;
+}
+#smctl-harness-panel .smctl-score {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+#smctl-harness-panel .smctl-meter {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  margin-top: 10px;
+}
+#smctl-harness-panel .smctl-meter span {
+  display: block;
+  height: 100%;
+  background: #cdf4ff;
+}
+#smctl-harness-panel .smctl-command {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  color: #dbeafe;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+#smctl-harness-panel .smctl-command code {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+}
+#smctl-harness-panel .smctl-copy {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: transparent;
+  color: #f5f5f5;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 7px;
+}
 #smctl-harness-panel .smctl-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -518,6 +623,8 @@ function harnessBarAsset() {
 }
 @media (max-width: 720px) {
   #smctl-harness-bar { grid-template-columns: 1fr; }
+  #smctl-harness-panel .smctl-hero { grid-template-columns: 1fr; }
+  #smctl-harness-panel .smctl-hero-score { text-align: left; }
   #smctl-harness-panel { top: 8px; right: 8px; left: 8px; width: auto; }
 }
 </style>
@@ -596,6 +703,22 @@ function harnessBarAsset() {
     return '<div class="smctl-row">' + status(state) + '<div class="smctl-row-title">' + escapeHtml(title) + '</div><div class="smctl-row-detail">' + escapeHtml(detail) + '</div></div>';
   }
 
+  function command(value) {
+    if (!value) return "";
+    return '<div class="smctl-command"><code>' + escapeHtml(value) + '</code><button class="smctl-copy" type="button" data-copy="' + escapeHtml(value) + '">Copy</button></div>';
+  }
+
+  function journeyRow(item) {
+    return '<div class="smctl-row">' + status(item.status) + '<div class="smctl-row-title">' + escapeHtml(item.title) + '</div><div class="smctl-row-detail">' + escapeHtml(item.detail) + '</div>' + command(item.command) + '</div>';
+  }
+
+  function hero(readiness) {
+    readiness = readiness || {};
+    const primary = readiness.primary || {};
+    const score = readiness.score == null ? 0 : readiness.score;
+    return '<div class="smctl-hero"><div><div class="smctl-k">Readiness</div><div class="smctl-row-title">' + escapeHtml(primary.title || "Check Harness state") + '</div><div class="smctl-row-detail">' + escapeHtml(primary.detail || "Harness is loading the next best action.") + '</div>' + command(primary.command || "smctl enhance") + '</div><div class="smctl-hero-score"><div class="smctl-score">' + escapeHtml(score) + '</div><div class="smctl-row-detail">' + escapeHtml(readiness.label || "Unknown") + '</div><div class="smctl-meter"><span style="width:' + Math.max(0, Math.min(100, Number(score) || 0)) + '%"></span></div></div></div>';
+  }
+
   function renderTabs() {
     if (!tabsEl) return;
     tabsEl.innerHTML = tabs.map(function (tab) {
@@ -620,8 +743,9 @@ function harnessBarAsset() {
     const project = panelData.project || {};
     const analysis = panelData.analysis || {};
     const trust = panelData.trust || {};
+    const readiness = panelData.readiness || {};
     if (activeTab === "Overview") {
-      body.innerHTML = '<div class="smctl-grid">'
+      body.innerHTML = hero(readiness) + '<div class="smctl-grid">'
         + card("Local", (summary.local && summary.local.status) || "unknown")
         + card("Agents configured", ((summary.agents && summary.agents.configured) || 0) + "/" + ((summary.agents && summary.agents.total) || 0))
         + card("Writes sampled", memory.sampled || 0)
@@ -629,8 +753,9 @@ function harnessBarAsset() {
         + card("Guard pending", guard.pending || 0)
         + card("Next", summary.next || "smctl watch")
         + '</div><div class="smctl-list" style="margin-top:12px">'
-        + (panelData.journeys || []).map(function (item) { return row(item.title, item.detail, item.status); }).join("")
+        + (panelData.journeys || []).map(journeyRow).join("")
         + '</div>';
+      wireCopy();
       return;
     }
     if (activeTab === "Trust") {
@@ -646,10 +771,11 @@ function harnessBarAsset() {
         + card("Failed writes", docs.failed ? docs.failed.length : 0)
         + card("Missing project", quality.missingProject ? quality.missingProject.length : 0)
         + card("Possible secrets", quality.risky ? quality.risky.length : 0)
-        + '</div><div class="smctl-actions"><button class="smctl-action" data-action="trustProbe">Run live trust probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
+        + '</div>' + command("smctl trust --probe") + '<div class="smctl-actions"><button class="smctl-action" data-action="trustProbe">Run live trust probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
         + (issues.length ? issues.map(function (item) { return row(item.title, (item.detail || "") + (item.command ? " -> " + item.command : ""), item.status); }).join("") : row("No trust issues", "The sampled memory flow looks healthy.", "done"))
         + '</div>';
       wireActions();
+      wireCopy();
       return;
     }
     if (activeTab === "Setup") {
@@ -659,10 +785,11 @@ function harnessBarAsset() {
         + card("Created", setup.summary ? setup.summary.created : 0)
         + card("Would create", setup.summary ? setup.summary["would-create"] : 0)
         + card("Manual steps", setup.summary ? setup.summary.manual : 0)
-        + '</div><div class="smctl-actions"><button class="smctl-action" data-action="setup">Apply safe setup files</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
+        + '</div>' + command("smctl enhance") + '<div class="smctl-actions"><button class="smctl-action" data-action="setup">Apply safe setup files</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><div class="smctl-list" style="margin-top:12px">'
         + actions.map(function (item) { return row(item.title, (item.path ? item.path + " - " : "") + (item.detail || ""), item.status); }).join("")
         + '</div>';
       wireActions();
+      wireCopy();
       return;
     }
     if (activeTab === "Memory") {
@@ -671,8 +798,9 @@ function harnessBarAsset() {
         + card("Failed", memory.failed || 0)
         + card("Queued", memory.queued || 0)
         + card("Dreaming", memory.dreaming ? memory.dreaming.label : "unknown")
-        + '</div><div class="smctl-actions"><button class="smctl-action" data-action="verify">Run verify probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><pre>' + escapeHtml(JSON.stringify(memory.counts || {}, null, 2)) + '</pre>';
+        + '</div>' + command("smctl verify") + '<div class="smctl-actions"><button class="smctl-action" data-action="verify">Run verify probe</button><button class="smctl-action secondary" data-action="reload">Refresh</button></div><pre>' + escapeHtml(JSON.stringify(memory.counts || {}, null, 2)) + '</pre>';
       wireActions();
+      wireCopy();
       return;
     }
     if (activeTab === "Repair") {
@@ -682,10 +810,11 @@ function harnessBarAsset() {
         + card("Repair status", repair.error ? repair.error : ((repair.summary && repair.summary.fail) || 0) + " fail")
         + card("Warnings", repair.summary ? repair.summary.warn : 0)
         + card("Store", repair.storage ? repair.storage.bytes + " bytes" : "unknown")
-        + '</div><div class="smctl-list" style="margin-top:12px">'
+        + '</div>' + command("smctl repair wizard") + '<div class="smctl-list" style="margin-top:12px">'
         + checks.map(function (item) { return row(item.title, item.detail || "", item.status); }).join("")
         + actions.map(function (item) { return row(item.title, item.detail || "", "todo"); }).join("")
         + '</div>';
+      wireCopy();
       return;
     }
     if (activeTab === "Guard") {
@@ -694,9 +823,10 @@ function harnessBarAsset() {
         + card("Pending", guard.pending || 0)
         + card("High risk", guard.risk ? guard.risk.high : 0)
         + card("Medium risk", guard.risk ? guard.risk.medium : 0)
-        + '</div><div class="smctl-list" style="margin-top:12px">'
+        + '</div>' + command("smctl guard inbox") + '<div class="smctl-list" style="margin-top:12px">'
         + (recent.length ? recent.map(function (item) { return row(item.id, item.preview || item.route || "", item.risk); }).join("") : row("No guarded writes", "Nothing is waiting for review.", "done"))
         + '</div>';
+      wireCopy();
       return;
     }
     const events = summary.recentEvents || [];
@@ -727,6 +857,24 @@ function harnessBarAsset() {
           .catch(function (error) {
             body.innerHTML = row("Action failed", error.message, "fail");
           });
+      });
+    }
+  }
+
+  function wireCopy() {
+    if (!body) return;
+    for (const button of body.querySelectorAll("[data-copy]")) {
+      button.addEventListener("click", function () {
+        const value = button.dataset.copy || "";
+        const done = function () {
+          button.textContent = "Copied";
+          setTimeout(function () { button.textContent = "Copy"; }, 1200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(done).catch(function () {});
+        } else {
+          done();
+        }
       });
     }
   }
