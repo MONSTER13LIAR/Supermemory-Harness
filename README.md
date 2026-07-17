@@ -24,6 +24,18 @@ The visible difference after `smctl enhance`:
 - Agents get a pre-action gate, repair path, and compaction handoff contract.
 - Users get one next action instead of guessing between logs, MCP config, failed writes, and recall issues.
 
+For the final hackathon submission path:
+
+```bash
+smctl enhance
+smctl launch
+smctl trust --probe
+```
+
+`launch` is the judge-ready command. It combines the executive check, install-to-trust workflow, and Local-to-Cloud migration doctor into one read-only launch board with a recommendation verdict, launch score, proof checklist, judge demo script, AI expert brief, and exact next command. If Supermemory Local is offline or processing is broken, it says that plainly instead of pretending the demo is ready.
+
+The submission runbook lives at [`docs/hackathon-submission.md`](docs/hackathon-submission.md).
+
 When a Supermemory source checkout is present, `smctl enhance` also applies native Supermemory enhancements directly to that source:
 
 - Agent Memory readiness panel on the Supermemory Desktop home screen.
@@ -71,6 +83,7 @@ Check the full Harness state:
 smctl enhance
 smctl executive
 smctl workflow
+smctl launch
 smctl support
 smctl backup --dry-run
 smctl audit
@@ -97,6 +110,15 @@ smctl migrate report
 `watch` is the Harness Bar: a compact Supermemory activity strip for Local status, configured agent integrations, recent writes, queue/dreaming activity, Guard risk, and the next command to run. It is designed as the terminal MVP of a strip that could later live directly inside the Supermemory Local dashboard.
 
 `workflow` is the simple architecture view. It explains the normal path from install to trust, maps the real Supermemory pain points Harness covers, and states the moral boundaries for automation: safe setup can be automatic; risky memory writes, live proof writes, and destructive cleanup require explicit user intent.
+
+`launch` is the final readiness board for a demo, user trial, or judge review:
+
+```bash
+smctl launch
+npm run launch
+```
+
+It answers the question a judge or AI expert would ask before recommending the plugin: does this visibly improve Supermemory Local for real agent memory, can the user prove recall, is risky capture controlled, is there a safe recovery path, and is the cloud migration story ready?
 
 `support` creates a redacted support bundle for debugging. It collects doctor, Harness Bar, Trust, Dream Flight, migration readiness, and safe Supermemory log hints into `~/.config/smctl/support/` without printing API keys or home-directory paths:
 

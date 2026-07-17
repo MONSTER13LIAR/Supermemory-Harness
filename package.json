@@ -13,6 +13,8 @@
   },
   "scripts": {
     "doctor": "node ./bin/smctl.js doctor",
+    "launch": "node ./bin/smctl.js launch",
+    "demo": "node ./bin/smctl.js launch",
     "test": "node --test"
   },
   "engines": {
