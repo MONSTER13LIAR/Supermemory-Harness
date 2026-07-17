@@ -72,6 +72,7 @@ smctl enhance
 smctl executive
 smctl workflow
 smctl support
+smctl backup --dry-run
 smctl watch
 smctl trust
 smctl supermemory start
@@ -101,6 +102,13 @@ smctl migrate report
 ```bash
 smctl support
 smctl support --dry-run
+```
+
+`backup` creates a data-only local backup before repair, migration, demos, or bulk ingest. It copies Supermemory Local data/runtime/log state into `~/.config/smctl/backups/` and intentionally excludes `api-key`, `auth-secret`, and `env.enc`:
+
+```bash
+smctl backup --dry-run
+smctl backup
 ```
 
 `executive` is the daily/final readiness cockpit. It runs the operational layers together, summarizes runtime, trust, Agent Autopilot, Dream Flight Recorder, Guard, and agent bridge state, then gives a prioritized action plan plus final checks before hosting or demoing.
@@ -312,6 +320,7 @@ node ./bin/smctl.js guard reject <id>
 - `watch` shows the Harness Bar: Local health, agent configs, write counts, queue/dreaming state, Guard risk, recent events, and the next useful command.
 - `workflow` shows the simple install-to-trust architecture, the real gaps covered, and the automation boundaries.
 - `support` writes a redacted shareable report for debugging Local, MCP, memory, dreaming, migration, and Guard problems.
+- `backup` writes a local data-only Supermemory backup while excluding API keys and auth/provider secrets.
 - `trust` decides whether Supermemory is scoped, healthy, recoverable, and safe to rely on. `trust --probe` adds a harmless live write/read/container recall proof.
 - `supermemory start` runs Supermemory Local with Harness health and trust events in the same terminal output.
 - `agent connect` installs local bridge instructions for Codex and Claude Code-style agents so they query Harness instead of making the user inspect logs manually.
