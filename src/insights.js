@@ -84,6 +84,7 @@ export async function analyzeMemory(options = {}) {
     },
     processing: {
       ok: processing.ok,
+      status: processing.status,
       body: processing.body,
       detail: responseDetail(processing)
     },
@@ -159,6 +160,9 @@ function buildIssues(input) {
     issues.push(fail("Document inventory unavailable", responseDetail(input.list), "smctl doctor"));
     return issues;
   }
+  if (!input.processing.ok && input.processing.status >= 500) {
+    issues.push(fail("Supermemory processing API is failing", responseDetail(input.processing), "smctl doctor"));
+  }
   if (input.failed.length > 0) {
     issues.push(fail("Failed memory writes", `${input.failed.length} of ${input.documents.length} sampled`, "smctl repair wizard"));
   }
@@ -167,7 +171,9 @@ function buildIssues(input) {
   } else if (input.queued.length > 0) {
     issues.push(warn("Writes still processing", `${input.queued.length} queued/processing`, "smctl status"));
   }
-  if (input.logs.retryLoop.length > 0) {
+  if (input.logs.schemaMismatch.length > 0) {
+    issues.push(fail("Supermemory Local schema mismatch", input.logs.schemaMismatch.at(-1), "smctl doctor"));
+  } else if (input.logs.retryLoop.length > 0) {
     issues.push(fail("Retry loop in Supermemory logs", input.logs.retryLoop.at(-1), "smctl repair wizard"));
   } else if (input.logs.failures.length > 0) {
     issues.push(warn("Recent failure hints in logs", input.logs.failures.at(-1), "smctl repair"));
@@ -399,11 +405,17 @@ async function inspectLogs(home) {
     const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     return {
       failures: lines.filter((line) => /failed|error|oom|out of memory|RangeError/i.test(line)).slice(-10),
-      retryLoop: lines.filter((line) => /Permanently failed|no retry params|missed execution|retry/i.test(line)).slice(-10)
+      retryLoop: lines.filter((line) => /Permanently failed|no retry params|missed execution|retry/i.test(line)).slice(-10),
+      schemaMismatch: lines.filter(isSchemaMismatchLine).slice(-10)
     };
   } catch {
-    return { failures: [], retryLoop: [] };
+    return { failures: [], retryLoop: [], schemaMismatch: [] };
   }
+}
+
+function isSchemaMismatchLine(line) {
+  return /column "(dreaming_status|profile_buckets)" does not exist/.test(line)
+    || (/Failed query:/.test(line) && /"(dreaming_status|profile_buckets)"/.test(line));
 }
 
 async function inspectStorage(home) {

@@ -49,6 +49,8 @@ export async function memoryDoctor(options = {}) {
   const processingResponse = await getJson(context.fetch, `${context.baseUrl}/v3/documents/processing`);
   if (processingResponse.ok) {
     checks.push(ok("Processing state reachable", summarizeObject(processingResponse.body)));
+  } else if (processingResponse.status >= 500) {
+    checks.push(fail("Supermemory processing API is failing", responseDetail(processingResponse)));
   } else {
     checks.push(warn("Processing state unavailable", responseDetail(processingResponse)));
   }
@@ -79,7 +81,12 @@ export async function memoryDoctor(options = {}) {
 
   const failedHints = await recentFailureHints(context.home);
   if (failedHints.length > 0) {
-    checks.push(fail("Recent memory pipeline failures in logs", failedHints.slice(-3).join(" | ")));
+    const schemaMismatch = failedHints.filter(isSchemaMismatchLine);
+    if (schemaMismatch.length > 0) {
+      checks.push(fail("Supermemory Local schema mismatch", `${schemaMismatch.at(-1)}. Upgrade/restart Supermemory Local before replaying failed memories.`));
+    } else {
+      checks.push(fail("Recent memory pipeline failures in logs", failedHints.slice(-3).join(" | ")));
+    }
   } else {
     checks.push(ok("No recent memory-agent failures in server log", "~/.supermemory/server.log"));
   }
@@ -132,6 +139,7 @@ export async function memoryDoctor(options = {}) {
 export async function memoryReplay(options = {}) {
   const context = {
     baseUrl: normalizeBaseUrl(options.baseUrl ?? "http://localhost:6767"),
+    home: options.home ?? homedir(),
     fetch: options.fetch ?? globalThis.fetch,
     limit: options.limit ?? 25,
     apply: Boolean(options.apply)
@@ -165,6 +173,51 @@ export async function memoryReplay(options = {}) {
   const documents = listResponse.body?.memories ?? listResponse.body?.documents ?? [];
   const failed = documents.filter((doc) => ["failed", "error"].includes(doc.status));
   const actions = [];
+  const failedHints = await recentFailureHints(context.home);
+  const schemaMismatch = failedHints.filter(isSchemaMismatchLine);
+
+  if (context.apply) {
+    const processing = await getJson(context.fetch, `${context.baseUrl}/v3/documents/processing`);
+    if (!processing.ok && processing.status >= 500) {
+      const result = {
+        command: "memory replay",
+        generatedAt: new Date().toISOString(),
+        baseUrl: context.baseUrl,
+        apply: context.apply,
+        sampled: documents.length,
+        actions: [{
+          status: "failed",
+          id: "server",
+          title: "Supermemory processing API is failing",
+          detail: `${responseDetail(processing)}. Restart or upgrade Supermemory Local and re-run smctl memory doctor before replaying.`
+        }],
+        summary: { replayed: 0, planned: 0, skipped: 0, failed: 1 },
+        exitCode: 1
+      };
+      result.text = formatMemoryReplay(result);
+      return result;
+    }
+  }
+
+  if (context.apply && schemaMismatch.length > 0) {
+    const result = {
+      command: "memory replay",
+      generatedAt: new Date().toISOString(),
+      baseUrl: context.baseUrl,
+      apply: context.apply,
+      sampled: documents.length,
+      actions: [{
+        status: "failed",
+        id: "schema",
+        title: "Supermemory Local schema mismatch",
+        detail: `${schemaMismatch.at(-1)}. Restart/upgrade Supermemory Local and re-run smctl doctor before replaying.`
+      }],
+      summary: { replayed: 0, planned: 0, skipped: 0, failed: 1 },
+      exitCode: 1
+    };
+    result.text = formatMemoryReplay(result);
+    return result;
+  }
 
   for (const doc of failed) {
     const detail = await getJson(context.fetch, `${context.baseUrl}/v3/documents/${doc.id}`);
@@ -342,11 +395,16 @@ async function recentFailureHints(home) {
     return content
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter((line) => /memory agent failed|0 memories|Permanently failed/i.test(line))
+      .filter((line) => /memory agent failed|0 memories|Permanently failed|dreaming_status|profile_buckets|Failed query:/i.test(line))
       .slice(-10);
   } catch {
     return [];
   }
+}
+
+function isSchemaMismatchLine(line) {
+  return /column "(dreaming_status|profile_buckets)" does not exist/.test(line)
+    || (/Failed query:/.test(line) && /"(dreaming_status|profile_buckets)"/.test(line));
 }
 
 function findDuplicateTitles(documents) {

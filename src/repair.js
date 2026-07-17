@@ -38,6 +38,9 @@ export async function runRepair(options = {}) {
   const processing = await getJson(context.fetch, `${context.baseUrl}/v3/documents/processing`);
   if (processing.ok) {
     checks.push(ok("Processing queue reachable", summarizeObject(processing.body)));
+  } else if (processing.status >= 500) {
+    checks.push(fail("Supermemory processing API is failing", responseDetail(processing)));
+    actions.push(plan("server", "Fix Supermemory Local runtime before replay", "Restart or upgrade Supermemory Local, then re-run smctl doctor and smctl memory doctor before replaying failed documents."));
   } else {
     checks.push(warn("Processing queue unavailable", responseDetail(processing)));
   }
@@ -49,10 +52,17 @@ export async function runRepair(options = {}) {
   const storage = await inspectStorage(context.home);
   const logs = await inspectLogs(context.home);
 
+  if (logs.schemaMismatch.length > 0) {
+    checks.push(fail("Supermemory Local schema mismatch", logs.schemaMismatch.at(-1)));
+    actions.push(plan("schema", "Fix the local server/schema mismatch first", "Run supermemory-server upgrade, restart Supermemory Local, then re-run smctl doctor. Do not replay failed documents until this clears."));
+  }
+
   if (failed.length > 0) {
     checks.push(fail("Failed documents found", `${failed.length} of ${documents.length} sampled`));
     actions.push(plan("backup", "Export important memories before repair", "Use the Supermemory API/UI before deleting failed docs."));
-    actions.push(plan("replay", "Replay failed documents safely", "Run smctl memory replay, then smctl memory replay --apply after reviewing the plan."));
+    actions.push(plan("replay", "Replay failed documents safely", logs.schemaMismatch.length > 0
+      ? "Wait until the schema mismatch is fixed, then run smctl memory replay before using --apply."
+      : "Run smctl memory replay, then smctl memory replay --apply after reviewing the plan."));
   } else {
     checks.push(ok("No failed documents in sample", `${documents.length} sampled`));
   }
@@ -195,11 +205,17 @@ async function inspectLogs(home) {
     const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     return {
       failures: lines.filter((line) => /failed|error|oom|out of memory|RangeError/i.test(line)).slice(-10),
-      retryLoop: lines.filter((line) => /Permanently failed|no retry params|missed execution|retry/i.test(line)).slice(-10)
+      retryLoop: lines.filter((line) => /Permanently failed|no retry params|missed execution|retry/i.test(line)).slice(-10),
+      schemaMismatch: lines.filter(isSchemaMismatchLine).slice(-10)
     };
   } catch {
-    return { failures: [], retryLoop: [] };
+    return { failures: [], retryLoop: [], schemaMismatch: [] };
   }
+}
+
+function isSchemaMismatchLine(line) {
+  return /column "(dreaming_status|profile_buckets)" does not exist/.test(line)
+    || (/Failed query:/.test(line) && /"(dreaming_status|profile_buckets)"/.test(line));
 }
 
 function storageCheck(storage) {
@@ -301,6 +317,20 @@ function wizardSteps(analysis) {
 
   if (!analysis.reachable) {
     add("Fix Supermemory reachability", "Harness cannot read the document inventory yet.", "smctl doctor");
+    return steps;
+  }
+
+  if (analysis.issues.some((issue) => issue.title === "Supermemory Local schema mismatch")) {
+    add("Fix Supermemory Local schema", "The server is querying columns missing from the local database, so replay will keep failing.", "smctl doctor");
+    add("Restart Supermemory Local", "Restart after the server/schema repair so the worker reloads cleanly.", null);
+    add("Re-check memory health", "Only replay failed documents after the schema mismatch disappears.", "smctl memory doctor");
+    return steps;
+  }
+
+  if (analysis.issues.some((issue) => issue.title === "Supermemory processing API is failing")) {
+    add("Fix Supermemory Local runtime", "The processing API is returning server errors, so replay cannot safely recover failed writes yet.", "smctl doctor");
+    add("Restart Supermemory Local", "Clear the failing worker/runtime state before testing replay.", null);
+    add("Re-check memory health", "Only replay failed documents after processing is reachable.", "smctl memory doctor");
     return steps;
   }
 

@@ -98,6 +98,112 @@ test("memory replay apply resubmits failed documents", async () => {
   assert.equal(posts[0].metadata.smctlReplayFrom, "doc_failed");
 });
 
+test("memory replay apply stops when Supermemory Local schema is mismatched", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
+  await mkdir(join(home, ".supermemory"), { recursive: true });
+  await writeFile(join(home, ".supermemory", "server.log"), "error: column \"dreaming_status\" does not exist\n");
+  const posts = [];
+
+  const result = await memoryReplay({
+    home,
+    apply: true,
+    fetch: async (url, init) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, {
+          memories: [
+            { id: "doc_failed", status: "failed", title: "Failed note" }
+          ]
+        });
+      }
+      if (url.endsWith("/v3/documents") && init?.method === "POST") {
+        posts.push(JSON.parse(init.body));
+        return response(200, { id: "new_doc", status: "queued" });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.summary.failed, 1);
+  assert.equal(posts.length, 0);
+  assert.match(result.text, /Supermemory Local schema mismatch/);
+});
+
+test("memory replay apply stops when processing API is failing", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
+  await mkdir(join(home, ".supermemory"), { recursive: true });
+  await writeFile(join(home, ".supermemory", "server.log"), "");
+  const posts = [];
+
+  const result = await memoryReplay({
+    home,
+    apply: true,
+    fetch: async (url, init) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, {
+          memories: [
+            { id: "doc_failed", status: "failed", title: "Failed note" }
+          ]
+        });
+      }
+      if (url.endsWith("/v3/documents/processing")) {
+        return response(500, { error: "Internal server error" });
+      }
+      if (url.endsWith("/v3/documents") && init?.method === "POST") {
+        posts.push(JSON.parse(init.body));
+        return response(200, { id: "new_doc", status: "queued" });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(posts.length, 0);
+  assert.match(result.text, /Supermemory processing API is failing/);
+});
+
+test("memory doctor fails when processing API is failing", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
+
+  const result = await memoryDoctor({
+    home,
+    fetch: async (url) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, { memories: [] });
+      }
+      if (url.endsWith("/v3/documents/processing")) {
+        return response(500, { error: "Internal server error" });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.text, /Supermemory processing API is failing/);
+});
+
+test("memory doctor names Supermemory Local schema mismatch", async () => {
+  const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
+  await mkdir(join(home, ".supermemory"), { recursive: true });
+  await writeFile(join(home, ".supermemory", "server.log"), "error: column \"dreaming_status\" does not exist\n");
+
+  const result = await memoryDoctor({
+    home,
+    fetch: async (url) => {
+      if (url.endsWith("/v3/documents/list")) {
+        return response(200, { memories: [] });
+      }
+      if (url.endsWith("/v3/documents/processing")) {
+        return response(500, { error: "Internal server error" });
+      }
+      return response(404, { error: "missing" });
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.text, /Supermemory Local schema mismatch/);
+});
+
 test("memory doctor passes on healthy sample", async () => {
   const home = await mkdtemp(join(tmpdir(), "smctl-memory-home-"));
   const result = await memoryDoctor({
