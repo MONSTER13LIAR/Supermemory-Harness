@@ -3,22 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Supermemory Harness is an operational trust layer for Supermemory Local, with verification, repair, project scope, guardrails, and agent gates.">
+  <meta name="description" content="Supermemory Harness is a support layer for Supermemory Local: install flow, recall proof, trust checks, repair paths, personalization, and agent gates.">
   <title>Supermemory Harness</title>
   <style>
     :root {
-      --bg: #f6f7f5;
+      --bg: #f5f6f4;
       --surface: #ffffff;
       --ink: #111718;
-      --muted: #5e6b6e;
-      --faint: #8a9698;
+      --muted: #606c70;
       --line: #dfe5e2;
-      --line-strong: #c9d2cf;
-      --dark: #101719;
-      --dark-2: #182224;
+      --dark: #0d1416;
+      --dark-2: #141e21;
       --cyan: #0d92a8;
+      --cyan-soft: #b8f2f7;
       --green: #15724f;
-      --blue: #245f9e;
       --amber: #a66718;
     }
 
@@ -36,6 +34,7 @@
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
 
     a {
@@ -48,162 +47,97 @@
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
 
-    .page-shell {
-      min-height: 100vh;
-      background:
-        linear-gradient(180deg, rgba(246, 247, 245, 0) 0%, var(--bg) 92%),
-        #f6f7f5;
-    }
-
     .hero {
-      position: relative;
-      min-height: 84vh;
+      min-height: 100vh;
       display: grid;
-      grid-template-rows: 1fr auto;
-      overflow: hidden;
-      color: #f9fbfa;
+      align-items: center;
       background: var(--dark);
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(90deg, rgba(16, 23, 25, 0.97) 0%, rgba(16, 23, 25, 0.88) 50%, rgba(16, 23, 25, 0.26) 100%),
-        url("assets/screenshots/2026-07-17-220643.png") right 28% / min(760px, 76vw) auto no-repeat,
-        var(--dark);
-      filter: saturate(0.92) contrast(1.06);
+      color: #f9fbfa;
+      overflow: hidden;
     }
 
     .hero-inner,
     .wrap {
-      width: min(1140px, calc(100% - 40px));
+      width: min(1160px, calc(100% - 40px));
       margin: 0 auto;
     }
 
     .hero-inner {
-      position: relative;
-      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 0.88fr) minmax(320px, 0.92fr);
+      gap: clamp(28px, 5vw, 70px);
+      align-items: center;
+      padding: 64px 0;
     }
 
-    .hero-inner {
+    .hero-text {
+      min-height: 340px;
       display: grid;
       align-content: center;
-      min-height: calc(84vh - 96px);
-      padding: 86px 0 72px;
     }
 
-    .kicker {
-      width: max-content;
-      margin-bottom: 18px;
-      padding: 7px 10px;
-      border: 1px solid rgba(184, 242, 247, 0.34);
-      color: #b8f2f7;
-      font-size: 13px;
-      font-weight: 850;
-      text-transform: uppercase;
-      letter-spacing: 0;
-    }
-
-    h1 {
-      max-width: 710px;
+    .typed-line {
+      max-width: 620px;
+      min-height: 0;
       margin: 0;
-      font-size: clamp(42px, 5.4vw, 68px);
+      font-size: clamp(46px, 5.3vw, 76px);
       line-height: 1.02;
       letter-spacing: 0;
+      font-weight: 850;
+      overflow-wrap: break-word;
     }
 
-    .hero-copy {
-      max-width: 720px;
-      margin: 24px 0 0;
-      color: rgba(249, 251, 250, 0.78);
-      font-size: clamp(18px, 1.9vw, 23px);
-      line-height: 1.42;
+    .typing-caret::after {
+      content: "";
+      display: inline-block;
+      width: 0.08em;
+      height: 0.88em;
+      margin-left: 0.08em;
+      vertical-align: -0.08em;
+      background: var(--cyan-soft);
+      animation: blink 0.85s step-end infinite;
     }
 
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      margin-top: 32px;
+    @keyframes blink {
+      0%, 48% {
+        opacity: 1;
+      }
+      49%, 100% {
+        opacity: 0;
+      }
     }
 
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 44px;
-      padding: 0 16px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      color: #f9fbfa;
-      background: rgba(255, 255, 255, 0.08);
-      font-weight: 800;
-      white-space: nowrap;
+    .hero-media {
+      margin: 0;
+      max-width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #071012;
+      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
     }
 
-    .button.primary {
-      color: #071719;
-      background: #b8f2f7;
-      border-color: #b8f2f7;
-    }
-
-    .hero-command {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      padding: 0 14px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(0, 0, 0, 0.34);
-      color: #e8fdff;
-      font-size: 14px;
-      overflow-wrap: anywhere;
-    }
-
-    .signal-bar {
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid rgba(255, 255, 255, 0.13);
-      background: rgba(8, 13, 14, 0.58);
-    }
-
-    .signal-grid {
-      width: min(1140px, calc(100% - 40px));
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 1px;
-      background: rgba(255, 255, 255, 0.10);
-    }
-
-    .signal {
-      min-height: 96px;
-      padding: 18px;
-      background: rgba(16, 23, 25, 0.88);
-    }
-
-    .signal strong {
+    .hero-media img {
+      width: 100%;
       display: block;
-      margin-bottom: 6px;
-      color: #f9fbfa;
-      font-size: 15px;
+      height: auto;
     }
 
-    .signal span {
-      color: rgba(249, 251, 250, 0.62);
-      font-size: 13px;
-      line-height: 1.35;
+    .scroll-note {
+      margin-top: 28px;
+      color: rgba(249, 251, 250, 0.56);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
     }
 
     section {
-      padding: 72px 0;
+      padding: 76px 0;
     }
 
     .section-head {
       display: grid;
       gap: 12px;
-      margin-bottom: 30px;
+      margin-bottom: 32px;
     }
 
     .section-label {
@@ -215,56 +149,49 @@
     }
 
     h2 {
-      max-width: 780px;
+      max-width: 800px;
       margin: 0;
-      font-size: clamp(32px, 4vw, 50px);
+      font-size: clamp(34px, 4vw, 54px);
       line-height: 1.02;
       letter-spacing: 0;
     }
 
     .section-head p {
-      max-width: 760px;
+      max-width: 780px;
       margin: 0;
       color: var(--muted);
       font-size: 18px;
-      line-height: 1.48;
+      line-height: 1.5;
     }
 
-    .two-col {
+    .commands {
+      background: #e9efec;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .command-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-      gap: 34px;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
     }
 
-    .plain-list {
-      display: grid;
-      gap: 12px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
+    .command-panel {
+      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
     }
 
-    .plain-list li {
-      padding: 18px 0;
-      border-top: 1px solid var(--line);
-    }
-
-    .plain-list strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--ink);
-      font-size: 18px;
-    }
-
-    .plain-list span {
-      color: var(--muted);
-      line-height: 1.48;
+    .command-panel h3 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      letter-spacing: 0;
     }
 
     .terminal {
       margin: 0;
-      padding: 20px;
+      max-width: 100%;
+      padding: 18px;
       overflow-x: auto;
       border: 1px solid #2a383b;
       background: #0d1416;
@@ -277,120 +204,168 @@
       color: #7f9297;
     }
 
-    .architecture {
+    .note {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .screenshots {
+      background: var(--bg);
+    }
+
+    .shot-list {
+      display: grid;
+      gap: 26px;
+    }
+
+    .shot {
+      display: grid;
+      grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.24fr);
+      gap: 28px;
+      align-items: center;
+      padding: 28px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .shot:nth-child(even) {
+      grid-template-columns: minmax(0, 1.24fr) minmax(0, 0.76fr);
+    }
+
+    .shot:nth-child(even) .shot-copy {
+      order: 2;
+    }
+
+    .shot-copy h3 {
+      margin: 0 0 10px;
+      font-size: clamp(24px, 2.6vw, 34px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .shot-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .shot img {
+      width: 100%;
+      display: block;
+      height: auto;
+      border: 1px solid #c8d1ce;
+      background: #0d1416;
+    }
+
+    .deep {
       background: var(--surface);
       border-top: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
     }
 
-    .flow {
+    .diagram-grid {
       display: grid;
-      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
-      gap: 16px;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 22px;
       align-items: stretch;
     }
 
-    .flow-panel {
-      display: grid;
-      align-content: start;
-      gap: 10px;
-      min-height: 230px;
-      padding: 22px;
-      border: 1px solid var(--line);
+    .diagram-card {
+      padding: 24px;
       background: var(--bg);
+      border: 1px solid var(--line);
     }
 
-    .flow-panel.core {
+    .diagram-card.dark {
       color: #f9fbfa;
       background: var(--dark);
       border-color: var(--dark);
     }
 
-    .flow-panel h3 {
-      margin: 0;
+    .diagram-card h3 {
+      margin: 0 0 10px;
       font-size: 24px;
-      line-height: 1.08;
       letter-spacing: 0;
     }
 
-    .flow-panel p {
+    .diagram-card p {
       margin: 0;
       color: var(--muted);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
-    .flow-panel.core p {
-      color: rgba(249, 251, 250, 0.68);
+    .diagram-card.dark p {
+      color: rgba(249, 251, 250, 0.70);
     }
 
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .tag {
-      padding: 6px 9px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: rgba(249, 251, 250, 0.82);
-      font-size: 13px;
-      font-weight: 750;
-    }
-
-    .proof-grid {
+    .flow-diagram {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
+      gap: 10px;
+      margin-top: 18px;
     }
 
-    .proof-card {
+    .flow-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .flow-node {
+      min-height: 82px;
+      padding: 14px;
       border: 1px solid var(--line);
       background: var(--surface);
     }
 
-    .proof-card img {
+    .dark .flow-node {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .flow-node strong {
       display: block;
-      width: 100%;
-      height: auto;
-      border-bottom: 1px solid var(--line);
-      background: #0d1416;
-    }
-
-    .proof-card div {
-      padding: 16px;
-    }
-
-    .proof-card h3 {
-      margin: 0 0 8px;
-      font-size: 20px;
-      letter-spacing: 0;
-    }
-
-    .proof-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.45;
+      margin-bottom: 4px;
       font-size: 15px;
     }
 
-    .commands {
-      background: #e9efec;
-      border-top: 1px solid var(--line);
+    .flow-node span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
     }
 
-    .command-grid {
+    .dark .flow-node span {
+      color: rgba(249, 251, 250, 0.62);
+    }
+
+    .arrow {
+      color: var(--cyan-soft);
+      text-align: center;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .feature-list {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
+      gap: 12px;
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
     }
 
-    .note {
-      margin-top: 14px;
+    .feature-list li {
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 15px;
       line-height: 1.45;
+    }
+
+    .feature-list strong {
+      color: var(--ink);
     }
 
     .footer {
@@ -408,198 +383,196 @@
     }
 
     .footer a {
-      color: #b8f2f7;
+      color: var(--cyan-soft);
       font-weight: 800;
     }
 
     @media (max-width: 940px) {
-      .hero {
-        min-height: 78vh;
-      }
-
-      .signal-grid,
-      .two-col,
-      .flow,
-      .proof-grid,
-      .command-grid {
+      .hero-inner,
+      .command-grid,
+      .shot,
+      .shot:nth-child(even),
+      .diagram-grid,
+      .flow-row {
         grid-template-columns: 1fr;
       }
 
-      section {
-        padding: 54px 0;
+      .hero-inner {
+        padding: 42px 0;
       }
 
-      h1 {
+      .hero-text {
+        min-height: 280px;
+      }
+
+      .typed-line {
         font-size: clamp(40px, 11vw, 58px);
       }
 
-      .hero-command {
-        width: 100%;
+      .shot,
+      .shot:nth-child(even) {
+        padding: 20px;
+      }
+
+      .shot:nth-child(even) .shot-copy {
+        order: 0;
+      }
+
+      .arrow {
+        transform: rotate(90deg);
       }
     }
   </style>
 </head>
 <body>
-  <div class="page-shell">
-    <header class="hero">
-      <div id="top" class="hero-inner">
-        <div class="kicker">Operational layer for Supermemory Local</div>
-        <h1>Trust, verify, and repair local memory before agents depend on it.</h1>
-        <p class="hero-copy">Supermemory Harness keeps Supermemory Local as the private memory engine and adds the missing production workflow around it: install guidance, recall proof, project scope, memory quality checks, repair paths, and coding-agent gates.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#install">Install</a>
-          <a class="button" href="https://github.com/MONSTER13LIAR/Supermemory-Harness">GitHub</a>
-          <code class="hero-command">npm install -g supermemory-harness</code>
-        </div>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="typed-line"><span id="typewriter" class="typing-caret"></span></h1>
+        <div class="scroll-note">Scroll for install, proof, and architecture</div>
       </div>
+      <figure class="hero-media" aria-label="Supermemory Harness terminal banner">
+        <img src="assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner">
+      </figure>
+    </div>
+  </header>
 
-      <div class="signal-bar">
-        <div class="signal-grid">
-          <div class="signal"><strong>npm package</strong><span>Install once, then run <code>smctl install</code>.</span></div>
-          <div class="signal"><strong>Local-first</strong><span>Uses Supermemory Local at <code>localhost:6767</code>.</span></div>
-          <div class="signal"><strong>Agent-aware</strong><span>Codex, Claude Code, and Cursor can check memory before acting.</span></div>
-          <div class="signal"><strong>Proof-based</strong><span>Verification writes a harmless marker and recalls it back.</span></div>
-        </div>
-      </div>
-    </header>
-
-    <section id="why">
-      <div class="wrap two-col">
-        <div class="section-head">
-          <div class="section-label">Problem</div>
-          <h2>Local memory is valuable only when it can be trusted.</h2>
-          <p>Supermemory Local handles the hard memory engine work on the user's machine. Harness focuses on the operational questions that appear immediately after install.</p>
-        </div>
-        <ul class="plain-list">
-          <li><strong>Is the local server reachable?</strong><span>Harness checks the dashboard, OpenAPI routes, MCP surface, processing path, and project setup.</span></li>
-          <li><strong>Is recall actually working?</strong><span><code>smctl verify</code> writes a harmless marker, waits for processing, searches it back, and checks scoping.</span></li>
-          <li><strong>Can an agent rely on this memory?</strong><span>Session and gate commands return pass, warn, or block decisions before important edits or handoffs.</span></li>
-          <li><strong>What should the user do next?</strong><span>Repair, trust, and launch commands turn raw state into ordered next actions instead of raw logs.</span></li>
-        </ul>
-      </div>
-    </section>
-
-    <section id="architecture" class="architecture">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="section-label">Architecture</div>
-          <h2>A companion layer, not a replacement.</h2>
-          <p>Harness talks to the real Supermemory Local server and keeps the memory engine local. It adds diagnostics, policy, and agent lifecycle checks around that engine.</p>
-        </div>
-        <div class="flow">
-          <article class="flow-panel">
-            <h3>Users, apps, and agents</h3>
-            <p>Beginners, local apps, Codex, Claude Code, and Cursor need a decision before trusting long-term memory.</p>
-          </article>
-          <article class="flow-panel core">
-            <h3>Supermemory Harness</h3>
-            <p>Runs local checks, verifies recall, scores trust, reviews risky writes, scopes project memory, explains repair steps, and installs agent bridge instructions.</p>
-            <div class="tag-row">
-              <span class="tag">verify</span>
-              <span class="tag">trust</span>
-              <span class="tag">repair</span>
-              <span class="tag">guard</span>
-              <span class="tag">genome</span>
-              <span class="tag">gate</span>
-            </div>
-          </article>
-          <article class="flow-panel">
-            <h3>Supermemory Local</h3>
-            <p>The private engine at <code>localhost:6767</code>: embeddings, encrypted storage, documents, search, and recall remain local.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="proof">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="section-label">Proof path</div>
-          <h2>What a user sees after installation.</h2>
-          <p>The walkthrough is intentionally operational: install, open the dashboard, prove recall, inspect trust, repair when needed, and connect agents.</p>
-        </div>
-        <div class="proof-grid">
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner">
-            <div>
-              <h3>First-run clarity</h3>
-              <p>The install path checks Local state, project scope, dashboard readiness, agent bridge setup, and the next command.</p>
-            </div>
-          </article>
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-211521.png" alt="Supermemory dashboard with Harness command center">
-            <div>
-              <h3>Dashboard command center</h3>
-              <p><code>smctl ui</code> keeps the Supermemory dashboard visible while adding Harness status and next-action controls.</p>
-            </div>
-          </article>
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-215159.png" alt="smctl verify recall proof">
-            <div>
-              <h3>Recall verification</h3>
-              <p><code>smctl verify</code> proves write, processing, search, project scoping, recall canaries, and language recall.</p>
-            </div>
-          </article>
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-221013.png" alt="smctl trust probe">
-            <div>
-              <h3>Trust before reliance</h3>
-              <p><code>smctl trust --probe</code> gives a live memory score and surfaces failed writes, drift, duplicates, and recall issues.</p>
-            </div>
-          </article>
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-221148.png" alt="smctl repair wizard">
-            <div>
-              <h3>Safe repair plan</h3>
-              <p>The repair wizard separates runtime failures from replayable memory problems and avoids unsafe changes.</p>
-            </div>
-          </article>
-          <article class="proof-card">
-            <img src="assets/screenshots/2026-07-17-215451.png" alt="smctl genome memory personalization">
-            <div>
-              <h3>Memory Genome</h3>
-              <p>Harness classifies the user's memory mix and creates a local policy for cleaner future memory behavior.</p>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="install" class="commands">
+  <main>
+    <section class="commands">
       <div class="wrap">
         <div class="section-head">
           <div class="section-label">Install</div>
           <h2>Install once. Run <code>smctl</code> from then on.</h2>
-          <p>Use Harness on the same machine as Supermemory Local. The CLI remains local and communicates with the local server by default.</p>
+          <p>Harness is distributed through npm. After the global install, users do not need to copy a GitHub URL again.</p>
         </div>
         <div class="command-grid">
-          <div>
-            <pre class="terminal"><code><span class="muted"># Install globally</span>
+          <article class="command-panel">
+            <h3>First install</h3>
+            <pre class="terminal"><code><span class="muted"># Install the CLI</span>
 npm install -g supermemory-harness
 
 <span class="muted"># Activate the Harness workflow</span>
 smctl install</code></pre>
-            <p class="note">After global install, users do not need to copy the GitHub repository URL again.</p>
-          </div>
-          <div>
-            <pre class="terminal"><code><span class="muted"># Normal local workflow</span>
-smctl supermemory start
+            <p class="note">Use this after Supermemory Local is installed on the same machine.</p>
+          </article>
+          <article class="command-panel">
+            <h3>Normal workflow</h3>
+            <pre class="terminal"><code>smctl supermemory start
 smctl ui
 smctl verify --timeout-ms 60000
 smctl trust --probe
 smctl gate</code></pre>
-            <p class="note">For one-off usage without global install, run <code>npx -y supermemory-harness install</code>.</p>
-          </div>
+            <p class="note">For one-off usage without a global install: <code>npx -y supermemory-harness install</code>.</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <footer class="footer">
+    <section class="screenshots">
       <div class="wrap">
-        <span>Supermemory Harness is a local operational layer for Supermemory Local.</span>
-        <a href="https://github.com/MONSTER13LIAR/Supermemory-Harness">View source on GitHub</a>
+        <div class="section-head">
+          <div class="section-label">Product flow</div>
+          <h2>What Harness adds around Supermemory Local.</h2>
+          <p>The screenshots show the actual local workflow: install, dashboard, recall proof, trust checks, repair guidance, and personalization.</p>
+        </div>
+        <div class="shot-list">
+          <article class="shot">
+            <div class="shot-copy">
+              <h3>First-run guidance</h3>
+              <p><code>smctl install</code> checks Local state, project scope, dashboard readiness, agent bridge setup, and the next safe command.</p>
+            </div>
+            <img src="assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner">
+          </article>
+
+          <article class="shot">
+            <div class="shot-copy">
+              <h3>Dashboard command center</h3>
+              <p><code>smctl ui</code> keeps the Supermemory dashboard visible while adding Harness status and next-action controls.</p>
+            </div>
+            <img src="assets/screenshots/2026-07-17-211521.png" alt="Supermemory dashboard with Harness command center">
+          </article>
+
+          <article class="shot">
+            <div class="shot-copy">
+              <h3>Recall proof before trust</h3>
+              <p><code>smctl verify</code> writes a harmless marker, waits for processing, searches it back, and checks project scoping.</p>
+            </div>
+            <img src="assets/screenshots/2026-07-17-215159.png" alt="smctl verify recall proof">
+          </article>
+
+          <article class="shot">
+            <div class="shot-copy">
+              <h3>Repair and personalization</h3>
+              <p>The repair wizard turns failures into safe ordered steps, while Memory Genome adapts memory behavior to what the user stores.</p>
+            </div>
+            <img src="assets/screenshots/2026-07-17-221148.png" alt="smctl repair wizard">
+          </article>
+        </div>
       </div>
-    </footer>
-  </div>
+    </section>
+
+    <section class="deep">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Architecture</div>
+          <h2>A support layer, not a replacement.</h2>
+          <p>Supermemory Local remains the private memory engine at <code>localhost:6767</code>. Harness adds the operational layer that makes that engine easier to recommend to users and agents.</p>
+        </div>
+        <div class="diagram-grid">
+          <article class="diagram-card dark">
+            <h3>Agent memory path</h3>
+            <p>Agents should not blindly trust memory. Harness gives them checks before edits, tests, migrations, compaction, or handoff.</p>
+            <div class="flow-diagram">
+              <div class="flow-row">
+                <div class="flow-node"><strong>Codex / Claude / Cursor</strong><span>Needs project memory before action.</span></div>
+                <div class="arrow">→</div>
+                <div class="flow-node"><strong>Harness gate</strong><span>Pass, warn, or block decision.</span></div>
+              </div>
+              <div class="flow-row">
+                <div class="flow-node"><strong>Scoped recall</strong><span>Uses Supermemory Local search.</span></div>
+                <div class="arrow">→</div>
+                <div class="flow-node"><strong>Safer action</strong><span>Agent carries warnings into the plan.</span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="diagram-card">
+            <h3>Why this exists</h3>
+            <p>Local memory becomes much more useful when users can see whether it is healthy, scoped, searchable, and safe to rely on.</p>
+            <ul class="feature-list">
+              <li><strong>Verify:</strong> proves write and recall work right now.</li>
+              <li><strong>Trust:</strong> surfaces failed writes, drift, duplicates, vague memories, and processing issues.</li>
+              <li><strong>Repair:</strong> gives ordered recovery steps without unsafe replay.</li>
+              <li><strong>Guard:</strong> reviews risky writes before they become durable memory.</li>
+              <li><strong>Genome:</strong> personalizes future memory behavior from the user's stored memory mix.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>Supermemory Harness is a support layer for Supermemory Local.</span>
+      <a href="https://github.com/MONSTER13LIAR/Supermemory-Harness">View source on GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    const target = "Support for Supermemory Local.";
+    const node = document.getElementById("typewriter");
+    let index = 0;
+
+    function typeNext() {
+      node.textContent = target.slice(0, index);
+      index += 1;
+      if (index <= target.length) {
+        window.setTimeout(typeNext, index < 4 ? 120 : 46);
+      }
+    }
+
+    window.setTimeout(typeNext, 320);
+  </script>
 </body>
 </html>
