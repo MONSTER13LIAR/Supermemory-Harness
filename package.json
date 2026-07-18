@@ -9,7 +9,7 @@
     "README.md"
   ],
   "bin": {
-    "smctl": "./bin/smctl.js"
+    "smctl": "bin/smctl.js"
   },
   "scripts": {
     "doctor": "node ./bin/smctl.js doctor",

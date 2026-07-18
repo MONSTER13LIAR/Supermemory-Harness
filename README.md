@@ -19,11 +19,17 @@ It does not replace Supermemory Local. It wraps the local server so users, Codex
 
 ## Quick Start
 
-Install globally from GitHub:
+Install globally from npm:
 
 ```bash
-npm install -g github:MONSTER13LIAR/Supermemory-Harness
-smctl enhance
+npm install -g supermemory-harness
+smctl install
+```
+
+Or run it without a global install:
+
+```bash
+npx -y supermemory-harness install
 ```
 
 Requirements:
@@ -33,7 +39,7 @@ Requirements:
 - Supermemory Local, normally reachable at `http://localhost:6767`
 - Optional: Ollama on `http://localhost:11434` for local plain-English explanations
 
-`smctl enhance` is the normal entrypoint. It checks Supermemory Local, applies Harness-owned setup, installs memory behavior skills, connects coding-agent bridge files, initializes project memory scope when missing, starts the dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
+`smctl install` is the normal entrypoint. It checks Supermemory Local, applies Harness-owned setup, installs memory behavior skills, connects coding-agent bridge files, initializes project memory scope when missing, starts the dashboard proxy when Local is reachable, and writes an activation receipt at `~/.config/smctl/activation.json`.
 
 The install/enhance flow opens with the same blue terminal banner shown above, so the first run feels like a product rather than a raw diagnostics script.
 
