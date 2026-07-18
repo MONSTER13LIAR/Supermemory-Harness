@@ -1,4 +1,6 @@
-![Supermemory Harness blue terminal banner](assets/smctl-banner.svg)
+<p align="center">
+  <img src="assets/supermemory-harness-banner.png" alt="Supermemory Harness install banner" width="717">
+</p>
 
 # Supermemory Harness
 
@@ -58,7 +60,7 @@ The final screenshot set lives in [docs/assets/screenshots](docs/assets/screensh
 
 `smctl install` opens with a clear Harness banner, so the first terminal run feels like a real product instead of a diagnostics script.
 
-<img src="docs/assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner" width="760">
+<img src="docs/assets/supermemory-harness-banner.png" alt="Supermemory Harness install banner" width="760">
 
 ### 2. Dashboard Command Center
 
@@ -388,7 +390,7 @@ smctl trust --json
 smctl repair wizard --json
 ```
 
-The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. GitHub cannot render live ANSI terminal color in Markdown, so the banner above is a terminal-faithful SVG render. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
+The CLI banner uses Supermemory-style blue ANSI terminal colors when color output is available. The banner above is the same PNG capture used by the launch page and first-run screenshot. The CLI respects `NO_COLOR=1` and can be forced with `FORCE_COLOR=1`.
 
 ## Current Scope
 
