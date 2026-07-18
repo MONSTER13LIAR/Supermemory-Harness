@@ -46,28 +46,65 @@ npm test
 
 The final screenshot set lives in [docs/assets/screenshots](docs/assets/screenshots). Use the video as the main launch hook; these screenshots are the GitHub and social proof layer for install polish, live verification, repair, terminal flow, and the dashboard.
 
-<table>
-  <tr>
-    <td><img src="docs/assets/screenshots/2026-07-17-211521.png" alt="Supermemory dashboard with Harness command center" width="420"><br><sub>Dashboard command center inside the Supermemory Local flow.</sub></td>
-    <td><img src="docs/assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner" width="420"><br><sub>Install opens with a product-grade terminal banner.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/assets/screenshots/2026-07-17-215159.png" alt="smctl verify recall proof" width="420"><br><sub>Recall verification proves write, search, scope, and language recall.</sub></td>
-    <td><img src="docs/assets/screenshots/2026-07-17-221013.png" alt="smctl trust probe" width="420"><br><sub>Trust probe checks live Supermemory Local health and memory quality.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/assets/screenshots/2026-07-17-221148.png" alt="smctl repair wizard" width="420"><br><sub>Repair wizard turns broken memory state into ordered safe actions.</sub></td>
-    <td><img src="docs/assets/screenshots/2026-07-17-215451.png" alt="smctl genome memory personalization" width="420"><br><sub>Memory Genome classifies what the user stores and generates policy.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/assets/screenshots/2026-07-17-221312.png" alt="smctl evidence pack" width="420"><br><sub>Evidence pack gives judges and maintainers a redacted proof summary.</sub></td>
-    <td><img src="docs/assets/screenshots/2026-07-17-215554.png" alt="smctl trust doctor" width="420"><br><sub>Trust doctor exposes drift, scope, queue, processing, and duplicate signals.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/assets/screenshots/2026-07-17-215523.png" alt="smctl repair wizard no changes needed" width="420"><br><sub>Repair can also prove there is nothing unsafe to replay.</sub></td>
-    <td><img src="docs/assets/screenshots/2026-07-17-223133.png" alt="smctl supermemory start already running handling" width="420"><br><sub>Duplicate startup is handled cleanly when Local is already running.</sub></td>
-  </tr>
-</table>
+### 1. First Install Moment
+
+`smctl install` opens with a clear Harness banner, so the first terminal run feels like a real product instead of a diagnostics script.
+
+<img src="docs/assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner" width="760">
+
+### 2. Dashboard Command Center
+
+`smctl ui` keeps the normal Supermemory Local dashboard visible while adding Harness status, next actions, and operational controls.
+
+<img src="docs/assets/screenshots/2026-07-17-211521.png" alt="Supermemory dashboard with Harness command center" width="760">
+
+### 3. Live Recall Verification
+
+`smctl verify` proves that write, processing, search, project scoping, recall canaries, and language recall are usable.
+
+<img src="docs/assets/screenshots/2026-07-17-215159.png" alt="smctl verify recall proof" width="760">
+
+### 4. Trust Probe
+
+`smctl trust --probe` runs a harmless live check against Supermemory Local before an agent or user relies on memory.
+
+<img src="docs/assets/screenshots/2026-07-17-221013.png" alt="smctl trust probe" width="760">
+
+### 5. Trust Doctor
+
+`smctl trust` shows project drift, queue health, processing status, duplicates, and memory quality in one terminal view.
+
+<img src="docs/assets/screenshots/2026-07-17-215554.png" alt="smctl trust doctor" width="760">
+
+### 6. Repair Wizard
+
+`smctl repair wizard` turns broken or messy memory state into an ordered recovery plan before anything is replayed or changed.
+
+<img src="docs/assets/screenshots/2026-07-17-221148.png" alt="smctl repair wizard" width="760">
+
+### 7. Safe No-Op Repair
+
+The repair path also proves when there is nothing unsafe to replay, so recovery does not become another source of memory noise.
+
+<img src="docs/assets/screenshots/2026-07-17-215523.png" alt="smctl repair wizard no changes needed" width="760">
+
+### 8. Memory Genome Personalization
+
+`smctl genome` classifies what the user stores and generates a local policy for better future memory behavior.
+
+<img src="docs/assets/screenshots/2026-07-17-215451.png" alt="smctl genome memory personalization" width="760">
+
+### 9. Evidence Pack
+
+`smctl evidence` gives judges, maintainers, and users a redacted proof summary with verdict, warnings, readiness, and next command.
+
+<img src="docs/assets/screenshots/2026-07-17-221312.png" alt="smctl evidence pack" width="760">
+
+### 10. Duplicate Startup Handling
+
+`smctl supermemory start` detects when Supermemory Local is already running and avoids starting a second server on port `6767`.
+
+<img src="docs/assets/screenshots/2026-07-17-223133.png" alt="smctl supermemory start already running handling" width="760">
 
 ## Final Demo Path
 
