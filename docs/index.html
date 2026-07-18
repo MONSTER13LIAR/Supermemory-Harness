@@ -7,15 +7,15 @@
   <title>Supermemory Harness</title>
   <style>
     :root {
-      --bg: #f5f6f4;
+      --bg: #ffffff;
       --surface: #ffffff;
       --ink: #111718;
       --muted: #606c70;
       --line: #dfe5e2;
+      --soft: #f7faf8;
       --dark: #0d1416;
-      --dark-2: #141e21;
       --cyan: #0d92a8;
-      --cyan-soft: #b8f2f7;
+      --cyan-soft: #e8fbfd;
       --green: #15724f;
       --amber: #a66718;
     }
@@ -51,8 +51,9 @@
       min-height: 100vh;
       display: grid;
       align-items: center;
-      background: var(--dark);
-      color: #f9fbfa;
+      background: var(--bg);
+      color: var(--ink);
+      border-bottom: 1px solid var(--line);
       overflow: hidden;
     }
 
@@ -94,7 +95,7 @@
       height: 0.88em;
       margin-left: 0.08em;
       vertical-align: -0.08em;
-      background: var(--cyan-soft);
+      background: var(--cyan);
       animation: blink 0.85s step-end infinite;
     }
 
@@ -110,9 +111,11 @@
     .hero-media {
       margin: 0;
       max-width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: #071012;
-      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 26px 80px rgba(14, 31, 36, 0.10);
+      overflow: hidden;
     }
 
     .hero-media img {
@@ -123,7 +126,7 @@
 
     .scroll-note {
       margin-top: 28px;
-      color: rgba(249, 251, 250, 0.56);
+      color: var(--muted);
       font-size: 14px;
       font-weight: 700;
       letter-spacing: 0;
@@ -165,7 +168,7 @@
     }
 
     .commands {
-      background: #e9efec;
+      background: var(--bg);
       border-bottom: 1px solid var(--line);
     }
 
@@ -180,6 +183,7 @@
       padding: 22px;
       background: var(--surface);
       border: 1px solid var(--line);
+      border-radius: 8px;
     }
 
     .command-panel h3 {
@@ -193,15 +197,16 @@
       max-width: 100%;
       padding: 18px;
       overflow-x: auto;
-      border: 1px solid #2a383b;
-      background: #0d1416;
-      color: #dff6f6;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--soft);
+      color: var(--ink);
       font-size: 15px;
       line-height: 1.55;
     }
 
     .terminal .muted {
-      color: #7f9297;
+      color: #748084;
     }
 
     .note {
@@ -228,6 +233,7 @@
       padding: 28px;
       background: var(--surface);
       border: 1px solid var(--line);
+      border-radius: 8px;
     }
 
     .shot:nth-child(even) {
@@ -257,7 +263,8 @@
       display: block;
       height: auto;
       border: 1px solid #c8d1ce;
-      background: #0d1416;
+      border-radius: 6px;
+      background: var(--soft);
     }
 
     .deep {
@@ -275,14 +282,15 @@
 
     .diagram-card {
       padding: 24px;
-      background: var(--bg);
+      background: var(--soft);
       border: 1px solid var(--line);
+      border-radius: 8px;
     }
 
     .diagram-card.dark {
-      color: #f9fbfa;
-      background: var(--dark);
-      border-color: var(--dark);
+      color: var(--ink);
+      background: var(--surface);
+      border-color: var(--line);
     }
 
     .diagram-card h3 {
@@ -298,7 +306,7 @@
     }
 
     .diagram-card.dark p {
-      color: rgba(249, 251, 250, 0.70);
+      color: var(--muted);
     }
 
     .flow-diagram {
@@ -319,11 +327,12 @@
       padding: 14px;
       border: 1px solid var(--line);
       background: var(--surface);
+      border-radius: 6px;
     }
 
     .dark .flow-node {
-      border-color: rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--line);
+      background: var(--soft);
     }
 
     .flow-node strong {
@@ -339,11 +348,11 @@
     }
 
     .dark .flow-node span {
-      color: rgba(249, 251, 250, 0.62);
+      color: var(--muted);
     }
 
     .arrow {
-      color: var(--cyan-soft);
+      color: var(--cyan);
       text-align: center;
       font-size: 24px;
       font-weight: 900;
@@ -370,8 +379,9 @@
 
     .footer {
       padding: 34px 0;
-      color: rgba(249, 251, 250, 0.78);
-      background: var(--dark);
+      color: var(--muted);
+      background: var(--bg);
+      border-top: 1px solid var(--line);
     }
 
     .footer .wrap {
@@ -383,7 +393,7 @@
     }
 
     .footer a {
-      color: var(--cyan-soft);
+      color: var(--cyan);
       font-weight: 800;
     }
 
@@ -432,7 +442,7 @@
         <div class="scroll-note">Scroll for install, proof, and architecture</div>
       </div>
       <figure class="hero-media" aria-label="Supermemory Harness terminal banner">
-        <img src="assets/screenshots/2026-07-17-220643.png" alt="Supermemory Harness install banner">
+        <img src="assets/smctl-banner.svg" alt="Supermemory Harness install banner">
       </figure>
     </div>
   </header>
@@ -525,12 +535,12 @@ smctl gate</code></pre>
             <div class="flow-diagram">
               <div class="flow-row">
                 <div class="flow-node"><strong>Codex / Claude / Cursor</strong><span>Needs project memory before action.</span></div>
-                <div class="arrow">→</div>
+                <div class="arrow">-&gt;</div>
                 <div class="flow-node"><strong>Harness gate</strong><span>Pass, warn, or block decision.</span></div>
               </div>
               <div class="flow-row">
                 <div class="flow-node"><strong>Scoped recall</strong><span>Uses Supermemory Local search.</span></div>
-                <div class="arrow">→</div>
+                <div class="arrow">-&gt;</div>
                 <div class="flow-node"><strong>Safer action</strong><span>Agent carries warnings into the plan.</span></div>
               </div>
             </div>
@@ -560,7 +570,7 @@ smctl gate</code></pre>
   </footer>
 
   <script>
-    const target = "Support for Supermemory Local.";
+    const target = "The trust layer for Supermemory Local.";
     const node = document.getElementById("typewriter");
     let index = 0;
 
