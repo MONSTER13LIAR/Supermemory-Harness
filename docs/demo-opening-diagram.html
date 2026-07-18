@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supermemory Harness Demo Diagram</title>
+  <style>
+    :root {
+      --bg: #081016;
+      --panel: #111b22;
+      --panel-2: #15242c;
+      --line: #31424b;
+      --text: #eef7f8;
+      --muted: #9fb1b8;
+      --cyan: #20d6ff;
+      --green: #55e69b;
+      --amber: #ffc857;
+      --rose: #ff6f91;
+      --violet: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(32, 214, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 84% 14%, rgba(85, 230, 155, 0.11), transparent 30%),
+        linear-gradient(135deg, #071017 0%, #0b151b 54%, #101516 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: grid;
+      justify-items: center;
+      align-items: start;
+      padding: 34px;
+      overflow-y: auto;
+    }
+
+    .stage {
+      width: min(1280px, 100%);
+      min-height: min(720px, calc(100vh - 68px));
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+      padding: clamp(26px, 4vw, 48px);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(8, 16, 22, 0.78);
+      box-shadow: 0 30px 110px rgba(0, 0, 0, 0.48);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .brand {
+      display: grid;
+      gap: 12px;
+    }
+
+    .eyebrow {
+      color: var(--cyan);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 900px;
+      font-size: clamp(42px, 5.6vw, 78px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 800px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 24px);
+      line-height: 1.35;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      min-width: 180px;
+      padding: 14px 16px;
+      border: 1px solid rgba(85, 230, 155, 0.40);
+      background: rgba(85, 230, 155, 0.10);
+      color: var(--green);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-columns: 0.95fr 1.25fr 0.95fr;
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .column {
+      display: grid;
+      gap: 16px;
+      align-content: center;
+    }
+
+    .node,
+    .core,
+    .engine {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(180deg, rgba(21, 36, 44, 0.96), rgba(13, 24, 30, 0.96));
+      padding: 18px;
+      min-height: 112px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 42px rgba(0, 0, 0, 0.22);
+    }
+
+    .node::before,
+    .core::before,
+    .engine::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: var(--accent, var(--cyan));
+    }
+
+    .label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--accent, var(--cyan));
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent, var(--cyan));
+      box-shadow: 0 0 20px var(--accent, var(--cyan));
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .core {
+      --accent: var(--cyan);
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      min-height: 430px;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(10, 35, 45, 0.98), rgba(10, 22, 28, 0.98));
+      border-color: rgba(32, 214, 255, 0.38);
+    }
+
+    .core h2 {
+      font-size: clamp(34px, 4vw, 52px);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .feature {
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .feature strong {
+      display: block;
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.28;
+    }
+
+    .engine {
+      --accent: var(--green);
+      min-height: 240px;
+      border-color: rgba(85, 230, 155, 0.28);
+    }
+
+    .connector {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .connector span {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .connector span::before,
+    .connector span::after {
+      content: "";
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(32, 214, 255, 0.85), transparent);
+    }
+
+    .footer {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .proof {
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .proof strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .proof span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 940px) {
+      body {
+        padding: 16px;
+      }
+
+      .stage {
+        min-height: auto;
+      }
+
+      .header,
+      .diagram,
+      .footer {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        display: grid;
+      }
+
+      .badge {
+        width: max-content;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Supermemory Harness architecture diagram">
+    <header class="header">
+      <div class="brand">
+        <div class="eyebrow">Supermemory Local Hackathon</div>
+        <h1>Harness makes local memory trustworthy for users and AI agents.</h1>
+        <p class="subtitle">Supermemory Local stays the private memory engine. Harness adds the command center: proof, trust, repair, guardrails, personalization, and agent lifecycle checks.</p>
+      </div>
+      <div class="badge">localhost:6767<br>plus Harness</div>
+    </header>
+
+    <section class="diagram">
+      <div class="column">
+        <article class="node" style="--accent: var(--amber)">
+          <div class="label"><span class="dot"></span>Users</div>
+          <h2>Install and know what is next</h2>
+          <p>One command shows health, blockers, dashboard path, project scope, and safe next action.</p>
+        </article>
+
+        <article class="node" style="--accent: var(--violet)">
+          <div class="label"><span class="dot"></span>Agents</div>
+          <h2>Codex, Claude Code, Cursor</h2>
+          <p>Agents run gates before edits, compaction, migrations, or relying on recalled memory.</p>
+        </article>
+      </div>
+
+      <div class="column">
+        <div class="connector"><span>checks before trust</span></div>
+        <article class="core">
+          <div class="label"><span class="dot"></span>Supermemory Harness</div>
+          <h2>Local memory command center</h2>
+          <div class="feature-grid">
+            <div class="feature"><strong>Verify</strong><span>Proves write, search, scope, and recall are working.</span></div>
+            <div class="feature"><strong>Trust</strong><span>Scores memory health before users or agents rely on it.</span></div>
+            <div class="feature"><strong>Repair</strong><span>Turns failed writes and runtime issues into safe next steps.</span></div>
+            <div class="feature"><strong>Guard</strong><span>Reviews risky writes before they become durable memory.</span></div>
+            <div class="feature"><strong>Genome</strong><span>Personalizes future memory behavior from stored memory types.</span></div>
+            <div class="feature"><strong>Bridge</strong><span>Gives coding agents lifecycle checks and handoff rules.</span></div>
+          </div>
+        </article>
+        <div class="connector"><span>uses local engine</span></div>
+      </div>
+
+      <div class="column">
+        <article class="engine">
+          <div class="label"><span class="dot"></span>Supermemory Local</div>
+          <h2>Private memory engine</h2>
+          <p>Embeddings, encrypted storage, search, documents, and recall stay on the user's machine at localhost:6767.</p>
+        </article>
+
+        <article class="node" style="--accent: var(--rose)">
+          <div class="label"><span class="dot"></span>Pain killed</div>
+          <h2>No more guessing from raw logs</h2>
+          <p>Harness turns local memory from a black box into an inspectable, repairable workflow.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="proof"><strong>For users</strong><span>Clear install, dashboard, proof, repair, and migration paths.</span></div>
+      <div class="proof"><strong>For agents</strong><span>Pass, warn, or block before relying on project memory.</span></div>
+      <div class="proof"><strong>For Supermemory</strong><span>A companion layer that makes Local easier to recommend.</span></div>
+    </footer>
+  </main>
+</body>
+</html>

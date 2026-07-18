@@ -4,6 +4,8 @@
 
 Supermemory Harness (`smctl`) is a local command center for Supermemory Local. It keeps the privacy and local-first shape of Supermemory, then adds the operational layer users and AI agents need: onboarding, health, project scope, risky-write review, recall proof, repair guidance, personalization, and reviewed Local-to-Cloud migration.
 
+Live project page: [monster13liar.github.io/Supermemory-Harness](https://monster13liar.github.io/Supermemory-Harness/)
+
 It does not replace Supermemory Local. It wraps the local server so users, Codex/Claude-style agents, and Supermemory developers can answer one question quickly: **is this memory safe and useful to rely on right now?**
 
 ## What Changes After Install
