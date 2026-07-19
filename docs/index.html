@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Supermemory Harness is the operational layer for Supermemory Local: install, trust, recall proof, repair, personalization, guard rails, and reviewed Local-to-Cloud migration.">
   <title>Supermemory Harness</title>
+  <link href="https://fonts.cdnfonts.com/css/raster-forge" rel="stylesheet">
   <style>
     :root {
       --black: #000000;
@@ -91,11 +92,7 @@
 
     .hero::after {
       z-index: -1;
-      background:
-        radial-gradient(circle at 72% 38%, rgba(0, 215, 255, 0.13), transparent 22%),
-        radial-gradient(circle at 28% 76%, rgba(47, 174, 119, 0.1), transparent 18%),
-        radial-gradient(circle at 86% 78%, rgba(226, 93, 93, 0.09), transparent 16%),
-        linear-gradient(180deg, transparent 0 72%, rgba(0, 0, 0, 0.92) 100%);
+      background: linear-gradient(180deg, transparent 0 70%, rgba(0, 0, 0, 0.94) 100%);
     }
 
     .brand {
@@ -104,12 +101,12 @@
       left: max(20px, calc((100% - 1160px) / 2));
       z-index: 3;
       color: #eaffff;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
+      font-family: "Raster Forge", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0;
       text-transform: uppercase;
-      text-shadow: 0 0 18px rgba(0, 215, 255, 0.42);
+      text-shadow: none;
     }
 
     .hero-grid {
@@ -117,7 +114,7 @@
       z-index: 2;
       display: grid;
       grid-template-columns: minmax(0, 0.92fr) minmax(360px, 0.88fr);
-      gap: clamp(32px, 6vw, 88px);
+      gap: 64px;
       align-items: center;
     }
 
@@ -126,7 +123,7 @@
       min-height: 2.1em;
       margin: 0;
       color: #f5fbfb;
-      font-size: clamp(48px, 5.5vw, 78px);
+      font-size: 72px;
       font-weight: 880;
       line-height: 1.03;
       letter-spacing: 0;
@@ -153,6 +150,7 @@
       display: grid;
       gap: 22px;
       width: min(100%, 580px);
+      margin-top: 60px;
     }
 
     .banner-wrap {
@@ -169,7 +167,6 @@
       display: block;
       height: auto;
       background: #000000;
-      filter: drop-shadow(0 0 28px rgba(0, 215, 255, 0.2));
     }
 
     .memory-sorter {
@@ -198,7 +195,7 @@
     .sort-robot {
       position: absolute;
       left: 41%;
-      bottom: 46px;
+      bottom: 16px;
       z-index: 2;
       width: 78px;
       height: 92px;
@@ -272,15 +269,15 @@
       position: absolute;
       right: 0;
       bottom: 0;
-      z-index: 3;
+      z-index: 5;
       display: grid;
-      grid-template-columns: repeat(3, 64px);
+      grid-template-columns: repeat(3, 102px);
       gap: 10px;
     }
 
     .sort-bin {
       position: relative;
-      height: 50px;
+      height: 58px;
       border: 1px solid currentColor;
       border-radius: 6px 6px 10px 10px;
       background: color-mix(in srgb, currentColor 12%, transparent);
@@ -291,20 +288,21 @@
       content: attr(data-label);
       position: absolute;
       left: 50%;
-      top: -22px;
+      top: 9px;
       transform: translateX(-50%);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 10px;
       font-weight: 900;
-      letter-spacing: 0.08em;
+      letter-spacing: 0;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .sort-bin::after {
       content: "";
       position: absolute;
       left: 50%;
-      bottom: 10px;
+      bottom: 9px;
       width: 32px;
       height: 18px;
       border: 1px solid currentColor;
@@ -326,42 +324,22 @@
       position: absolute;
       left: 16px;
       top: 18px;
-      z-index: 4;
-      width: 42px;
-      height: 30px;
+      z-index: 3;
+      width: 58px;
+      height: 28px;
       display: grid;
       place-items: center;
+      padding: 0 8px;
       border: 1px solid currentColor;
       border-radius: 6px;
       background: rgba(0, 0, 0, 0.68);
       color: var(--chip);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      font-size: 0;
+      font-size: 10px;
+      font-weight: 850;
       letter-spacing: 0;
       box-shadow: 0 0 18px color-mix(in srgb, currentColor 32%, transparent);
       animation: sortChip 7.2s linear infinite;
-    }
-
-    .memory-chip::before,
-    .memory-chip::after {
-      content: "";
-      position: absolute;
-      left: 9px;
-      height: 3px;
-      border-radius: 999px;
-      background: currentColor;
-      box-shadow: 0 0 12px currentColor;
-    }
-
-    .memory-chip::before {
-      top: 9px;
-      width: 21px;
-    }
-
-    .memory-chip::after {
-      top: 17px;
-      width: 14px;
-      opacity: 0.72;
     }
 
     .memory-chip.red {
@@ -370,8 +348,8 @@
       --y1: 24px;
       --x2: 214px;
       --y2: 56px;
-      --x3: 318px;
-      --y3: 124px;
+      --x3: 220px;
+      --y3: 116px;
     }
 
     .memory-chip.green {
@@ -380,8 +358,8 @@
       --y1: 76px;
       --x2: 222px;
       --y2: 34px;
-      --x3: 392px;
-      --y3: 124px;
+      --x3: 332px;
+      --y3: 116px;
       animation-delay: -2.4s;
     }
 
@@ -391,8 +369,8 @@
       --y1: 6px;
       --x2: 226px;
       --y2: 42px;
-      --x3: 466px;
-      --y3: 124px;
+      --x3: 444px;
+      --y3: 116px;
       animation-delay: -4.8s;
     }
 
@@ -473,7 +451,7 @@
     h2 {
       max-width: 860px;
       margin: 0;
-      font-size: clamp(34px, 4.4vw, 58px);
+      font-size: 52px;
       font-weight: 860;
       line-height: 1.02;
       letter-spacing: 0;
@@ -583,8 +561,8 @@
     .feature-card {
       display: grid;
       align-content: start;
-      gap: 18px;
-      min-height: 230px;
+      gap: 20px;
+      min-height: 378px;
       padding: 22px;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -606,12 +584,112 @@
       line-height: 1.5;
     }
 
+    .feature-diagram {
+      width: 100%;
+      height: 136px;
+      display: block;
+      border: 1px solid #dbe4e0;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(17, 23, 24, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(17, 23, 24, 0.028) 1px, transparent 1px),
+        #fbfdfb;
+      background-size: 32px 32px;
+    }
+
+    .feature-diagram text {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 10px;
+      font-weight: 760;
+      fill: #1c292b;
+    }
+
+    .feature-diagram .muted-text {
+      fill: #657174;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .feature-diagram .text-light {
+      fill: #ffffff;
+    }
+
+    .feature-diagram .node {
+      fill: #ffffff;
+      stroke: #cfdad7;
+      stroke-width: 1.2;
+    }
+
+    .feature-diagram .node-dark {
+      fill: #111718;
+      stroke: #111718;
+      stroke-width: 1.2;
+    }
+
+    .feature-diagram .node-cyan {
+      fill: rgba(0, 215, 255, 0.08);
+      stroke: var(--cyan);
+    }
+
+    .feature-diagram .node-green {
+      fill: rgba(47, 174, 119, 0.08);
+      stroke: var(--green);
+    }
+
+    .feature-diagram .node-amber {
+      fill: rgba(207, 135, 47, 0.08);
+      stroke: var(--amber);
+    }
+
+    .feature-diagram .node-red {
+      fill: rgba(226, 93, 93, 0.08);
+      stroke: var(--red);
+    }
+
+    .feature-diagram .path {
+      fill: none;
+      stroke: #8ca09b;
+      stroke-width: 1.5;
+    }
+
+    .feature-diagram .path-cyan {
+      stroke: var(--cyan);
+    }
+
+    .feature-diagram .path-green {
+      stroke: var(--green);
+    }
+
+    .feature-diagram .path-amber {
+      stroke: var(--amber);
+    }
+
+    .feature-diagram .path-red {
+      stroke: var(--red);
+    }
+
+    .feature-diagram .fill-cyan {
+      fill: var(--cyan);
+    }
+
+    .feature-diagram .fill-green {
+      fill: var(--green);
+    }
+
+    .feature-diagram .fill-amber {
+      fill: var(--amber);
+    }
+
+    .feature-diagram .fill-red {
+      fill: var(--red);
+    }
+
     .feature-kicker {
       color: var(--cyan);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 12px;
       font-weight: 900;
-      letter-spacing: 0.08em;
+      letter-spacing: 0;
       text-transform: uppercase;
     }
 
@@ -679,12 +757,7 @@
     .migration-map::before {
       content: "";
       position: absolute;
-      left: 9%;
-      right: 9%;
-      top: auto;
-      bottom: 42px;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(0, 215, 255, 0.2), rgba(47, 174, 119, 0.54), rgba(0, 95, 255, 0.34));
+      display: none;
     }
 
     .migration-node,
@@ -747,21 +820,53 @@
     .review-lane:nth-child(2) { border-color: rgba(207, 135, 47, 0.34); }
     .review-lane:nth-child(3) { border-color: rgba(226, 93, 93, 0.32); }
 
-    .migration-packet {
+    .migration-route {
       position: absolute;
-      z-index: 2;
-      width: 11px;
-      height: 11px;
-      border-radius: 999px;
-      background: var(--cyan);
-      box-shadow: 0 0 20px rgba(0, 215, 255, 0.88);
-      bottom: 38px;
-      animation: migratePacket 6.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      left: 28px;
+      right: 28px;
+      bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
     }
 
-    .migration-packet:nth-of-type(1) { animation-delay: 0s; }
-    .migration-packet:nth-of-type(2) { animation-delay: -2.2s; background: var(--green); box-shadow: 0 0 20px rgba(47, 174, 119, 0.82); }
-    .migration-packet:nth-of-type(3) { animation-delay: -4.4s; background: var(--amber); box-shadow: 0 0 20px rgba(207, 135, 47, 0.78); }
+    .route-step {
+      position: relative;
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      padding: 8px 10px;
+      color: rgba(234, 250, 250, 0.78);
+      border: 1px solid rgba(207, 250, 255, 0.16);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.32);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      font-weight: 820;
+      line-height: 1.2;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .route-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -19px;
+      top: 50%;
+      width: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0, 215, 255, 0.26), rgba(47, 174, 119, 0.5));
+    }
+
+    .route-step:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      right: -21px;
+      top: calc(50% - 4px);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 7px solid rgba(47, 174, 119, 0.72);
+    }
 
     .migration-note {
       margin: 18px 0 0;
@@ -894,7 +999,7 @@
         opacity: 0;
         transform: translate3d(0, 0, 0) scale(0.92);
       }
-      10%, 76% {
+      10%, 52% {
         opacity: 1;
       }
       30% {
@@ -903,8 +1008,8 @@
       55% {
         transform: translate3d(var(--x2), var(--y2), 0) scale(0.96);
       }
-      86% {
-        opacity: 1;
+      70% {
+        opacity: 0;
         transform: translate3d(var(--x3), var(--y3), 0) scale(0.72);
       }
       100% {
@@ -942,39 +1047,6 @@
       }
     }
 
-    @keyframes migratePacket {
-      0% {
-        left: 8%;
-        opacity: 0;
-        transform: translateY(0);
-      }
-      9% {
-        opacity: 1;
-      }
-      28% {
-        left: 34%;
-        transform: translateY(-7px);
-      }
-      44% {
-        left: 43%;
-        transform: translateY(5px);
-      }
-      60% {
-        left: 52%;
-        transform: translateY(-6px);
-      }
-      78% {
-        left: 70%;
-        opacity: 1;
-        transform: translateY(4px);
-      }
-      100% {
-        left: 91%;
-        opacity: 0;
-        transform: translateY(0);
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -1003,6 +1075,88 @@
       .flow-card {
         min-height: 132px;
       }
+
+      .hero-title {
+        font-size: 56px;
+      }
+
+      h2 {
+        font-size: 44px;
+      }
+    }
+
+    @media (max-height: 640px) and (min-width: 761px) {
+      .hero {
+        padding: 76px 0 52px;
+      }
+
+      .hero-grid {
+        gap: 52px;
+      }
+
+      .hero-title {
+        font-size: 58px;
+      }
+
+      .hero-visual {
+        gap: 6px;
+        margin-top: 78px;
+        width: min(100%, 520px);
+      }
+
+      .banner-wrap {
+        width: min(100%, 480px);
+      }
+
+      .memory-sorter {
+        height: 104px;
+        width: min(100%, 500px);
+      }
+
+      .sort-robot {
+        left: 38%;
+        bottom: -2px;
+        transform: translateX(-50%) scale(0.68);
+      }
+
+      .sort-bins {
+        grid-template-columns: repeat(3, 88px);
+      }
+
+      .sort-bin {
+        height: 44px;
+      }
+
+      .sort-bin::before {
+        font-size: 8px;
+      }
+
+      .memory-chip {
+        width: 50px;
+        height: 25px;
+        font-size: 9px;
+      }
+
+      .memory-chip.red {
+        --x3: 216px;
+        --y3: 72px;
+      }
+
+      .memory-chip.green {
+        --x3: 314px;
+        --y3: 72px;
+      }
+
+      .memory-chip.blue {
+        --x3: 412px;
+        --y3: 72px;
+      }
+
+      .scroll-cue {
+        bottom: 12px;
+        width: 40px;
+        height: 40px;
+      }
     }
 
     @media (max-width: 760px) {
@@ -1018,6 +1172,7 @@
       .brand {
         left: 16px;
         top: 22px;
+        font-size: 16px;
       }
 
       .hero-grid,
@@ -1034,7 +1189,7 @@
 
       .hero-title {
         min-height: 3.2em;
-        font-size: clamp(40px, 11.5vw, 54px);
+        font-size: 44px;
       }
 
       .banner-wrap {
@@ -1046,6 +1201,7 @@
         justify-self: stretch;
         width: 100%;
         gap: 16px;
+        margin-top: 0;
       }
 
       .memory-sorter {
@@ -1056,26 +1212,36 @@
       }
 
       .sort-robot {
-        left: 32%;
-        bottom: 30px;
-        transform: translateX(-50%) scale(0.76);
+        left: 22%;
+        bottom: 14px;
+        transform: translateX(-50%) scale(0.72);
       }
 
       .sort-bins {
         right: 0;
-        grid-template-columns: repeat(3, 48px);
+        grid-template-columns: repeat(3, 84px);
         gap: 8px;
       }
 
       .sort-bin {
-        height: 40px;
+        height: 50px;
+      }
+
+      .sort-bin::before {
+        font-size: 8px;
+      }
+
+      .sort-bin::after {
+        bottom: 7px;
+        width: 28px;
       }
 
       .memory-chip {
         left: 4px;
         top: 10px;
-        width: 36px;
-        height: 26px;
+        width: 50px;
+        height: 25px;
+        font-size: 9px;
       }
 
       .memory-chip.red {
@@ -1083,7 +1249,7 @@
         --y1: 18px;
         --x2: 102px;
         --y2: 46px;
-        --x3: 196px;
+        --x3: 108px;
         --y3: 100px;
       }
 
@@ -1092,7 +1258,7 @@
         --y1: 58px;
         --x2: 110px;
         --y2: 18px;
-        --x3: 250px;
+        --x3: 200px;
         --y3: 100px;
       }
 
@@ -1101,7 +1267,7 @@
         --y1: 0;
         --x2: 118px;
         --y2: 30px;
-        --x3: 304px;
+        --x3: 292px;
         --y3: 100px;
       }
 
@@ -1113,13 +1279,42 @@
         font-size: 16px;
       }
 
-      .migration-map {
-        min-height: 720px;
+      h2 {
+        font-size: 34px;
       }
 
-      .migration-map::before,
-      .migration-packet {
-        display: none;
+      .migration-map {
+        min-height: auto;
+        padding: 24px;
+      }
+
+      .migration-route {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        margin-top: 4px;
+      }
+
+      .route-step:not(:last-child)::after {
+        left: 50%;
+        right: auto;
+        top: 100%;
+        width: 1px;
+        height: 18px;
+        transform: translateX(-50%);
+      }
+
+      .route-step:not(:last-child)::before {
+        left: calc(50% - 4px);
+        right: auto;
+        top: calc(100% + 12px);
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 7px solid rgba(47, 174, 119, 0.72);
+        border-bottom: 0;
       }
 
       .migration-node {
@@ -1145,18 +1340,18 @@
           <img class="hero-banner" src="assets/smctl-banner.svg?v=20260718-black" alt="smctl Supermemory Harness install banner">
         </div>
         <div class="memory-sorter" aria-hidden="true">
-          <span class="memory-chip red">recall</span>
-          <span class="memory-chip green">scope</span>
-          <span class="memory-chip blue">trust</span>
+          <span class="memory-chip red">memory</span>
+          <span class="memory-chip green">memory</span>
+          <span class="memory-chip blue">memory</span>
           <div class="sort-robot">
             <div class="robot-head"></div>
             <div class="robot-body"></div>
             <div class="robot-arm"></div>
           </div>
           <div class="sort-bins">
-            <div class="sort-bin red" data-label="red"></div>
-            <div class="sort-bin green" data-label="green"></div>
-            <div class="sort-bin blue" data-label="blue"></div>
+            <div class="sort-bin red" data-label="Review"></div>
+            <div class="sort-bin green" data-label="Personalize"></div>
+            <div class="sort-bin blue" data-label="Recall"></div>
           </div>
         </div>
       </div>
@@ -1169,8 +1364,8 @@
       <div class="wrap">
         <div class="section-head reveal">
           <div class="section-label">Core Flow</div>
-          <h2>Every important action has a visible command.</h2>
-          <p>The page now explains the workflow directly: install, start Local, open the command center, prove recall, check trust, and gate agent work.</p>
+          <h2>Commanded workflows from install to handoff.</h2>
+          <p>Harness exposes each critical step as an explicit command: installation, Local startup, command-center access, recall verification, trust checks, and agent gating.</p>
         </div>
 
         <div class="flow-board reveal" aria-label="Core Supermemory Harness command flow">
@@ -1207,61 +1402,159 @@
       <div class="wrap">
         <div class="section-head reveal">
           <div class="section-label">Feature Systems</div>
-          <h2>The big features are operational, not decorative.</h2>
-          <p>Harness wraps Supermemory Local with proof, review, repair, personalization, dashboards, agent gates, and redacted evidence so memory feels safe enough to recommend.</p>
+          <h2>Operational systems for reliable local memory.</h2>
+          <p>Harness adds proof, review, repair, personalization, dashboards, agent gates, and redacted evidence around Supermemory Local so memory-backed work remains auditable.</p>
         </div>
 
         <div class="feature-grid">
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Trust checks combine memory health, scope, and recall proof before a gate verdict">
+              <rect class="node" x="18" y="18" width="86" height="34" rx="7"></rect>
+              <text x="31" y="39">health</text>
+              <rect class="node" x="18" y="84" width="86" height="34" rx="7"></rect>
+              <text x="34" y="105">scope</text>
+              <rect class="node node-cyan" x="122" y="51" width="86" height="34" rx="7"></rect>
+              <text x="140" y="72">recall</text>
+              <rect class="node node-dark" x="230" y="51" width="72" height="34" rx="7"></rect>
+              <text class="text-light" x="246" y="72">gate</text>
+              <path class="path" d="M104 35 L122 68"></path>
+              <path class="path" d="M104 101 L122 68"></path>
+              <path class="path path-cyan" d="M208 68 L230 68"></path>
+              <polygon class="fill-cyan" points="229,68 220,63 220,73"></polygon>
+              <circle class="fill-green" cx="266" cy="98" r="5"></circle>
+              <text class="muted-text" x="246" y="116">verdict</text>
+            </svg>
             <div class="feature-kicker">Trust Layer</div>
             <div>
-              <h3>Trust before action</h3>
-              <p><code>trust</code>, <code>gate</code>, and <code>session</code> check scope, health, warnings, and recall before agents make high-impact changes.</p>
+              <h3>Pre-action trust checks</h3>
+              <p><code>trust</code>, <code>gate</code>, and <code>session</code> evaluate scope, health, warnings, and recall before agents perform high-impact work.</p>
             </div>
             <div class="feature-commands"><code>smctl trust</code><code>smctl gate</code><code>smctl session pre-action</code></div>
           </article>
 
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Guard review routes writes through an inbox before approval or rejection">
+              <rect class="node" x="16" y="22" width="72" height="32" rx="7"></rect>
+              <text x="31" y="42">write</text>
+              <rect class="node node-amber" x="118" y="22" width="78" height="32" rx="7"></rect>
+              <text x="139" y="42">inbox</text>
+              <rect class="node node-green" x="228" y="16" width="72" height="30" rx="7"></rect>
+              <text x="244" y="35">approve</text>
+              <rect class="node node-red" x="228" y="90" width="72" height="30" rx="7"></rect>
+              <text x="248" y="109">reject</text>
+              <rect class="node node-cyan" x="118" y="84" width="78" height="32" rx="7"></rect>
+              <text x="140" y="104">local</text>
+              <path class="path" d="M88 38 L118 38"></path>
+              <path class="path path-green" d="M196 38 L228 31"></path>
+              <path class="path path-red" d="M196 38 C218 52 215 82 228 105"></path>
+              <path class="path path-cyan" d="M157 54 L157 84"></path>
+              <polygon class="fill-cyan" points="157,84 152,74 162,74"></polygon>
+            </svg>
             <div class="feature-kicker">Write Review</div>
             <div>
-              <h3>Guard review</h3>
-              <p><code>guard</code> keeps risky writes in an inbox, applies project metadata, and forwards only approved memories to Local.</p>
+              <h3>Reviewed write intake</h3>
+              <p><code>guard</code> places risky writes in a review inbox, applies project metadata, and forwards only approved memories to Local.</p>
             </div>
             <div class="feature-commands"><code>smctl guard inbox</code><code>approve</code><code>reject</code></div>
           </article>
 
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Memory Genome classifies clusters into profile gaps and policy">
+              <circle class="fill-cyan" cx="42" cy="36" r="12"></circle>
+              <circle class="fill-green" cx="69" cy="66" r="10"></circle>
+              <circle class="fill-amber" cx="38" cy="92" r="9"></circle>
+              <rect class="node node-dark" x="116" y="46" width="86" height="44" rx="8"></rect>
+              <text class="text-light" x="135" y="65">genome</text>
+              <text class="text-light" x="139" y="80">model</text>
+              <rect class="node node-green" x="230" y="14" width="72" height="28" rx="7"></rect>
+              <text x="247" y="32">profile</text>
+              <rect class="node node-amber" x="230" y="55" width="72" height="28" rx="7"></rect>
+              <text x="252" y="73">gaps</text>
+              <rect class="node node-cyan" x="230" y="96" width="72" height="28" rx="7"></rect>
+              <text x="250" y="114">policy</text>
+              <path class="path" d="M79 66 L116 68"></path>
+              <path class="path path-green" d="M202 68 L230 28"></path>
+              <path class="path path-amber" d="M202 68 L230 69"></path>
+              <path class="path path-cyan" d="M202 68 L230 110"></path>
+            </svg>
             <div class="feature-kicker">Personalization</div>
             <div>
-              <h3>Memory Genome</h3>
-              <p><code>genome</code> classifies stored memory types, finds personalization gaps, and can install a local policy for future writes.</p>
+              <h3>Personalization analysis</h3>
+              <p><code>genome</code> classifies stored memory, identifies personalization gaps, and can install a local policy for future writes.</p>
             </div>
             <div class="feature-commands"><code>smctl genome</code><code>smctl genome apply</code></div>
           </article>
 
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Repair wizard diagnoses issues and produces recovery steps">
+              <rect class="node node-red" x="16" y="28" width="76" height="34" rx="7"></rect>
+              <text x="36" y="49">issue</text>
+              <rect class="node node-amber" x="122" y="16" width="80" height="34" rx="7"></rect>
+              <text x="139" y="37">diagnose</text>
+              <rect class="node" x="122" y="86" width="80" height="34" rx="7"></rect>
+              <text x="146" y="107">steps</text>
+              <rect class="node node-green" x="230" y="52" width="74" height="34" rx="7"></rect>
+              <text x="247" y="73">verify</text>
+              <path class="path path-red" d="M92 45 L122 33"></path>
+              <path class="path" d="M162 50 L162 86"></path>
+              <path class="path path-green" d="M202 103 C220 103 214 69 230 69"></path>
+              <polygon class="fill-green" points="230,69 220,64 220,74"></polygon>
+            </svg>
             <div class="feature-kicker">Recovery</div>
             <div>
-              <h3>Repair wizard</h3>
-              <p><code>repair wizard</code> turns failed writes, stale queues, retry loops, and recall mismatches into ordered recovery steps.</p>
+              <h3>Guided recovery</h3>
+              <p><code>repair wizard</code> converts failed writes, stale queues, retry loops, and recall mismatches into ordered recovery steps.</p>
             </div>
             <div class="feature-commands"><code>smctl repair wizard</code><code>smctl support</code></div>
           </article>
 
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Evidence commands redact proof and prepare reports">
+              <rect class="node" x="16" y="24" width="74" height="30" rx="7"></rect>
+              <text x="36" y="43">audit</text>
+              <rect class="node" x="16" y="82" width="74" height="30" rx="7"></rect>
+              <text x="34" y="101">events</text>
+              <rect class="node node-red" x="118" y="52" width="78" height="34" rx="7"></rect>
+              <text x="136" y="73">redact</text>
+              <rect class="node node-cyan" x="226" y="30" width="76" height="34" rx="7"></rect>
+              <text x="245" y="51">proof</text>
+              <rect class="node node-green" x="226" y="82" width="76" height="34" rx="7"></rect>
+              <text x="244" y="103">launch</text>
+              <path class="path" d="M90 39 L118 69"></path>
+              <path class="path" d="M90 97 L118 69"></path>
+              <path class="path path-cyan" d="M196 69 L226 47"></path>
+              <path class="path path-green" d="M196 69 L226 99"></path>
+            </svg>
             <div class="feature-kicker">Proof</div>
             <div>
-              <h3>Evidence and launch board</h3>
-              <p><code>evidence</code>, <code>advisor</code>, <code>recommend</code>, and <code>launch</code> produce redacted proof, readiness, and demo guidance.</p>
+              <h3>Redacted evidence board</h3>
+              <p><code>evidence</code>, <code>advisor</code>, <code>recommend</code>, and <code>launch</code> produce proof, readiness, and demo guidance.</p>
             </div>
             <div class="feature-commands"><code>smctl evidence</code><code>smctl launch</code></div>
           </article>
 
           <article class="feature-card reveal">
+            <svg class="feature-diagram" viewBox="0 0 320 136" role="img" aria-label="Operations view connects Local, proxy, dashboard, and live status commands">
+              <rect class="node node-dark" x="18" y="52" width="74" height="34" rx="7"></rect>
+              <text class="text-light" x="38" y="73">local</text>
+              <rect class="node node-cyan" x="122" y="52" width="78" height="34" rx="7"></rect>
+              <text x="145" y="73">proxy</text>
+              <rect class="node" x="230" y="16" width="72" height="28" rx="7"></rect>
+              <text x="250" y="34">ui</text>
+              <rect class="node" x="230" y="54" width="72" height="28" rx="7"></rect>
+              <text x="246" y="72">watch</text>
+              <rect class="node" x="230" y="92" width="72" height="28" rx="7"></rect>
+              <text x="245" y="110">score</text>
+              <path class="path path-cyan" d="M92 69 L122 69"></path>
+              <path class="path" d="M200 69 L230 30"></path>
+              <path class="path" d="M200 69 L230 68"></path>
+              <path class="path" d="M200 69 L230 106"></path>
+              <circle class="fill-green" cx="161" cy="69" r="5"></circle>
+            </svg>
             <div class="feature-kicker">Operations</div>
             <div>
-              <h3>Runtime command center</h3>
-              <p><code>ui</code>, <code>watch</code>, <code>status</code>, and <code>score</code> make Local state readable without digging through logs.</p>
+              <h3>Runtime operations view</h3>
+              <p><code>ui</code>, <code>watch</code>, <code>status</code>, and <code>score</code> make Local state observable without manual log inspection.</p>
             </div>
             <div class="feature-commands"><code>smctl ui</code><code>smctl watch</code><code>smctl score</code></div>
           </article>
@@ -1278,10 +1571,6 @@
         </div>
 
         <div class="migration-map reveal" aria-label="Local to Cloud migration diagram">
-          <span class="migration-packet" aria-hidden="true"></span>
-          <span class="migration-packet" aria-hidden="true"></span>
-          <span class="migration-packet" aria-hidden="true"></span>
-
           <article class="migration-node">
             <div class="node-label">Local</div>
             <strong>Supermemory Local</strong>
@@ -1314,6 +1603,13 @@
             <strong>Verify and receipt</strong>
             <span><code>migrate verify</code>, <code>receipt</code>, and <code>report</code> show what moved and what still needs attention.</span>
           </article>
+
+          <div class="migration-route" aria-hidden="true">
+            <span class="route-step">scan local memory</span>
+            <span class="route-step">review and redact</span>
+            <span class="route-step">upload by intent</span>
+            <span class="route-step">verify receipt</span>
+          </div>
         </div>
 
         <p class="migration-note reveal">Boundary: this is reviewed knowledge migration, not a byte-perfect clone of Supermemory internals. Original database IDs, embeddings, chunk IDs, auth state, and Local-only processing state remain owned by Supermemory.</p>
