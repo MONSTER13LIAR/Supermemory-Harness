@@ -92,8 +92,9 @@
     .hero::after {
       z-index: -1;
       background:
-        linear-gradient(120deg, transparent 0 16%, rgba(0, 215, 255, 0.12) 16.1% 16.22%, transparent 16.3% 100%),
-        linear-gradient(70deg, transparent 0 68%, rgba(47, 174, 119, 0.12) 68.1% 68.24%, transparent 68.34% 100%),
+        radial-gradient(circle at 72% 38%, rgba(0, 215, 255, 0.13), transparent 22%),
+        radial-gradient(circle at 28% 76%, rgba(47, 174, 119, 0.1), transparent 18%),
+        radial-gradient(circle at 86% 78%, rgba(226, 93, 93, 0.09), transparent 16%),
         linear-gradient(180deg, transparent 0 72%, rgba(0, 0, 0, 0.92) 100%);
     }
 
@@ -102,22 +103,13 @@
       top: 28px;
       left: max(20px, calc((100% - 1160px) / 2));
       z-index: 3;
-      display: flex;
-      align-items: center;
-      gap: 10px;
       color: #eaffff;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0;
-    }
-
-    .brand::before {
-      content: "";
-      width: 12px;
-      height: 12px;
-      border: 2px solid var(--cyan);
-      box-shadow: 0 0 20px rgba(0, 215, 255, 0.72);
-      transform: rotate(45deg);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(0, 215, 255, 0.42);
     }
 
     .hero-grid {
@@ -155,37 +147,19 @@
       animation: blink 0.85s step-end infinite;
     }
 
+    .hero-visual {
+      position: relative;
+      justify-self: end;
+      display: grid;
+      gap: 22px;
+      width: min(100%, 580px);
+    }
+
     .banner-wrap {
       position: relative;
       justify-self: end;
-      width: min(100%, 560px);
+      width: min(100%, 540px);
       animation: bannerRise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    }
-
-    .banner-wrap::before,
-    .banner-wrap::after {
-      content: "";
-      position: absolute;
-      pointer-events: none;
-    }
-
-    .banner-wrap::before {
-      left: -18px;
-      right: -18px;
-      top: -18px;
-      bottom: -18px;
-      border: 1px solid rgba(0, 215, 255, 0.2);
-      opacity: 0.62;
-      transform: skewY(-1deg);
-    }
-
-    .banner-wrap::after {
-      left: -34px;
-      right: 18%;
-      bottom: -28px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0, 215, 255, 0.72), transparent);
-      animation: scanLine 3.6s ease-in-out infinite;
     }
 
     .hero-banner {
@@ -195,7 +169,231 @@
       display: block;
       height: auto;
       background: #000000;
-      filter: drop-shadow(0 0 34px rgba(0, 215, 255, 0.22));
+      filter: drop-shadow(0 0 28px rgba(0, 215, 255, 0.2));
+    }
+
+    .memory-sorter {
+      position: relative;
+      justify-self: end;
+      width: min(100%, 520px);
+      height: 174px;
+      color: #eaffff;
+      isolation: isolate;
+    }
+
+    .memory-sorter::before {
+      content: "";
+      position: absolute;
+      inset: 14px 0 0;
+      z-index: -1;
+      background:
+        linear-gradient(90deg, rgba(0, 215, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(0, 215, 255, 0.035) 1px, transparent 1px);
+      background-size: 34px 34px;
+      opacity: 0.8;
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 76%);
+      mask-image: radial-gradient(ellipse at center, #000 0%, transparent 76%);
+    }
+
+    .sort-robot {
+      position: absolute;
+      left: 41%;
+      bottom: 46px;
+      z-index: 2;
+      width: 78px;
+      height: 92px;
+      transform: translateX(-50%);
+    }
+
+    .robot-head,
+    .robot-body {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid rgba(234, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 24px rgba(0, 215, 255, 0.12);
+    }
+
+    .robot-head {
+      top: 0;
+      width: 54px;
+      height: 38px;
+      border-radius: 8px;
+    }
+
+    .robot-head::before,
+    .robot-head::after {
+      content: "";
+      position: absolute;
+      top: 13px;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--cyan);
+      box-shadow: 0 0 14px rgba(0, 215, 255, 0.8);
+    }
+
+    .robot-head::before { left: 15px; }
+    .robot-head::after { right: 15px; }
+
+    .robot-body {
+      top: 44px;
+      width: 68px;
+      height: 48px;
+      border-radius: 10px 10px 6px 6px;
+    }
+
+    .robot-arm {
+      position: absolute;
+      left: 4px;
+      top: 50px;
+      width: 42px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(234, 255, 255, 0.22), rgba(0, 215, 255, 0.76));
+      transform-origin: right center;
+      animation: robotCatch 4.8s ease-in-out infinite;
+    }
+
+    .robot-arm::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: -6px;
+      width: 15px;
+      height: 20px;
+      border: 2px solid var(--cyan);
+      border-right: 0;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .sort-bins {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(3, 64px);
+      gap: 10px;
+    }
+
+    .sort-bin {
+      position: relative;
+      height: 50px;
+      border: 1px solid currentColor;
+      border-radius: 6px 6px 10px 10px;
+      background: color-mix(in srgb, currentColor 12%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, currentColor 24%, transparent);
+    }
+
+    .sort-bin::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      top: -22px;
+      transform: translateX(-50%);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sort-bin::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      width: 32px;
+      height: 18px;
+      border: 1px solid currentColor;
+      border-radius: 4px;
+      background:
+        linear-gradient(currentColor, currentColor) 8px 6px / 14px 2px no-repeat,
+        linear-gradient(currentColor, currentColor) 8px 11px / 9px 2px no-repeat,
+        rgba(0, 0, 0, 0.35);
+      box-shadow: 0 0 14px color-mix(in srgb, currentColor 32%, transparent);
+      transform: translateX(-50%);
+      opacity: 0.74;
+    }
+
+    .sort-bin.red { color: var(--red); }
+    .sort-bin.green { color: var(--green); }
+    .sort-bin.blue { color: var(--cyan); }
+
+    .memory-chip {
+      position: absolute;
+      left: 16px;
+      top: 18px;
+      z-index: 4;
+      width: 42px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.68);
+      color: var(--chip);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0;
+      letter-spacing: 0;
+      box-shadow: 0 0 18px color-mix(in srgb, currentColor 32%, transparent);
+      animation: sortChip 7.2s linear infinite;
+    }
+
+    .memory-chip::before,
+    .memory-chip::after {
+      content: "";
+      position: absolute;
+      left: 9px;
+      height: 3px;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .memory-chip::before {
+      top: 9px;
+      width: 21px;
+    }
+
+    .memory-chip::after {
+      top: 17px;
+      width: 14px;
+      opacity: 0.72;
+    }
+
+    .memory-chip.red {
+      --chip: var(--red);
+      --x1: 132px;
+      --y1: 24px;
+      --x2: 214px;
+      --y2: 56px;
+      --x3: 318px;
+      --y3: 124px;
+    }
+
+    .memory-chip.green {
+      --chip: var(--green);
+      --x1: 120px;
+      --y1: 76px;
+      --x2: 222px;
+      --y2: 34px;
+      --x3: 392px;
+      --y3: 124px;
+      animation-delay: -2.4s;
+    }
+
+    .memory-chip.blue {
+      --chip: var(--cyan);
+      --x1: 178px;
+      --y1: 6px;
+      --x2: 226px;
+      --y2: 42px;
+      --x3: 466px;
+      --y3: 124px;
+      animation-delay: -4.8s;
     }
 
     .particle-field {
@@ -384,8 +582,9 @@
 
     .feature-card {
       display: grid;
+      align-content: start;
       gap: 18px;
-      min-height: 300px;
+      min-height: 230px;
       padding: 22px;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -407,96 +606,32 @@
       line-height: 1.5;
     }
 
-    .mini-diagram {
-      position: relative;
-      min-height: 116px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background:
-        linear-gradient(90deg, rgba(17, 23, 24, 0.04) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(17, 23, 24, 0.04) 1px, transparent 1px),
-        #f8faf7;
-      background-size: 28px 28px;
-      overflow: hidden;
-    }
-
-    .mini-node,
-    .mini-chip {
-      position: absolute;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(17, 23, 24, 0.14);
-      background: #ffffff;
-      color: var(--ink);
+    .feature-kicker {
+      color: var(--cyan);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 12px;
-      font-weight: 780;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
-    .mini-node {
-      width: 72px;
-      height: 34px;
+    .feature-commands {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .feature-commands code {
+      padding: 6px 8px;
+      color: #102022;
+      background: #edf4f1;
+      border: 1px solid #d6e3df;
       border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
-
-    .mini-chip {
-      min-width: 46px;
-      height: 26px;
-      padding: 0 9px;
-      border-radius: 999px;
-    }
-
-    .mini-line {
-      position: absolute;
-      height: 2px;
-      background: linear-gradient(90deg, rgba(0, 215, 255, 0.2), rgba(0, 215, 255, 0.86));
-      transform-origin: left center;
-    }
-
-    .mini-packet {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--cyan);
-      box-shadow: 0 0 16px rgba(0, 215, 255, 0.72);
-      animation: miniPacket 2.8s ease-in-out infinite;
-    }
-
-    .trust-map .mini-node:nth-child(1) { left: 18px; top: 20px; }
-    .trust-map .mini-node:nth-child(2) { left: calc(50% - 36px); top: 60px; }
-    .trust-map .mini-node:nth-child(3) { right: 18px; top: 20px; }
-    .trust-map .mini-line { left: 90px; right: 90px; top: 54px; }
-    .trust-map .mini-packet { left: 78px; top: 50px; }
-
-    .guard-map .mini-chip:nth-child(1) { left: 20px; top: 22px; border-color: rgba(226, 93, 93, 0.42); }
-    .guard-map .mini-chip:nth-child(2) { left: calc(50% - 36px); top: 44px; border-color: rgba(207, 135, 47, 0.42); }
-    .guard-map .mini-chip:nth-child(3) { right: 20px; top: 68px; border-color: rgba(47, 174, 119, 0.42); }
-    .guard-map .mini-line { left: 64px; right: 64px; top: 58px; transform: rotate(8deg); }
-    .guard-map .mini-packet { left: 62px; top: 50px; animation-delay: -0.7s; }
-
-    .genome-map .mini-chip:nth-child(1) { left: 22px; top: 18px; }
-    .genome-map .mini-chip:nth-child(2) { right: 24px; top: 18px; }
-    .genome-map .mini-chip:nth-child(3) { left: calc(50% - 41px); bottom: 20px; border-color: rgba(47, 174, 119, 0.42); }
-    .genome-map .mini-line { left: 42px; right: 42px; top: 70px; }
-    .genome-map .mini-packet { left: 50%; top: 66px; animation-delay: -1.2s; }
-
-    .repair-map .mini-node:nth-child(1) { left: 18px; bottom: 20px; }
-    .repair-map .mini-node:nth-child(2) { left: calc(50% - 36px); top: 18px; border-color: rgba(207, 135, 47, 0.44); }
-    .repair-map .mini-node:nth-child(3) { right: 18px; bottom: 20px; border-color: rgba(47, 174, 119, 0.44); }
-    .repair-map .mini-line { left: 84px; right: 84px; top: 58px; }
-    .repair-map .mini-packet { left: 82px; top: 54px; animation-delay: -1.8s; }
-
-    .evidence-map .mini-node:nth-child(1) { left: 18px; top: 22px; }
-    .evidence-map .mini-node:nth-child(2) { left: calc(50% - 36px); top: 22px; }
-    .evidence-map .mini-node:nth-child(3) { right: 18px; top: 62px; }
-    .evidence-map .mini-line { left: 88px; right: 88px; top: 55px; }
-    .evidence-map .mini-packet { left: 86px; top: 51px; animation-delay: -0.4s; }
-
-    .runtime-map .mini-node:nth-child(1) { left: 18px; top: 18px; }
-    .runtime-map .mini-node:nth-child(2) { right: 18px; top: 18px; }
-    .runtime-map .mini-node:nth-child(3) { left: calc(50% - 36px); bottom: 18px; border-color: rgba(0, 215, 255, 0.42); }
-    .runtime-map .mini-line { left: 64px; right: 64px; top: 58px; }
-    .runtime-map .mini-packet { left: 90px; top: 54px; animation-delay: -1s; }
 
     .migration {
       color: #eafafa;
@@ -533,7 +668,7 @@
       grid-template-columns: 1fr 1.12fr 1fr 1fr;
       gap: 16px;
       align-items: center;
-      padding: 28px;
+      padding: 28px 28px 92px;
       border: 1px solid var(--line-dark);
       border-radius: 8px;
       background: rgba(8, 12, 12, 0.86);
@@ -546,7 +681,8 @@
       position: absolute;
       left: 9%;
       right: 9%;
-      top: 47%;
+      top: auto;
+      bottom: 42px;
       height: 2px;
       background: linear-gradient(90deg, rgba(0, 215, 255, 0.2), rgba(47, 174, 119, 0.54), rgba(0, 95, 255, 0.34));
     }
@@ -566,15 +702,6 @@
       border: 1px solid var(--line-dark);
       border-radius: 8px;
       background: rgba(255, 255, 255, 0.045);
-      animation: floatNode 5.4s ease-in-out infinite;
-    }
-
-    .migration-node:nth-of-type(2) {
-      animation-delay: -1.2s;
-    }
-
-    .migration-node:nth-of-type(3) {
-      animation-delay: -2.4s;
     }
 
     .migration-node strong,
@@ -628,6 +755,7 @@
       border-radius: 999px;
       background: var(--cyan);
       box-shadow: 0 0 20px rgba(0, 215, 255, 0.88);
+      bottom: 38px;
       animation: migratePacket 6.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
     }
 
@@ -740,17 +868,6 @@
       }
     }
 
-    @keyframes scanLine {
-      0%, 100% {
-        opacity: 0.22;
-        transform: translateX(-16px);
-      }
-      50% {
-        opacity: 0.82;
-        transform: translateX(34px);
-      }
-    }
-
     @keyframes cueDrop {
       0%, 100% {
         opacity: 0.54;
@@ -772,6 +889,45 @@
       50% { opacity: 0.88; }
     }
 
+    @keyframes sortChip {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) scale(0.92);
+      }
+      10%, 76% {
+        opacity: 1;
+      }
+      30% {
+        transform: translate3d(var(--x1), var(--y1), 0) scale(1);
+      }
+      55% {
+        transform: translate3d(var(--x2), var(--y2), 0) scale(0.96);
+      }
+      86% {
+        opacity: 1;
+        transform: translate3d(var(--x3), var(--y3), 0) scale(0.72);
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--x3), var(--y3), 0) scale(0.62);
+      }
+    }
+
+    @keyframes robotCatch {
+      0%, 100% {
+        transform: rotate(-10deg);
+      }
+      34% {
+        transform: rotate(-26deg);
+      }
+      58% {
+        transform: rotate(10deg);
+      }
+      82% {
+        transform: rotate(24deg);
+      }
+    }
+
     @keyframes flowPulse {
       0% {
         left: 8%;
@@ -786,59 +942,36 @@
       }
     }
 
-    @keyframes miniPacket {
-      0% {
-        opacity: 0;
-        transform: translateX(0);
-      }
-      20%, 82% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        transform: translateX(110px);
-      }
-    }
-
-    @keyframes floatNode {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-8px);
-      }
-    }
-
     @keyframes migratePacket {
       0% {
         left: 8%;
-        top: 47%;
         opacity: 0;
+        transform: translateY(0);
       }
       9% {
         opacity: 1;
       }
       28% {
         left: 34%;
-        top: 47%;
+        transform: translateY(-7px);
       }
       44% {
         left: 43%;
-        top: 34%;
+        transform: translateY(5px);
       }
       60% {
         left: 52%;
-        top: 57%;
+        transform: translateY(-6px);
       }
       78% {
         left: 70%;
-        top: 47%;
         opacity: 1;
+        transform: translateY(4px);
       }
       100% {
         left: 91%;
-        top: 47%;
         opacity: 0;
+        transform: translateY(0);
       }
     }
 
@@ -909,9 +1042,67 @@
         width: 100%;
       }
 
-      .banner-wrap::before,
-      .banner-wrap::after {
-        display: none;
+      .hero-visual {
+        justify-self: stretch;
+        width: 100%;
+        gap: 16px;
+      }
+
+      .memory-sorter {
+        justify-self: stretch;
+        width: 100%;
+        height: 142px;
+        overflow: hidden;
+      }
+
+      .sort-robot {
+        left: 32%;
+        bottom: 30px;
+        transform: translateX(-50%) scale(0.76);
+      }
+
+      .sort-bins {
+        right: 0;
+        grid-template-columns: repeat(3, 48px);
+        gap: 8px;
+      }
+
+      .sort-bin {
+        height: 40px;
+      }
+
+      .memory-chip {
+        left: 4px;
+        top: 10px;
+        width: 36px;
+        height: 26px;
+      }
+
+      .memory-chip.red {
+        --x1: 54px;
+        --y1: 18px;
+        --x2: 102px;
+        --y2: 46px;
+        --x3: 196px;
+        --y3: 100px;
+      }
+
+      .memory-chip.green {
+        --x1: 58px;
+        --y1: 58px;
+        --x2: 110px;
+        --y2: 18px;
+        --x3: 250px;
+        --y3: 100px;
+      }
+
+      .memory-chip.blue {
+        --x1: 82px;
+        --y1: 0;
+        --x2: 118px;
+        --y2: 30px;
+        --x3: 304px;
+        --y3: 100px;
       }
 
       section {
@@ -949,8 +1140,25 @@
       <h1 class="hero-title" aria-label="The ultimate Supermemory Local experience.">
         <span id="typewriter" class="typing-caret">The ultimate Supermemory Local experience.</span>
       </h1>
-      <div class="banner-wrap">
-        <img class="hero-banner" src="assets/smctl-banner.svg?v=20260718-black" alt="smctl Supermemory Harness install banner">
+      <div class="hero-visual">
+        <div class="banner-wrap">
+          <img class="hero-banner" src="assets/smctl-banner.svg?v=20260718-black" alt="smctl Supermemory Harness install banner">
+        </div>
+        <div class="memory-sorter" aria-hidden="true">
+          <span class="memory-chip red">recall</span>
+          <span class="memory-chip green">scope</span>
+          <span class="memory-chip blue">trust</span>
+          <div class="sort-robot">
+            <div class="robot-head"></div>
+            <div class="robot-body"></div>
+            <div class="robot-arm"></div>
+          </div>
+          <div class="sort-bins">
+            <div class="sort-bin red" data-label="red"></div>
+            <div class="sort-bin green" data-label="green"></div>
+            <div class="sort-bin blue" data-label="blue"></div>
+          </div>
+        </div>
       </div>
     </div>
     <a class="scroll-cue" href="#flow" aria-label="Jump to command flow"></a>
@@ -1005,87 +1213,57 @@
 
         <div class="feature-grid">
           <article class="feature-card reveal">
-            <div class="mini-diagram trust-map" aria-hidden="true">
-              <div class="mini-node">Recall</div>
-              <div class="mini-node">Trust</div>
-              <div class="mini-node">Action</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Trust Layer</div>
             <div>
               <h3>Trust before action</h3>
               <p><code>trust</code>, <code>gate</code>, and <code>session</code> check scope, health, warnings, and recall before agents make high-impact changes.</p>
             </div>
+            <div class="feature-commands"><code>smctl trust</code><code>smctl gate</code><code>smctl session pre-action</code></div>
           </article>
 
           <article class="feature-card reveal">
-            <div class="mini-diagram guard-map" aria-hidden="true">
-              <div class="mini-chip">Risk</div>
-              <div class="mini-chip">Review</div>
-              <div class="mini-chip">Save</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Write Review</div>
             <div>
               <h3>Guard review</h3>
               <p><code>guard</code> keeps risky writes in an inbox, applies project metadata, and forwards only approved memories to Local.</p>
             </div>
+            <div class="feature-commands"><code>smctl guard inbox</code><code>approve</code><code>reject</code></div>
           </article>
 
           <article class="feature-card reveal">
-            <div class="mini-diagram genome-map" aria-hidden="true">
-              <div class="mini-chip">Types</div>
-              <div class="mini-chip">Gaps</div>
-              <div class="mini-chip">Policy</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Personalization</div>
             <div>
               <h3>Memory Genome</h3>
               <p><code>genome</code> classifies stored memory types, finds personalization gaps, and can install a local policy for future writes.</p>
             </div>
+            <div class="feature-commands"><code>smctl genome</code><code>smctl genome apply</code></div>
           </article>
 
           <article class="feature-card reveal">
-            <div class="mini-diagram repair-map" aria-hidden="true">
-              <div class="mini-node">Issue</div>
-              <div class="mini-node">Plan</div>
-              <div class="mini-node">Recover</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Recovery</div>
             <div>
               <h3>Repair wizard</h3>
               <p><code>repair wizard</code> turns failed writes, stale queues, retry loops, and recall mismatches into ordered recovery steps.</p>
             </div>
+            <div class="feature-commands"><code>smctl repair wizard</code><code>smctl support</code></div>
           </article>
 
           <article class="feature-card reveal">
-            <div class="mini-diagram evidence-map" aria-hidden="true">
-              <div class="mini-node">Audit</div>
-              <div class="mini-node">Proof</div>
-              <div class="mini-node">Share</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Proof</div>
             <div>
               <h3>Evidence and launch board</h3>
               <p><code>evidence</code>, <code>advisor</code>, <code>recommend</code>, and <code>launch</code> produce redacted proof, readiness, and demo guidance.</p>
             </div>
+            <div class="feature-commands"><code>smctl evidence</code><code>smctl launch</code></div>
           </article>
 
           <article class="feature-card reveal">
-            <div class="mini-diagram runtime-map" aria-hidden="true">
-              <div class="mini-node">Local</div>
-              <div class="mini-node">UI</div>
-              <div class="mini-node">Watch</div>
-              <div class="mini-line"></div>
-              <div class="mini-packet"></div>
-            </div>
+            <div class="feature-kicker">Operations</div>
             <div>
               <h3>Runtime command center</h3>
               <p><code>ui</code>, <code>watch</code>, <code>status</code>, and <code>score</code> make Local state readable without digging through logs.</p>
             </div>
+            <div class="feature-commands"><code>smctl ui</code><code>smctl watch</code><code>smctl score</code></div>
           </article>
         </div>
       </div>
