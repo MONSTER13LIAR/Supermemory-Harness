@@ -14,7 +14,7 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       }
       .ascii {
-        font-size: 31px;
+        font-size: 29px;
         font-weight: 700;
         letter-spacing: 0;
       }
