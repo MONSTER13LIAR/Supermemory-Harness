@@ -63,8 +63,8 @@
       position: relative;
       min-height: 100svh;
       display: grid;
-      place-items: center;
-      padding: 96px 0 88px;
+      place-items: start center;
+      padding: 132px 0 210px;
       color: #f3fbfb;
       background: #000000;
       overflow: hidden;
@@ -98,7 +98,7 @@
     .brand {
       position: absolute;
       top: 28px;
-      left: max(20px, calc((100% - 1160px) / 2));
+      left: max(20px, calc((100% - 1280px) / 2));
       z-index: 3;
       color: #eaffff;
       font-family: "Raster Forge", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -112,18 +112,19 @@
     .hero-grid {
       position: relative;
       z-index: 2;
+      width: min(1280px, calc(100% - 40px));
       display: grid;
-      grid-template-columns: minmax(0, 0.92fr) minmax(360px, 0.88fr);
-      gap: 64px;
-      align-items: center;
+      grid-template-columns: minmax(0, 0.95fr) minmax(500px, 1fr);
+      gap: 48px;
+      align-items: start;
     }
 
     .hero-title {
-      max-width: 660px;
+      max-width: 700px;
       min-height: 2.1em;
       margin: 0;
       color: #f5fbfb;
-      font-size: 72px;
+      font-size: 88px;
       font-weight: 880;
       line-height: 1.03;
       letter-spacing: 0;
@@ -146,17 +147,18 @@
 
     .hero-visual {
       position: relative;
-      justify-self: end;
+      justify-self: start;
       display: grid;
       gap: 22px;
-      width: min(100%, 580px);
-      margin-top: 60px;
+      width: min(100%, 640px);
+      margin-top: 0;
     }
 
     .banner-wrap {
       position: relative;
-      justify-self: end;
-      width: min(100%, 540px);
+      justify-self: start;
+      width: min(100%, 640px);
+      margin-top: -30px;
       animation: bannerRise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
 
@@ -170,8 +172,10 @@
     }
 
     .memory-sorter {
-      position: relative;
-      justify-self: end;
+      position: absolute;
+      left: max(20px, calc((100% - 1280px) / 2));
+      bottom: 64px;
+      z-index: 2;
       width: min(100%, 520px);
       height: 174px;
       color: #eaffff;
@@ -1077,7 +1081,7 @@
       }
 
       .hero-title {
-        font-size: 56px;
+        font-size: 62px;
       }
 
       h2 {
@@ -1095,20 +1099,22 @@
       }
 
       .hero-title {
-        font-size: 58px;
+        font-size: 70px;
       }
 
       .hero-visual {
         gap: 6px;
-        margin-top: 78px;
-        width: min(100%, 520px);
+        margin-top: 0;
+        width: min(100%, 540px);
       }
 
       .banner-wrap {
-        width: min(100%, 480px);
+        width: min(100%, 520px);
       }
 
       .memory-sorter {
+        left: max(20px, calc((100% - 1280px) / 2));
+        bottom: 24px;
         height: 104px;
         width: min(100%, 500px);
       }
@@ -1189,12 +1195,13 @@
 
       .hero-title {
         min-height: 3.2em;
-        font-size: 44px;
+        font-size: 50px;
       }
 
       .banner-wrap {
         justify-self: stretch;
         width: 100%;
+        margin-top: 0;
       }
 
       .hero-visual {
@@ -1205,9 +1212,13 @@
       }
 
       .memory-sorter {
-        justify-self: stretch;
-        width: 100%;
+        position: relative;
+        left: auto;
+        bottom: auto;
+        justify-self: start;
+        width: min(calc(100% - 32px), 420px);
         height: 142px;
+        margin: 14px 0 0 16px;
         overflow: hidden;
       }
 
@@ -1339,21 +1350,21 @@
         <div class="banner-wrap">
           <img class="hero-banner" src="assets/smctl-banner.svg?v=20260718-black" alt="smctl Supermemory Harness install banner">
         </div>
-        <div class="memory-sorter" aria-hidden="true">
-          <span class="memory-chip red">memory</span>
-          <span class="memory-chip green">memory</span>
-          <span class="memory-chip blue">memory</span>
-          <div class="sort-robot">
-            <div class="robot-head"></div>
-            <div class="robot-body"></div>
-            <div class="robot-arm"></div>
-          </div>
-          <div class="sort-bins">
-            <div class="sort-bin red" data-label="Review"></div>
-            <div class="sort-bin green" data-label="Personalize"></div>
-            <div class="sort-bin blue" data-label="Recall"></div>
-          </div>
-        </div>
+      </div>
+    </div>
+    <div class="memory-sorter" aria-hidden="true">
+      <span class="memory-chip red">memory</span>
+      <span class="memory-chip green">memory</span>
+      <span class="memory-chip blue">memory</span>
+      <div class="sort-robot">
+        <div class="robot-head"></div>
+        <div class="robot-body"></div>
+        <div class="robot-arm"></div>
+      </div>
+      <div class="sort-bins">
+        <div class="sort-bin red" data-label="Review"></div>
+        <div class="sort-bin green" data-label="Personalize"></div>
+        <div class="sort-bin blue" data-label="Recall"></div>
       </div>
     </div>
     <a class="scroll-cue" href="#flow" aria-label="Jump to command flow"></a>
