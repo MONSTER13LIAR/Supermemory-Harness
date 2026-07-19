@@ -64,7 +64,7 @@
       min-height: 100svh;
       display: grid;
       place-items: start center;
-      padding: 132px 0 210px;
+      padding: 196px 0 150px;
       color: #f3fbfb;
       background: #000000;
       overflow: hidden;
@@ -173,7 +173,7 @@
 
     .memory-sorter {
       position: absolute;
-      left: max(20px, calc((100% - 1280px) / 2));
+      right: clamp(20px, 4vw, 72px);
       bottom: 64px;
       z-index: 2;
       width: min(100%, 520px);
@@ -1091,7 +1091,7 @@
 
     @media (max-height: 640px) and (min-width: 761px) {
       .hero {
-        padding: 76px 0 52px;
+        padding: 118px 0 52px;
       }
 
       .hero-grid {
@@ -1113,7 +1113,7 @@
       }
 
       .memory-sorter {
-        left: max(20px, calc((100% - 1280px) / 2));
+        right: clamp(20px, 4vw, 72px);
         bottom: 24px;
         height: 104px;
         width: min(100%, 500px);
@@ -1214,6 +1214,7 @@
       .memory-sorter {
         position: relative;
         left: auto;
+        right: auto;
         bottom: auto;
         justify-self: start;
         width: min(calc(100% - 32px), 420px);
